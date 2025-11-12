@@ -1,0 +1,341 @@
+import React from "react";
+import {
+  View,
+  Text,
+  FlatList,
+  StyleSheet,
+  ActivityIndicator,
+  TouchableOpacity,
+} from "react-native";
+import { useNavigation } from "@react-navigation/native";
+import { Clock, CreditCard, DollarSign, Coins } from "lucide-react-native";
+import colors from "../Constants/colors";
+import {
+  fontEq,
+  getHeightEquivalent,
+  getWidthEquivalent,
+} from "../Utils/helpers";
+
+interface SalePaymentMethod {
+  payment_method: string;
+  amount: number;
+  sales: {
+    id: number;
+    location_id: string;
+    created_at: string;
+    tip_amount: number;
+  };
+  adjustedTipAmount?: number; // Add processed tip amount
+  isTipTransaction?: boolean; // Flag for tip transactions
+}
+
+interface SalesTableProps {
+  data: SalePaymentMethod[];
+  loading: boolean;
+}
+
+const SalesTable: React.FC<SalesTableProps> = ({ data, loading }) => {
+  const { colors: paint } = colors;
+  const navigation = useNavigation<any>();
+
+  const formatCurrency = (amount: number) => {
+    return amount.toFixed(2);
+  };
+
+  const formatTime = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    });
+  };
+
+  const renderTableHeader = () => (
+    <View
+      style={[
+        styles.tableRow,
+        styles.headerRow,
+        { backgroundColor: paint.backgroundSecondary },
+      ]}
+    >
+      <View style={[styles.headerCell, styles.timeColumn]}>
+        <Clock size={16} color={paint.primary} />
+        <Text style={[styles.headerText, { color: paint.text }]}>Time</Text>
+      </View>
+      <View style={[styles.headerCell, styles.paymentColumn]}>
+        <CreditCard size={16} color={paint.primary} />
+        <Text style={[styles.headerText, { color: paint.text }]}>Payment</Text>
+      </View>
+      <View style={[styles.headerCell, styles.amountColumn]}>
+        <DollarSign size={16} color={paint.primary} />
+        <Text style={[styles.headerText, { color: paint.text }]}>Amount</Text>
+      </View>
+      <View style={[styles.headerCell, styles.tipColumn]}>
+        <Coins size={16} color={paint.primary} />
+        <Text style={[styles.headerText, { color: paint.text }]}>Tip</Text>
+      </View>
+      <View style={[styles.headerCell, styles.totalColumn]}>
+        <DollarSign size={16} color={paint.primary} />
+        <Text style={[styles.headerText, { color: paint.text }]}>Total</Text>
+      </View>
+    </View>
+  );
+
+  const handleRowPress = (item: SalePaymentMethod) => {
+    const saleId = item?.sales?.id ? String(item.sales.id) : undefined;
+    navigation.navigate("TransactionDetailsScreen", {
+      saleId,
+      fallbackTransaction: item,
+    });
+  };
+
+  const renderTableRow = ({ item }: { item: SalePaymentMethod }) => {
+    const adjustedTip = item.adjustedTipAmount || 0;
+    const total = item.amount + adjustedTip;
+    const displayPaymentMethod = item.isTipTransaction
+      ? `${item.payment_method} (Tip)`
+      : item.payment_method;
+
+    return (
+      <TouchableOpacity
+        style={[styles.tableRow, { borderBottomColor: paint.border }]}
+        onPress={() => handleRowPress(item)}
+        activeOpacity={0.7}
+      >
+        <Text style={[styles.cell, styles.timeColumn, { color: paint.text }]}>
+          {formatTime(item.sales.created_at)}
+        </Text>
+        <Text
+          style={[styles.cell, styles.paymentColumn, { color: paint.text }]}
+        >
+          {displayPaymentMethod}
+        </Text>
+        <Text style={[styles.cell, styles.amountColumn, { color: paint.text }]}>
+          {formatCurrency(item.amount)}
+        </Text>
+        <Text style={[styles.cell, styles.tipColumn, { color: paint.text }]}>
+          {formatCurrency(adjustedTip)}
+        </Text>
+        <Text
+          style={[
+            styles.cell,
+            styles.totalColumn,
+            { color: paint.text, fontWeight: "600" },
+          ]}
+        >
+          {formatCurrency(total)}
+        </Text>
+      </TouchableOpacity>
+    );
+  };
+
+  const renderEmptyState = () => (
+    <View style={styles.emptyState}>
+      <Text style={[styles.emptyText, { color: paint.textSecondary }]}>
+        No sales data found for this date
+      </Text>
+    </View>
+  );
+
+  const calculateSummary = () => {
+    const totalAmount = data.reduce((sum, item) => sum + item.amount, 0);
+    const totalTips = data.reduce(
+      (sum, item) => sum + (item.adjustedTipAmount || 0),
+      0
+    );
+    const grandTotal = totalAmount + totalTips;
+
+    return { totalAmount, totalTips, grandTotal };
+  };
+
+  const renderSummary = () => {
+    if (data.length === 0) return null;
+
+    const { totalAmount, totalTips, grandTotal } = calculateSummary();
+
+    return (
+      <View
+        style={[
+          styles.summaryContainer,
+          { backgroundColor: paint.backgroundSecondary },
+        ]}
+      >
+        <View style={styles.summaryRow}>
+          <Text style={[styles.summaryLabel, { color: paint.text }]}>
+            Total Transactions: {data.length}
+          </Text>
+        </View>
+        <View style={styles.summaryRow}>
+          <Text style={[styles.summaryLabel, { color: paint.text }]}>
+            Subtotal:
+          </Text>
+          <Text style={[styles.summaryValue, { color: paint.text }]}>
+            {formatCurrency(totalAmount)}
+          </Text>
+        </View>
+        <View style={styles.summaryRow}>
+          <Text style={[styles.summaryLabel, { color: paint.text }]}>
+            Tips:
+          </Text>
+          <Text style={[styles.summaryValue, { color: paint.text }]}>
+            {formatCurrency(totalTips)}
+          </Text>
+        </View>
+        <View style={[styles.summaryRow, styles.totalRow]}>
+          <Text
+            style={[
+              styles.summaryLabel,
+              styles.totalLabel,
+              { color: paint.text },
+            ]}
+          >
+            Grand Total:
+          </Text>
+          <Text
+            style={[
+              styles.summaryValue,
+              styles.totalValue,
+              { color: paint.primary },
+            ]}
+          >
+            {formatCurrency(grandTotal)}
+          </Text>
+        </View>
+      </View>
+    );
+  };
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={paint.primary} />
+        <Text style={[styles.loadingText, { color: paint.textSecondary }]}>
+          Loading sales data...
+        </Text>
+      </View>
+    );
+  }
+
+  // Sort data by time before rendering
+  const sortedData = [...data].sort(
+    (a, b) =>
+      new Date(a.sales.created_at).getTime() -
+      new Date(b.sales.created_at).getTime()
+  );
+
+  return (
+    <View style={styles.container}>
+      {renderTableHeader()}
+      {sortedData.length === 0
+        ? renderEmptyState()
+        : sortedData.map((item, index) => (
+            <View key={`${item.sales.id}-${index}`}>
+              {renderTableRow({ item })}
+            </View>
+          ))}
+      {renderSummary()}
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "white",
+    borderRadius: 12,
+    overflow: "hidden",
+    marginTop: getHeightEquivalent(16),
+  },
+  tableRow: {
+    flexDirection: "row",
+    paddingVertical: getHeightEquivalent(12),
+    paddingHorizontal: getWidthEquivalent(16),
+    borderBottomWidth: 1,
+    borderBottomColor: "#E0E0E0",
+  },
+  headerRow: {
+    borderBottomWidth: 2,
+  },
+  headerCell: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: getWidthEquivalent(4),
+  },
+  headerText: {
+    fontSize: fontEq(12),
+    fontWeight: "600",
+    textAlign: "center",
+  },
+  cell: {
+    fontSize: fontEq(13),
+    textAlign: "center",
+  },
+  timeColumn: {
+    flex: 1.2,
+  },
+  paymentColumn: {
+    flex: 1.5,
+  },
+  amountColumn: {
+    flex: 1,
+  },
+  tipColumn: {
+    flex: 1,
+  },
+  totalColumn: {
+    flex: 1,
+  },
+  emptyState: {
+    paddingVertical: getHeightEquivalent(40),
+    alignItems: "center",
+  },
+  emptyText: {
+    fontSize: fontEq(16),
+    fontStyle: "italic",
+  },
+  loadingContainer: {
+    paddingVertical: getHeightEquivalent(40),
+    alignItems: "center",
+  },
+  loadingText: {
+    fontSize: fontEq(16),
+    marginTop: getHeightEquivalent(12),
+  },
+  summaryContainer: {
+    paddingVertical: getHeightEquivalent(16),
+    paddingHorizontal: getWidthEquivalent(16),
+    borderTopWidth: 2,
+    borderTopColor: "#E0E0E0",
+  },
+  summaryRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: getHeightEquivalent(4),
+  },
+  summaryLabel: {
+    fontSize: fontEq(14),
+    fontWeight: "500",
+  },
+  summaryValue: {
+    fontSize: fontEq(14),
+    fontWeight: "500",
+  },
+  totalRow: {
+    marginTop: getHeightEquivalent(8),
+    paddingTop: getHeightEquivalent(8),
+    borderTopWidth: 1,
+    borderTopColor: "#E0E0E0",
+  },
+  totalLabel: {
+    fontSize: fontEq(16),
+    fontWeight: "700",
+  },
+  totalValue: {
+    fontSize: fontEq(16),
+    fontWeight: "700",
+  },
+});
+
+export default SalesTable;
