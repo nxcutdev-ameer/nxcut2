@@ -43,10 +43,17 @@ export const useDailySalesScreenVM = () => {
     fetchDataForDate(selectedDate);
   }, [pageFilter]);
 
+  const formatDateForQuery = (value: Date) => {
+    const year = value.getFullYear();
+    const month = `${value.getMonth() + 1}`.padStart(2, "0");
+    const day = `${value.getDate()}`.padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
+
   const fetchDataForDate = async (date: Date) => {
     try {
       setLoading(true);
-      const dateString = date.toISOString().split("T")[0];
+      const dateString = formatDateForQuery(date);
 
       // Get location IDs from pageFilter, or use empty array to get all locations
       const locationIds =
@@ -108,7 +115,7 @@ export const useDailySalesScreenVM = () => {
   };
 
   const formatDateForFilename = (date: Date) => {
-    return date.toISOString().split("T")[0];
+    return formatDateForQuery(date);
   };
 
   const generateSaleItemsSummary = () => {
@@ -189,7 +196,7 @@ export const useDailySalesScreenVM = () => {
 
     processedPayments.forEach((item) => {
       const paymentMethod = item.payment_method;
-      const totalAmount = item.amount + (item.adjustedTipAmount || 0);
+      const totalAmount = item.amount+ (item.adjustedTipAmount || 0);
 
       if (paymentTypes[paymentMethod]) {
         paymentTypes[paymentMethod] += totalAmount;

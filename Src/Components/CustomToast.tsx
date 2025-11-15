@@ -4,7 +4,7 @@ import {
   Text,
   StyleSheet,
   Animated,
-  Dimensions,
+  ColorValue,
 } from 'react-native';
 import { PanGestureHandler, State } from 'react-native-gesture-handler';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -34,8 +34,19 @@ const CustomToast: React.FC<CustomToastProps> = ({
   const opacityAnim = useRef(new Animated.Value(0)).current;
   const panAnim = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(0)).current;
+  const slideAnimValueRef = useRef(-100);
 
-  const getGradientColors = () => {
+  useEffect(() => {
+    const listenerId = slideAnim.addListener(({ value }: { value: number }) => {
+      slideAnimValueRef.current = value;
+    });
+
+    return () => {
+      slideAnim.removeListener(listenerId);
+    };
+  }, [slideAnim]);
+
+  const getGradientColors = (): [ColorValue, ColorValue, ColorValue] => {
     switch (type) {
       case 'success':
         return ['#4CAF50', '#45a049', '#2E7D32'];
@@ -145,7 +156,7 @@ const CustomToast: React.FC<CustomToastProps> = ({
     }
   };
 
-  if (!visible && slideAnim._value === -100) {
+  if (!visible && slideAnimValueRef.current === -100) {
     return null;
   }
 

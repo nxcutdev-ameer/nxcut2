@@ -31,6 +31,11 @@ const FilterBottomSheet: React.FC<FilterBottomSheetProps> = ({
 }) => {
   const { colors: paint } = colors;
 
+  console.log('[FilterBottomSheet] visible prop:', {
+    type: typeof visible,
+    value: visible,
+  });
+
   const filterOptions = [
     { label: 'Last 7 days', value: 7 as const },
     { label: 'Last 30 days', value: 30 as const },

@@ -26,7 +26,10 @@ export interface StaffPerformance {
   thisMonthAmount: number;
   lastMonthAmount: number;
 }
-const useDashBoardScreenVM = (dateRange?: { startDate: Date; endDate: Date }) => {
+const useDashBoardScreenVM = (dateRange?: {
+  startDate: Date;
+  endDate: Date;
+}) => {
   const {
     comissionCaluculationData,
     comissionSummary,
@@ -69,16 +72,17 @@ const useDashBoardScreenVM = (dateRange?: { startDate: Date; endDate: Date }) =>
 
   // Staff performance advanced filters
   const [staffSearchText, setStaffSearchText] = React.useState("");
-  const [debouncedStaffSearchText, setDebouncedStaffSearchText] = React.useState("");
+  const [debouncedStaffSearchText, setDebouncedStaffSearchText] =
+    React.useState("");
   const [selectedMonth, setSelectedMonth] = React.useState(
     new Date().getMonth() + 1
   );
   const [selectedYear, setSelectedYear] = React.useState(
     new Date().getFullYear()
   );
-  
+
   // Debounce timer ref
-  const debounceTimer = useRef<NodeJS.Timeout | null>(null);
+  const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Bottom sheet state
   const [showFilterModal, setShowFilterModal] = React.useState(false);
@@ -93,7 +97,8 @@ const useDashBoardScreenVM = (dateRange?: { startDate: Date; endDate: Date }) =>
       barGraph: barGraphData !== undefined,
       activity: appointmentsActivityData !== undefined,
       topServices:
-        topServicesData !== undefined && Object.keys(topServicesData).length > 0,
+        topServicesData !== undefined &&
+        Object.keys(topServicesData).length > 0,
       staffPerformance:
         staffPerformanceData !== undefined &&
         (staffPerformanceData.currentMonth !== undefined ||
@@ -138,7 +143,7 @@ const useDashBoardScreenVM = (dateRange?: { startDate: Date; endDate: Date }) =>
 
   // Natural data loading completion detection
   useEffect(() => {
-    setLoadingStates(prev => ({
+    setLoadingStates((prev) => ({
       lineGraph: prev.lineGraph && !hasData.lineGraph,
       barGraph: prev.barGraph && !hasData.barGraph,
       activity: prev.activity && !hasData.activity,
@@ -149,7 +154,7 @@ const useDashBoardScreenVM = (dateRange?: { startDate: Date; endDate: Date }) =>
   }, [hasData]);
 
   useEffect(() => {
-    setLoadingStates(prev => ({
+    setLoadingStates((prev) => ({
       ...prev,
       pieChart: salesByLocationLoading || !hasData.pieChart,
     }));
@@ -173,33 +178,22 @@ const useDashBoardScreenVM = (dateRange?: { startDate: Date; endDate: Date }) =>
         return;
       }
 
-      setLoadingStates(prev => ({ ...prev, topServices: true, barGraph: true, activity: true, lineGraph: true, staffPerformance: true, pieChart: true }));
-      try {
-        await Promise.all([
-          fetchTopServices(filter),
-          fetchAppointmentsBarGraphData(barGraphFilter),
-          fetchApppointmentsActivityData(filter),
-          fetchAppointmentsWithSalesData(filter),
-          fetchSalesByLocationSummary({
-            startDate: filter.startDate,
-            endDate: filter.endDate,
-            locationIds: undefined,
-          }),
-        ]);
-      } catch (error) {
-        console.error("[DASHBOARD-VM] Error fetching initial data:", error);
-      }
+      // Use refetchAllDataWithDateRange for consistent data loading
+      await refetchAllDataWithDateRange({
+        startDate: filter.startDate,
+        endDate: filter.endDate,
+      });
     };
 
     fetchInitialData();
-  }, []); // Remove filter dependency since we handle it differently for fresh vs login loads
+  }, []);
 
   // Update data when filters change (skip if coming from login with preloaded data)
   useEffect(() => {
     if (isFromLogin) {
       return;
     }
-    setLoadingStates(prev => ({ ...prev, barGraph: true }));
+    setLoadingStates((prev) => ({ ...prev, barGraph: true }));
     fetchAppointmentsBarGraphData(barGraphFilter);
   }, [barGraphFilter, isFromLogin]);
 
@@ -208,11 +202,11 @@ const useDashBoardScreenVM = (dateRange?: { startDate: Date; endDate: Date }) =>
     if (debounceTimer.current) {
       clearTimeout(debounceTimer.current);
     }
-    
+
     debounceTimer.current = setTimeout(() => {
       setDebouncedStaffSearchText(staffSearchText);
     }, 500); // 500ms delay
-    
+
     return () => {
       if (debounceTimer.current) {
         clearTimeout(debounceTimer.current);
@@ -227,13 +221,14 @@ const useDashBoardScreenVM = (dateRange?: { startDate: Date; endDate: Date }) =>
     // Skip if coming from login with preloaded data for current month
     const currentMonth = new Date().getMonth() + 1;
     const currentYear = new Date().getFullYear();
-    const isCurrentMonthYear = selectedMonth === currentMonth && selectedYear === currentYear;
+    const isCurrentMonthYear =
+      selectedMonth === currentMonth && selectedYear === currentYear;
 
     if (isFromLogin && isCurrentMonthYear && !debouncedStaffSearchText) {
       return;
     }
 
-    setLoadingStates(prev => ({ ...prev, staffPerformance: true }));
+    setLoadingStates((prev) => ({ ...prev, staffPerformance: true }));
 
     // Fix timezone issues by using UTC dates
     const currentMonthStart = new Date(
@@ -248,7 +243,13 @@ const useDashBoardScreenVM = (dateRange?: { startDate: Date; endDate: Date }) =>
     };
 
     fetchStaffPerformanceData(staffFilter);
-  }, [selectedMonth, selectedYear, debouncedStaffSearchText, isFromLogin, fetchStaffPerformanceData]);
+  }, [
+    selectedMonth,
+    selectedYear,
+    debouncedStaffSearchText,
+    isFromLogin,
+    fetchStaffPerformanceData,
+  ]);
 
   // Debug logging for data changes
   const getServiceStats = (
@@ -307,11 +308,11 @@ const useDashBoardScreenVM = (dateRange?: { startDate: Date; endDate: Date }) =>
     }
 
     const firstCurrentItem = staffPerformanceData.currentMonth[0];
-    const hasRPCStructure = firstCurrentItem && (
-      firstCurrentItem.team_member_name !== undefined ||
-      firstCurrentItem.team_member !== undefined ||
-      firstCurrentItem.staff_name !== undefined
-    );
+    const hasRPCStructure =
+      firstCurrentItem &&
+      (firstCurrentItem.team_member_name !== undefined ||
+        firstCurrentItem.team_member !== undefined ||
+        firstCurrentItem.staff_name !== undefined);
 
     if (hasRPCStructure) {
       const extractName = (item: any) => {
@@ -324,10 +325,11 @@ const useDashBoardScreenVM = (dateRange?: { startDate: Date; endDate: Date }) =>
           item.staffName ??
           item.member_name;
         if (direct) return direct;
-        const key = Object.keys(item).find((k) =>
-          k.toLowerCase().includes("name") ||
-          k.toLowerCase().includes("member") ||
-          k.toLowerCase().includes("staff")
+        const key = Object.keys(item).find(
+          (k) =>
+            k.toLowerCase().includes("name") ||
+            k.toLowerCase().includes("member") ||
+            k.toLowerCase().includes("staff")
         );
         return key ? item[key] : undefined;
       };
@@ -355,10 +357,11 @@ const useDashBoardScreenVM = (dateRange?: { startDate: Date; endDate: Date }) =>
           const num = typeof direct === "number" ? direct : parseFloat(direct);
           if (Number.isFinite(num)) return num;
         }
-        const key = Object.keys(item).find((k) =>
-          k.toLowerCase().includes("total") ||
-          k.toLowerCase().includes("sales") ||
-          k.toLowerCase().includes("amount")
+        const key = Object.keys(item).find(
+          (k) =>
+            k.toLowerCase().includes("total") ||
+            k.toLowerCase().includes("sales") ||
+            k.toLowerCase().includes("amount")
         );
         if (key) {
           const value = item[key];
@@ -437,11 +440,7 @@ const useDashBoardScreenVM = (dateRange?: { startDate: Date; endDate: Date }) =>
       start.getMonth(),
       start.getDate()
     );
-    const endUTC = Date.UTC(
-      end.getFullYear(),
-      end.getMonth(),
-      end.getDate()
-    );
+    const endUTC = Date.UTC(end.getFullYear(), end.getMonth(), end.getDate());
     const diff = Math.floor((endUTC - startUTC) / MS_PER_DAY);
     return diff >= 0 ? diff + 1 : 0;
   };
@@ -476,7 +475,6 @@ const useDashBoardScreenVM = (dateRange?: { startDate: Date; endDate: Date }) =>
       });
       current.setDate(current.getDate() + 1);
     }
-    console.log("[SCREENVM-processedBarGraphData]", result);
     return result;
   }, [barGraphData]);
 
@@ -488,139 +486,137 @@ const useDashBoardScreenVM = (dateRange?: { startDate: Date; endDate: Date }) =>
 
   const appointmentsLineData = useMemo<LinePoint[]>(() => {
     let appointments = appointmentsWithSalesData;
-      if (!appointments || appointments.length === 0) {
-        return [];
+    if (!appointments || appointments.length === 0) {
+      return [];
+    }
+
+    // Group by date - Count UNIQUE APPOINTMENTS (not appointment services)
+    const grouped: Record<string, Set<string>> = {};
+    appointments.forEach((item) => {
+      if (item?.appointment?.appointment_date) {
+        const key = new Date(item.appointment.appointment_date)
+          .toISOString()
+          .split("T")[0];
+
+        if (!grouped[key]) {
+          grouped[key] = new Set();
+        }
+        // Add unique appointment ID to avoid counting same appointment multiple times
+        grouped[key].add(item.appointment.id);
       }
+    });
 
-      // Group by date - Count UNIQUE APPOINTMENTS (not appointment services)
-      const grouped: Record<string, Set<string>> = {};
-      appointments.forEach((item) => {
-        if (item?.appointment?.appointment_date) {
-          const key = new Date(item.appointment.appointment_date)
-            .toISOString()
-            .split("T")[0];
+    // Create date range based on dateRange prop or fallback to lineGraphFilter
+    const result: LinePoint[] = [];
 
-          if (!grouped[key]) {
-            grouped[key] = new Set();
-          }
-          // Add unique appointment ID to avoid counting same appointment multiple times
-          grouped[key].add(item.appointment.id);
-        }
-      });
+    if (dateRange) {
+      // Use custom date range from date picker
+      const start = new Date(dateRange.startDate);
+      const end = new Date(dateRange.endDate);
+      const totalDays = getInclusiveDayCount(start, end);
 
-      // Create date range based on dateRange prop or fallback to lineGraphFilter
-      const result: LinePoint[] = [];
-      
-      if (dateRange) {
-        // Use custom date range from date picker
-        const start = new Date(dateRange.startDate);
-        const end = new Date(dateRange.endDate);
-        const totalDays = getInclusiveDayCount(start, end);
+      for (let i = 0; i < totalDays; i++) {
+        const date = new Date(start);
+        date.setDate(start.getDate() + i);
+        const key = date.toISOString().split("T")[0];
+        const count = grouped[key] ? grouped[key].size : 0;
 
-        for (let i = 0; i < totalDays; i++) {
-          const date = new Date(start);
-          date.setDate(start.getDate() + i);
-          const key = date.toISOString().split("T")[0];
-          const count = grouped[key] ? grouped[key].size : 0;
-
-          result.push({
-            value: count,
-            label: date.toLocaleDateString("en-US", {
-              month: "short",
-              day: "numeric",
-            }),
-          });
-        }
-      } else {
-        // Fallback to lineGraphFilter for initial load
-        const endDate = new Date();
-        for (let i = lineGraphFilter - 1; i >= 0; i--) {
-          const date = new Date();
-          date.setDate(endDate.getDate() - i);
-          const key = date.toISOString().split("T")[0];
-          const count = grouped[key] ? grouped[key].size : 0;
-
-          result.push({
-            value: count,
-            label: date.toLocaleDateString("en-US", {
-              month: "short",
-              day: "numeric",
-            }),
-          });
-        }
+        result.push({
+          value: count,
+          label: date.toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+          }),
+        });
       }
+    } else {
+      // Fallback to lineGraphFilter for initial load
+      const endDate = new Date();
+      for (let i = lineGraphFilter - 1; i >= 0; i--) {
+        const date = new Date();
+        date.setDate(endDate.getDate() - i);
+        const key = date.toISOString().split("T")[0];
+        const count = grouped[key] ? grouped[key].size : 0;
 
-      console.log("[APPOINTMENTS-DEBUG] Final appointments result:", result);
-      return result;
+        result.push({
+          value: count,
+          label: date.toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+          }),
+        });
+      }
+    }
+
+    return result;
   }, [appointmentsWithSalesData, lineGraphFilter, dateRange]);
 
   const salesLineData = useMemo<LinePoint[]>(() => {
     let appointments = appointmentsWithSalesData;
-      if (!appointments || appointments.length === 0) {
-        return [];
+    if (!appointments || appointments.length === 0) {
+      return [];
+    }
+
+    const grouped: Record<string, number> = {};
+    appointments.forEach((item) => {
+      if (item?.appointment?.appointment_date && item?.appointment?.sales) {
+        const key = new Date(item.appointment.appointment_date)
+          .toISOString()
+          .split("T")[0];
+
+        // Count the NUMBER OF SALES (not the total amount)
+        // Filter for valid service sales and count them
+        const salesCount = item.appointment.sales.filter(
+          (s) => !s.is_voided && s.sale_type === "services"
+        ).length;
+
+        grouped[key] = (grouped[key] || 0) + salesCount;
       }
+    });
 
-      const grouped: Record<string, number> = {};
-      appointments.forEach((item) => {
-        if (item?.appointment?.appointment_date && item?.appointment?.sales) {
-          const key = new Date(item.appointment.appointment_date)
-            .toISOString()
-            .split("T")[0];
+    // Create date range based on dateRange prop or fallback to lineGraphFilter
+    const result: LinePoint[] = [];
 
-          // Count the NUMBER OF SALES (not the total amount)
-          // Filter for valid service sales and count them
-          const salesCount = item.appointment.sales.filter(
-            (s) => !s.is_voided && s.sale_type === "services"
-          ).length;
+    if (dateRange) {
+      // Use custom date range from date picker
+      const start = new Date(dateRange.startDate);
+      const end = new Date(dateRange.endDate);
+      const totalDays = getInclusiveDayCount(start, end);
 
-          grouped[key] = (grouped[key] || 0) + salesCount;
-        }
-      });
+      for (let i = 0; i < totalDays; i++) {
+        const date = new Date(start);
+        date.setDate(start.getDate() + i);
+        const key = date.toISOString().split("T")[0];
+        const salesCount = grouped[key] || 0;
 
-      // Create date range based on dateRange prop or fallback to lineGraphFilter
-      const result: LinePoint[] = [];
-      
-      if (dateRange) {
-        // Use custom date range from date picker
-        const start = new Date(dateRange.startDate);
-        const end = new Date(dateRange.endDate);
-        const totalDays = getInclusiveDayCount(start, end);
-
-        for (let i = 0; i < totalDays; i++) {
-          const date = new Date(start);
-          date.setDate(start.getDate() + i);
-          const key = date.toISOString().split("T")[0];
-          const salesCount = grouped[key] || 0;
-
-          result.push({
-            value: salesCount,
-            label: date.toLocaleDateString("en-US", {
-              month: "short",
-              day: "numeric",
-            }),
-          });
-        }
-      } else {
-        // Fallback to lineGraphFilter for initial load
-        const endDate = new Date();
-        for (let i = lineGraphFilter - 1; i >= 0; i--) {
-          const date = new Date();
-          date.setDate(endDate.getDate() - i);
-          const key = date.toISOString().split("T")[0];
-          const salesCount = grouped[key] || 0;
-
-          result.push({
-            value: salesCount,
-            label: date.toLocaleDateString("en-US", {
-              month: "short",
-              day: "numeric",
-            }),
-          });
-        }
+        result.push({
+          value: salesCount,
+          label: date.toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+          }),
+        });
       }
+    } else {
+      // Fallback to lineGraphFilter for initial load
+      const endDate = new Date();
+      for (let i = lineGraphFilter - 1; i >= 0; i--) {
+        const date = new Date();
+        date.setDate(endDate.getDate() - i);
+        const key = date.toISOString().split("T")[0];
+        const salesCount = grouped[key] || 0;
 
-      console.log("[SALES-DEBUG] Final sales result:", result);
-      return result;
+        result.push({
+          value: salesCount,
+          label: date.toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+          }),
+        });
+      }
+    }
+
+    return result;
   }, [appointmentsWithSalesData, lineGraphFilter, dateRange]);
   //----------------------------------------------------------------Totals th slae with the conditions    ---------------------------------------------------------------
   // const totalSalesAmount = useMemo(() => {
@@ -642,32 +638,50 @@ const useDashBoardScreenVM = (dateRange?: { startDate: Date; endDate: Date }) =>
   //   return total;
   // }, [appointmentsWithSalesData]);
 
-  // ONLY TOTLA THE SALE WITHOUT CONDITION ---------------------------------------------------------------
+  // Aggregate sales to match pie chart totals (top 5 locations)
+  const topFiveSalesSummary = useMemo(() => {
+    if (!salesByLocationSummary || salesByLocationSummary.length === 0) {
+      return [];
+    }
+
+    return salesByLocationSummary
+      .slice()
+      .sort((a, b) => b.total_sales_amount - a.total_sales_amount)
+      .slice(0, 5);
+  }, [salesByLocationSummary]);
+
   const totalSalesAmount = useMemo(() => {
-    if (!appointmentsWithSalesData || appointmentsWithSalesData.length === 0) {
+    if (topFiveSalesSummary.length === 0) {
       return 0;
     }
 
-    let total = 0;
-    appointmentsWithSalesData.forEach((item) => {
-      if (item?.appointment?.sales) {
-        item.appointment.sales.forEach((sale) => {
-          total += sale.total_amount || 0;
-        });
-      }
-    });
+    return topFiveSalesSummary.reduce(
+      (sum, location) => sum + (location.total_sales_amount || 0),
+      0
+    );
+  }, [topFiveSalesSummary]);
 
-    return total;
-  }, [appointmentsWithSalesData]);
+  const totalAppointmentsCount = useMemo(() => {
+    if (!salesByLocationSummary || salesByLocationSummary.length === 0) {
+      return 0;
+    }
+
+    return salesByLocationSummary.reduce(
+      (sum, location) => sum + (location.transaction_count || 0),
+      0
+    );
+  }, [salesByLocationSummary]);
+
   const totalAppointmentPrice = useMemo(() => {
-    if (!appointmentsWithSalesData || appointmentsWithSalesData.length === 0) {
+    if (topFiveSalesSummary.length === 0) {
       return 0;
     }
 
-    return appointmentsWithSalesData.reduce((total, item) => {
-      return total + (item.price || 0);
-    }, 0);
-  }, [appointmentsWithSalesData]);
+    return topFiveSalesSummary.reduce(
+      (sum, location) => sum + (location.total_sales_amount || 0),
+      0
+    );
+  }, [topFiveSalesSummary]);
 
   // Helper functions for file generation
   const generateCSV = (data: any[]) => {
@@ -714,17 +728,27 @@ const useDashBoardScreenVM = (dateRange?: { startDate: Date; endDate: Date }) =>
           <table>
             <thead>
               <tr>
-                ${headers.map(header => `<th>${header}</th>`).join('')}
+                ${headers.map((header) => `<th>${header}</th>`).join("")}
               </tr>
             </thead>
             <tbody>
-              ${data.map(row => `
+              ${data
+                .map(
+                  (row) => `
                 <tr>
-                  ${headers.map(header => `
-                    <td class="${header.includes('Month') ? 'amount' : ''}">${row[header]}</td>
-                  `).join('')}
+                  ${headers
+                    .map(
+                      (header) => `
+                    <td class="${header.includes("Month") ? "amount" : ""}">${
+                        row[header]
+                      }</td>
+                  `
+                    )
+                    .join("")}
                 </tr>
-              `).join('')}
+              `
+                )
+                .join("")}
             </tbody>
           </table>
         </body>
@@ -734,13 +758,25 @@ const useDashBoardScreenVM = (dateRange?: { startDate: Date; endDate: Date }) =>
 
   const getMonthName = (monthNumber: number) => {
     const months = [
-      'January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December'
+      "January",
+      "February",
+      "March",
+      "April",
+      "May",
+      "June",
+      "July",
+      "August",
+      "September",
+      "October",
+      "November",
+      "December",
     ];
-    return months[monthNumber - 1] || '';
+    return months[monthNumber - 1] || "";
   };
 
-  const downloadTopTeamMembersReport = async (type: "CSV" | "Excel" | "PDF") => {
+  const downloadTopTeamMembersReport = async (
+    type: "CSV" | "Excel" | "PDF"
+  ) => {
     try {
       const monthName = getMonthName(selectedMonth);
       const fileName = `${monthName}_${selectedYear}_Top_team_member_report`;
@@ -748,15 +784,29 @@ const useDashBoardScreenVM = (dateRange?: { startDate: Date; endDate: Date }) =>
 
       // Format data for export
       const formattedData = staffPerformance.map((staff, index) => ({
-        "Rank": index + 1,
+        Rank: index + 1,
         "Team Member": staff.staffName,
-        "This Month (AED)": staff.thisMonthAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
-        "Last Month (AED)": staff.lastMonthAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
-        "Difference (AED)": (staff.thisMonthAmount - staff.lastMonthAmount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+        "This Month (AED)": staff.thisMonthAmount.toLocaleString("en-US", {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        }),
+        "Last Month (AED)": staff.lastMonthAmount.toLocaleString("en-US", {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        }),
+        "Difference (AED)": (
+          staff.thisMonthAmount - staff.lastMonthAmount
+        ).toLocaleString("en-US", {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        }),
       }));
 
       if (formattedData.length === 0) {
-        Alert.alert("No Data", "No team member data available for the selected period.");
+        Alert.alert(
+          "No Data",
+          "No team member data available for the selected period."
+        );
         return;
       }
 
@@ -766,17 +816,25 @@ const useDashBoardScreenVM = (dateRange?: { startDate: Date; endDate: Date }) =>
 
       switch (type) {
         case "CSV":
-          fileContent = `Top Team Members Report\n${dateRange}\n\n${generateCSV(formattedData)}`;
+          fileContent = `Top Team Members Report\n${dateRange}\n\n${generateCSV(
+            formattedData
+          )}`;
           finalFileName = `${fileName}.csv`;
           mimeType = "text/csv";
           break;
         case "Excel":
-          fileContent = `Top Team Members Report\n${dateRange}\n\n${generateCSV(formattedData)}`;
+          fileContent = `Top Team Members Report\n${dateRange}\n\n${generateCSV(
+            formattedData
+          )}`;
           finalFileName = `${fileName}.xls`;
           mimeType = "application/vnd.ms-excel";
           break;
         case "PDF":
-          const htmlContent = generateHTML(formattedData, "Top Team Members Report", dateRange);
+          const htmlContent = generateHTML(
+            formattedData,
+            "Top Team Members Report",
+            dateRange
+          );
           const { uri: pdfUri } = await Print.printToFileAsync({
             html: htmlContent,
             base64: false,
@@ -836,7 +894,10 @@ const useDashBoardScreenVM = (dateRange?: { startDate: Date; endDate: Date }) =>
   };
 
   // Function to refetch all data with new date range
-  const refetchAllDataWithDateRange = async (filterObj: { startDate: string; endDate: string }) => {
+  const refetchAllDataWithDateRange = async (filterObj: {
+    startDate: string;
+    endDate: string;
+  }) => {
     triggerDateFilterLoading();
     setFilter({
       startDate: filterObj.startDate,
@@ -847,7 +908,9 @@ const useDashBoardScreenVM = (dateRange?: { startDate: Date; endDate: Date }) =>
       const currentMonthStart = new Date(
         Date.UTC(selectedYear, selectedMonth - 1, 1)
       );
-      const currentMonthEnd = new Date(Date.UTC(selectedYear, selectedMonth, 0));
+      const currentMonthEnd = new Date(
+        Date.UTC(selectedYear, selectedMonth, 0)
+      );
       const staffFilter = {
         startDate: currentMonthStart.toISOString().split("T")[0],
         endDate: currentMonthEnd.toISOString().split("T")[0],
@@ -866,23 +929,10 @@ const useDashBoardScreenVM = (dateRange?: { startDate: Date; endDate: Date }) =>
         }),
       ]);
     } catch (error) {
-      console.error("[DASHBOARD-VM] Error refetching data with date range:", error);
-    }
-  };
-
-  // Test function to verify RPC is working
-  const testStaffPerformanceRPC = async () => {
-    console.log("\n🧪 [DASHBOARD-VM] Starting RPC test from dashboard...");
-    try {
-      const result = await paymentRepository.testTeamMemberMonthlySales();
-      if (result) {
-        Alert.alert("Test Success", "RPC function is working correctly! Check console for details.");
-      } else {
-        Alert.alert("Test Failed", "RPC function failed. Check console for error details.");
-      }
-    } catch (error) {
-      console.error("[DASHBOARD-VM] Test error:", error);
-      Alert.alert("Test Error", "An error occurred during testing. Check console for details.");
+      console.error(
+        "[DASHBOARD-VM] Error refetching data with date range:",
+        error
+      );
     }
   };
 
@@ -895,6 +945,7 @@ const useDashBoardScreenVM = (dateRange?: { startDate: Date; endDate: Date }) =>
     formatCustomDate,
     salesLineData,
     appointmentsLineData,
+    totalAppointmentsCount,
     barGraphData,
     processedBarGraphData,
     topServices,
@@ -919,7 +970,6 @@ const useDashBoardScreenVM = (dateRange?: { startDate: Date; endDate: Date }) =>
     downloadTopTeamMembersReport,
     // Loading states
     loadingStates,
-    triggerDateFilterLoading,
     salesByLocationSummary,
     salesByLocationLoading,
     // Data fetching functions
@@ -927,8 +977,6 @@ const useDashBoardScreenVM = (dateRange?: { startDate: Date; endDate: Date }) =>
     refetchAllDataWithDateRange,
     fetchTopServices,
     fetchApppointmentsActivityData,
-    // Test function
-    testStaffPerformanceRPC,
     handleFilterChange: (type: "line" | "bar" | "staff", value: 7 | 30) => {
       switch (type) {
         case "line":

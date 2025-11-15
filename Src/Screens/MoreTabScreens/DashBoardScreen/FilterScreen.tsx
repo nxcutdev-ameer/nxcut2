@@ -11,7 +11,9 @@ import Modal from "react-native-modal";
 import { X, ChevronDown } from "lucide-react-native";
 import colors from "../../../Constants/colors";
 import { FilterScreenStyles } from "./FilterScreenStyles";
-import { Calendar } from "react-native-paper-dates";
+import InlineRangeCalendar, {
+  DateRangeValue,
+} from "../../../Components/InlineRangeCalendar";
 
 interface FilterScreenProps {
   visible: boolean;
@@ -50,8 +52,8 @@ const FilterScreen: React.FC<FilterScreenProps> = ({
   // Helper function to format date for calendar (avoid timezone issues)
   const formatDateForCalendar = (date: Date) => {
     const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
     return `${year}-${month}-${day}`;
   };
 
@@ -64,7 +66,9 @@ const FilterScreen: React.FC<FilterScreenProps> = ({
 
   const defaultRange = getMonthToDateRange();
 
-  const [selectedPeriod, setSelectedPeriod] = useState(initialPeriod || "Month to date");
+  const [selectedPeriod, setSelectedPeriod] = useState(
+    initialPeriod || "Month to date"
+  );
   const [showPeriodDropdown, setShowPeriodDropdown] = useState(false);
   const [startDate, setStartDate] = useState<Date>(
     initialStartDate || defaultRange.start
@@ -72,6 +76,10 @@ const FilterScreen: React.FC<FilterScreenProps> = ({
   const [endDate, setEndDate] = useState<Date>(
     initialEndDate || defaultRange.end
   );
+  const [calendarSelection, setCalendarSelection] = useState<DateRangeValue>({
+    startDate: initialStartDate || defaultRange.start,
+    endDate: initialEndDate || defaultRange.end,
+  });
 
   // Manual input states
   const [startDateInput, setStartDateInput] = useState(
@@ -94,6 +102,10 @@ const FilterScreen: React.FC<FilterScreenProps> = ({
       setEndDateInput(formatDateForCalendar(newEndDate));
       setStartDateError("");
       setEndDateError("");
+      setCalendarSelection({
+        startDate: newStartDate,
+        endDate: newEndDate,
+      });
     }
   }, [visible, initialStartDate, initialEndDate, initialPeriod]);
   const [startDateError, setStartDateError] = useState("");
@@ -101,13 +113,18 @@ const FilterScreen: React.FC<FilterScreenProps> = ({
 
   const isDateRangeValid = () => {
     if (!startDateInput || !endDateInput) return false;
-    if (startDateInput.length !== 10 || endDateInput.length !== 10) return false;
+    if (startDateInput.length !== 10 || endDateInput.length !== 10)
+      return false;
     if (startDateError || endDateError) return false;
 
-    const [startYear, startMonth, startDay] = startDateInput.split('-').map(Number);
-    const [endYear, endMonth, endDay] = endDateInput.split('-').map(Number);
+    const [startYear, startMonth, startDay] = startDateInput
+      .split("-")
+      .map(Number);
+    const [endYear, endMonth, endDay] = endDateInput.split("-").map(Number);
 
-    if ([startYear, startMonth, startDay, endYear, endMonth, endDay].some(isNaN)) {
+    if (
+      [startYear, startMonth, startDay, endYear, endMonth, endDay].some(isNaN)
+    ) {
       return false;
     }
 
@@ -204,6 +221,10 @@ const FilterScreen: React.FC<FilterScreenProps> = ({
     setEndDateInput(formatDateForCalendar(newEndDate));
     setStartDateError("");
     setEndDateError("");
+    setCalendarSelection({
+      startDate: newStartDate,
+      endDate: newEndDate,
+    });
   };
 
   const handleStartDateInputChange = (text: string) => {
@@ -226,9 +247,13 @@ const FilterScreen: React.FC<FilterScreenProps> = ({
     if (text.length === 10) {
       if (validateDateFormat(text)) {
         // Parse date parts to avoid timezone issues
-        const [year, month, day] = text.split('-').map(Number);
+        const [year, month, day] = text.split("-").map(Number);
         const newDate = new Date(year, month - 1, day);
         setStartDate(newDate);
+        setCalendarSelection((prev) => ({
+          ...prev,
+          startDate: newDate,
+        }));
         setStartDateError("");
 
         // Validate range with current end date
@@ -276,9 +301,13 @@ const FilterScreen: React.FC<FilterScreenProps> = ({
     if (text.length === 10) {
       if (validateDateFormat(text)) {
         // Parse date parts to avoid timezone issues
-        const [year, month, day] = text.split('-').map(Number);
+        const [year, month, day] = text.split("-").map(Number);
         const newDate = new Date(year, month - 1, day);
         setEndDate(newDate);
+        setCalendarSelection((prev) => ({
+          ...prev,
+          endDate: newDate,
+        }));
 
         const normalizedStart = new Date(
           startDate.getFullYear(),
@@ -306,6 +335,39 @@ const FilterScreen: React.FC<FilterScreenProps> = ({
   const handleApply = () => {
     onApply(startDate, endDate, selectedPeriod);
     onClose();
+  };
+
+  const handleCalendarChange = ({
+    startDate: start,
+    endDate: end,
+  }: DateRangeValue) => {
+    setCalendarSelection({
+      startDate: start,
+      endDate: end,
+    });
+
+    if (start) {
+      setStartDate(start);
+      setStartDateInput(formatDateForCalendar(start));
+      setStartDateError("");
+    }
+
+    if (end) {
+      const normalizedEnd = new Date(
+        end.getFullYear(),
+        end.getMonth(),
+        end.getDate()
+      );
+      setEndDate(normalizedEnd);
+      setEndDateInput(formatDateForCalendar(normalizedEnd));
+      setEndDateError("");
+    } else if (start) {
+      setEndDate(start);
+      setEndDateInput(formatDateForCalendar(start));
+      setEndDateError("");
+    }
+
+    setSelectedPeriod("Custom");
   };
 
   return (
@@ -412,130 +474,105 @@ const FilterScreen: React.FC<FilterScreenProps> = ({
                 </ScrollView>
               </View>
             )}
-          </View>
-
-          {/* Date Inputs */}
-          <View style={FilterScreenStyles.dateInputsContainer}>
-            <View style={FilterScreenStyles.dateInputWrapper}>
-              <Text
-                style={[
-                  FilterScreenStyles.inputLabel,
-                  { color: paint.textSecondary },
-                ]}
-              >
-                Starting
-              </Text>
-              <TextInput
-                style={[
-                  FilterScreenStyles.dateInput,
-                  {
-                    backgroundColor: paint.background,
-                    borderColor: startDateError ? paint.danger : paint.border,
-                    color: paint.text,
-                  },
-                ]}
-                value={startDateInput}
-                onChangeText={handleStartDateInputChange}
-                placeholder="YYYY-MM-DD"
-                placeholderTextColor={paint.textSecondary}
-                maxLength={10}
-              />
-              {startDateError ? (
+            {/* Date Inputs */}
+            <View style={FilterScreenStyles.dateInputsContainer}>
+              <View style={FilterScreenStyles.dateInputWrapper}>
                 <Text
                   style={[
-                    FilterScreenStyles.errorText,
-                    { color: paint.danger },
+                    FilterScreenStyles.inputLabel,
+                    { color: paint.textSecondary },
                   ]}
                 >
-                  {startDateError}
+                  Starting
                 </Text>
-              ) : null}
-            </View>
+                <TextInput
+                  style={[
+                    FilterScreenStyles.dateInput,
+                    {
+                      backgroundColor: paint.background,
+                      borderColor: startDateError ? paint.danger : paint.border,
+                      color: paint.text,
+                    },
+                  ]}
+                  value={startDateInput}
+                  onChangeText={handleStartDateInputChange}
+                  placeholder="YYYY-MM-DD"
+                  placeholderTextColor={paint.textSecondary}
+                  maxLength={10}
+                />
+                {startDateError ? (
+                  <Text
+                    style={[
+                      FilterScreenStyles.errorText,
+                      { color: paint.danger },
+                    ]}
+                  >
+                    {startDateError}
+                  </Text>
+                ) : null}
+              </View>
 
-            <View style={FilterScreenStyles.dateInputWrapper}>
-              <Text
-                style={[
-                  FilterScreenStyles.inputLabel,
-                  { color: paint.textSecondary },
-                ]}
-              >
-                Ending
-              </Text>
-              <TextInput
-                style={[
-                  FilterScreenStyles.dateInput,
-                  {
-                    backgroundColor: paint.background,
-                    borderColor: endDateError ? paint.danger : paint.border,
-                    color: paint.text,
-                  },
-                ]}
-                value={endDateInput}
-                onChangeText={handleEndDateInputChange}
-                placeholder="YYYY-MM-DD"
-                placeholderTextColor={paint.textSecondary}
-                maxLength={10}
-              />
-              {endDateError ? (
+              <View style={FilterScreenStyles.dateInputWrapper}>
                 <Text
                   style={[
-                    FilterScreenStyles.errorText,
-                    { color: paint.danger },
+                    FilterScreenStyles.inputLabel,
+                    { color: paint.textSecondary },
                   ]}
                 >
-                  {endDateError}
+                  Ending
                 </Text>
-              ) : null}
+                <TextInput
+                  style={[
+                    FilterScreenStyles.dateInput,
+                    {
+                      backgroundColor: paint.background,
+                      borderColor: endDateError ? paint.danger : paint.border,
+                      color: paint.text,
+                    },
+                  ]}
+                  value={endDateInput}
+                  onChangeText={handleEndDateInputChange}
+                  placeholder="YYYY-MM-DD"
+                  placeholderTextColor={paint.textSecondary}
+                  maxLength={10}
+                />
+                {endDateError ? (
+                  <Text
+                    style={[
+                      FilterScreenStyles.errorText,
+                      { color: paint.danger },
+                    ]}
+                  >
+                    {endDateError}
+                  </Text>
+                ) : null}
+              </View>
             </View>
           </View>
 
           {/* Calendar View */}
           <View style={FilterScreenStyles.calendarSection}>
-            <Text
+            {/* <Text
               style={[
                 FilterScreenStyles.calendarHint,
                 { color: paint.textSecondary },
               ]}
             >
               {`Selected range: ${formatDateForDisplay(startDate)} — ${formatDateForDisplay(endDate)}`}
-            </Text>
-            <Calendar
-              locale="en-US"
-              mode="range"
-              startWeekOnMonday={false}
-              startDate={startDate}
-              endDate={endDate}
-              onChange={({ startDate: start, endDate: end }) => {
-                if (start) {
-                  setStartDate(start);
-                  setStartDateInput(formatDateForCalendar(start));
-                  setStartDateError("");
-                }
-
-                if (end) {
-                  const normalizedEnd = new Date(
-                    end.getFullYear(),
-                    end.getMonth(),
-                    end.getDate()
-                  );
-                  setEndDate(normalizedEnd);
-                  setEndDateInput(formatDateForCalendar(normalizedEnd));
-                  setEndDateError("");
-                } else if (start) {
-                  setEndDate(start);
-                  setEndDateInput(formatDateForCalendar(start));
-                  setEndDateError("");
-                }
-
-                setSelectedPeriod("Custom");
-              }}
-              validRange={{
-                startDate: new Date(2020, 0, 1),
-                endDate: new Date(new Date().getFullYear() + 5, 11, 31),
-              }}
-              startYear={2020}
-              endYear={new Date().getFullYear() + 5}
-            />
+            </Text> */}
+            <View style={FilterScreenStyles.calendarWrapper}>
+              <InlineRangeCalendar
+                locale="en-US"
+                startDate={calendarSelection.startDate}
+                endDate={calendarSelection.endDate}
+                onChange={handleCalendarChange}
+                startWeekOnMonday={false}
+                validRange={{
+                  startDate: new Date(2020, 0, 1),
+                  endDate: new Date(new Date().getFullYear() + 5, 11, 31),
+                }}
+              />
+            </View>
           </View>
         </ScrollView>
 
@@ -561,7 +598,5 @@ const FilterScreen: React.FC<FilterScreenProps> = ({
       </SafeAreaView>
     </Modal>
   );
-}
-;
-
+};
 export default FilterScreen;

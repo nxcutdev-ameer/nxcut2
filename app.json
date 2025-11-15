@@ -2,7 +2,7 @@
   "expo": {
     "name": "Nxcut",
     "slug": "nxcut",
-    "version": "1.0.6",
+    "version": "1.0.7",
     "orientation": "portrait",
     "icon": "./assets/nxcutLogo.png",
     "userInterfaceStyle": "light",
@@ -14,7 +14,7 @@
     },
     "ios": {
       "supportsTablet": true,
-      "buildNumber": "7",
+      "buildNumber": "8",
       "bundleIdentifier": "com.qdealsllc.nxcut",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
@@ -26,7 +26,7 @@
       }
     },
     "android": {
-      "versionCode": 7,
+      "versionCode": 8,
       "edgeToEdgeEnabled": true,
       "package": "com.qdealsllc.nxcut",
       "splash": {

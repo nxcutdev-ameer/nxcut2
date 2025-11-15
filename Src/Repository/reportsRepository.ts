@@ -28,6 +28,7 @@ export interface SalesByLocationRow {
   card_amount: number;
   cash_amount: number;
   online_amount: number;
+  payment_method_count?: number;
   other_amount: number;
 }
 
@@ -126,7 +127,9 @@ export const reportsRepository = {
         throw new Error("start_date is required");
       }
 
-      const parsed = new Date(value.includes("T") ? value : `${value}T00:00:00`);
+      const parsed = new Date(
+        value.includes("T") ? value : `${value}T00:00:00`
+      );
       if (isNaN(parsed.getTime())) {
         throw new Error(`Invalid start_date provided: ${value}`);
       }
@@ -134,46 +137,38 @@ export const reportsRepository = {
       return parsed.toISOString();
     };
 
-    const normalizeEndDate = (value?: string) => {
-      const now = new Date();
-
-      if (!value) {
-        return now.toISOString();
+    const normalizeEndDate = (value?: string, startFallback?: string) => {
+      const source = value ?? startFallback;
+      if (!source) {
+        throw new Error("end_date requires a value when start_date is missing");
       }
 
-      const parsed = new Date(value.includes("T") ? value : `${value}T00:00:00`);
+      const parsed = new Date(
+        source.includes("T") ? source : `${source}T00:00:00`
+      );
+
       if (isNaN(parsed.getTime())) {
-        return now.toISOString();
+        throw new Error(`Invalid end_date provided: ${source}`);
       }
 
-      if (
-        parsed.getFullYear() === now.getFullYear() &&
-        parsed.getMonth() === now.getMonth() &&
-        parsed.getDate() === now.getDate()
-      ) {
-        return now.toISOString();
-      }
-
-      parsed.setHours(23, 59, 59, 999);
+      parsed.setHours(0, 0, 0, 0);
       return parsed.toISOString();
     };
 
     const normalizedStart = normalizeStartDate(start_date);
-    const normalizedEnd = normalizeEndDate(end_date);
+    const normalizedEnd = normalizeEndDate(end_date, start_date);
+
+    const normalizedLocationIds =
+      location_ids && location_ids.length > 0 ? [...location_ids].sort() : null;
 
     const rpcPayload: Record<string, any> = {
-      p_start_date: normalizedStart,
-      p_end_date: normalizedEnd,
+      p_start: normalizedStart,
+      p_end: normalizedEnd,
+      p_location_ids: normalizedLocationIds,
     };
-
-    if (location_ids && location_ids.length > 0) {
-      rpcPayload.p_locations = location_ids;
-    } else {
-      rpcPayload.p_locations = null;
-    }
     try {
       const { data, error } = await supabase.rpc(
-        "get_location_sales_totals",
+        "get_total_sales_per_location",
         rpcPayload
       );
 
@@ -186,6 +181,14 @@ export const reportsRepository = {
         const card = Number(row.card_amount) || 0;
         const cash = Number(row.cash_amount) || 0;
         const online = Number(row.online_amount) || 0;
+        const paymentMethodCountRaw =
+          row.payment_method_count !== undefined
+            ? Number(row.payment_method_count)
+            : undefined;
+        const paymentMethodCount =
+          paymentMethodCountRaw !== undefined && !Number.isNaN(paymentMethodCountRaw)
+            ? paymentMethodCountRaw
+            : Number(row.transaction_count) || 0;
         const rpcOther =
           row.other_amount !== undefined && row.other_amount !== null
             ? Number(row.other_amount)
@@ -204,6 +207,7 @@ export const reportsRepository = {
           card_amount: card,
           cash_amount: cash,
           online_amount: online,
+          payment_method_count: paymentMethodCount,
           other_amount: derivedOther,
         } as SalesByLocationRow;
       });

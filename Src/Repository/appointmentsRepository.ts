@@ -255,9 +255,6 @@ export const appointmentsRepository = {
 
           if (data && data.length > 0) {
             allData = allData.concat(data);
-            console.log(
-              `[getAppointmentsActivity] Fetched ${data.length} records, total: ${allData.length}`
-            );
           }
 
           // Check if we've reached the end
@@ -277,9 +274,7 @@ export const appointmentsRepository = {
       };
 
       const data = await fetchAllAppointments();
-      console.log(
-        `[getAppointmentsActivity] Total records fetched: ${data.length}`
-      );
+      // Data aggregated silently to avoid excessive logging during dashboard mount
 
       // Sort services in each appointment by start_time descending
       const sortedData = data?.map((appointment: any) => ({

@@ -49,7 +49,7 @@ const SplashScreen: FC<SplashScreenProps> = ({ navigation }) => {
 
     if (elapsedTime < minimumTime) {
       const remainingTime = minimumTime - elapsedTime;
-      await new Promise(resolve => setTimeout(resolve, remainingTime));
+      await new Promise((resolve) => setTimeout(resolve, remainingTime));
     }
 
     callback();
@@ -185,7 +185,7 @@ const SplashScreen: FC<SplashScreenProps> = ({ navigation }) => {
         source={require("../../Assets/Images/nxcut.png")}
       />
 
-     {/*{isHydrating && (
+      {/*{isHydrating && (
         <View style={splashScreenStyles.loadingContainer}>
           <ActivityIndicator
             size="large"

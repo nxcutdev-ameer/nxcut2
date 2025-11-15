@@ -2,7 +2,7 @@ import { View, Text, TouchableOpacity, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { PaymentSummaryScreenStyles } from "./PaymentSummaryScreenStyles";
 import usePaymentSummaryScreenVM from "./PaymentSummaryScreenVM";
-import { SelectPeriodModal } from "./SelectPeriodModal";
+import SelectPeriodModal from "../../../Components/SelectPeriodModal";
 import PaymentSummaryTable from "../../../Components/PaymentSummaryTable";
 import ExportBottomSheet from "../../../Components/ExportBottomSheet";
 import {
@@ -106,12 +106,11 @@ const PaymentSummaryScreen = () => {
         <SelectPeriodModal
           visible={showPeriodFilter}
           onClose={() => setShowPeriodFilter(false)}
-          updateVisible={setShowPeriodFilter}
           onDateRangeSelect={(fromDate, toDate) => {
             updateDateRange(fromDate, toDate);
           }}
-          currentStartDate={startDate}
-          currentEndDate={endDate}
+          initialFromDate={startDate ? startDate.toISOString() : undefined}
+          initialToDate={endDate ? endDate.toISOString() : undefined}
         />
       )}
 

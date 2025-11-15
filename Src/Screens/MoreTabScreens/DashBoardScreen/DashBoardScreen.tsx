@@ -67,6 +67,7 @@ const DashBoardScreen = () => {
     formatCustomDate,
     topServices,
     totalSalesAmount,
+    totalAppointmentsCount,
     staffPerformance,
     // Filter states and handlers
     lineGraphFilter,
@@ -100,7 +101,7 @@ const DashBoardScreen = () => {
     .map((location, index) => ({
       value: location.total_sales_amount,
       color: chartColors[index % chartColors.length],
-      text: `${location.transaction_count}`,
+      text: `${location.payment_method_count ?? location.transaction_count}`,
       textPosition: "center" as const,
       textColor: colors.colors.white,
       textSize: fontEq(10),
@@ -122,7 +123,7 @@ const DashBoardScreen = () => {
     0
   );
 
-  const showPieChartSkeleton = loadingStates.pieChart || salesByLocationLoading;
+  const showPieChartSkeleton = salesByLocationLoading;
 
   useEffect(() => {
     if (salesByLocationLoading) {
@@ -137,8 +138,7 @@ const DashBoardScreen = () => {
     }
   }, [salesByLocationLoading, pieChartFetchActive]);
 
-  const shouldShowPieChartSkeleton =
-    !pieChartLoaded || showPieChartSkeleton;
+  const shouldShowPieChartSkeleton = showPieChartSkeleton && !pieChartLoaded;
 
   // Filter handlers
   const handleFilterApply = (start: Date, end: Date, period: string) => {
@@ -195,7 +195,6 @@ const DashBoardScreen = () => {
       8,
       2025
     );
-
   };
   return (
     <View style={DashBoardScreenStyles.mainContainer}>
@@ -251,7 +250,7 @@ const DashBoardScreen = () => {
           <Text style={DashBoardScreenStyles.barGraphSubTitle}>
             Appointments{" "}
             <Text style={{ fontWeight: "bold", color: colors.colors.text }}>
-              {appointmentsWithSalesData.length}
+              {totalAppointmentsCount}
             </Text>
           </Text>
           <Text style={DashBoardScreenStyles.barGraphSubTitle}>
@@ -366,9 +365,14 @@ const DashBoardScreen = () => {
               </View>
             </View>
           ) : (
-            <Text style={DashBoardScreenStyles.lineGraphTitle}>
-              No sales distribution data for the selected range.
-            </Text>
+            <View style={DashBoardScreenStyles.pieChartEmptyContainer}>
+              <Text style={DashBoardScreenStyles.pieChartEmptyTitle}>
+                No sales distribution data found
+              </Text>
+              <Text style={DashBoardScreenStyles.pieChartEmptySubtitle}>
+                Try choosing a different date range.
+              </Text>
+            </View>
           )}
 
           <View style={DashBoardScreenStyles.lineGraphContainer}>

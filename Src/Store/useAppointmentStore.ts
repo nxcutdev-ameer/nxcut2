@@ -152,7 +152,7 @@ export const useAppointmentStore = create<AppointmentStore>((set, get) => ({
         set({ calanderAppointmentsData: responce});
       }
     } catch (err) {
-      console.log("[STORE-FETCH-CALANDER]", err);
+      console.error("[STORE-FETCH-CALANDER]", err);
     }
   },
   fetchApppointmentsActivityData: async (filter: appointmentFilter, options?: FetchOptions) => {
@@ -195,7 +195,7 @@ export const useAppointmentStore = create<AppointmentStore>((set, get) => ({
         }));
       }
     } catch (err) {
-      console.log("[STORE-FETCH-APPOINTMENTS-Activity]", err);
+      console.error("[STORE-FETCH-APPOINTMENTS-Activity]", err);
       if (cacheConfig.enabled) {
         const fallback = appointmentsActivityCache[cacheKey];
         if (fallback) {
@@ -224,14 +224,11 @@ export const useAppointmentStore = create<AppointmentStore>((set, get) => ({
     }
 
     try {
-      let responce = await appointmentsRepository.fetchAppointmentsWithSaleData(
-        {
-          startDate: filter.startDate,
-          endDate: filter.endDate,
-        }
-      );
+      let responce = await appointmentsRepository.fetchAppointmentsWithSaleData({
+        startDate: filter.startDate,
+        endDate: filter.endDate,
+      });
 
-      console.log("[STORE-FETCH-APPOINTMENTS-SALE]", responce.length);
       if (responce) {
         set((state) => ({
           appointmentsWithSalesData: responce,
@@ -248,7 +245,7 @@ export const useAppointmentStore = create<AppointmentStore>((set, get) => ({
         }));
       }
     } catch (err) {
-      console.log("[STORE-FETCH-SALE-SALE]", err);
+      console.error("[STORE-FETCH-SALE-SALE]", err);
       if (cacheConfig.enabled) {
         const fallback = appointmentsWithSalesCache[cacheKey];
         if (fallback) {
@@ -259,14 +256,7 @@ export const useAppointmentStore = create<AppointmentStore>((set, get) => ({
   },
   fetchComission: async (month: string | number, year: string | number) => {
     try {
-      let responce = await appointmentsRepository.getCommissionCalculations(
-        month,
-        year
-      );
-
-      if (responce) {
-        console.log("[STORE]in funtion screen location", responce);
-      }
+      await appointmentsRepository.fetchCommissionCalculations(month as number, year as number);
     } catch (err) {}
   },
 
@@ -299,7 +289,6 @@ export const useAppointmentStore = create<AppointmentStore>((set, get) => ({
         startDate,
         endDate,
       });
-      console.log("[store-bar-graph]", response);
       if (response) {
         set((state) => ({
           barGraphData: response,
@@ -424,14 +413,6 @@ export const useAppointmentStore = create<AppointmentStore>((set, get) => ({
         }
       }
 
-      console.log("=== [STORE] Staff Performance Date Calculation ===");
-      console.log("Input filter:", filter);
-      console.log("Selected Month/Year:", selectedMonth + 1, "/", selectedYear); // +1 because month is 0-based
-      console.log("Current month range:", currentStartStr, "to", currentEndStr);
-      console.log("Previous month range:", prevStartStr, "to", prevEndStr);
-      console.log("Previous month details:", prevMonth + 1, "/", prevYear);
-      console.log("================================================");
-
       // Fetch data directly from Supabase RPC for both months
       const [currentMonthData, previousMonthData] = await Promise.all([
         paymentRepository.getTeamMemberMonthlySales({
@@ -445,16 +426,6 @@ export const useAppointmentStore = create<AppointmentStore>((set, get) => ({
           p_team_member_name: filter.staffNameFilter,
         }),
       ]);
-
-      console.log(
-        "[store-staff-performance] Current month fetched (RPC):",
-        currentMonthData.length
-      );
-      console.log(
-        "[store-staff-performance] Previous month fetched (RPC):",
-        previousMonthData.length
-      );
-
       const data = {
         currentMonth: Array.isArray(currentMonthData) ? currentMonthData : [],
         previousMonth: Array.isArray(previousMonthData) ? previousMonthData : [],

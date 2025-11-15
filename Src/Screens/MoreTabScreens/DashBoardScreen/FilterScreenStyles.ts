@@ -98,9 +98,9 @@ export const FilterScreenStyles = StyleSheet.create({
   dateInputsContainer: {
     flexDirection: "row",
     paddingHorizontal: getWidthEquivalent(20),
-    paddingTop: getHeightEquivalent(8),
+    paddingTop: getHeightEquivalent(16),
     gap: getWidthEquivalent(12),
-    marginBottom: getHeightEquivalent(16),
+    //marginBottom: getHeightEquivalent(6),
   },
   dateInputWrapper: {
     flex: 1,
@@ -128,6 +128,57 @@ export const FilterScreenStyles = StyleSheet.create({
     paddingHorizontal: getWidthEquivalent(20),
     paddingTop: getHeightEquivalent(16),
     marginBottom: getHeightEquivalent(16),
+  },
+  datePickerButton: {
+    borderWidth: 1,
+    borderRadius: 16,
+    paddingVertical: getHeightEquivalent(18),
+    paddingHorizontal: getWidthEquivalent(20),
+  },
+  datePickerButtonRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  datePreviewColumn: {
+    flex: 1,
+    alignItems: "flex-start",
+  },
+  datePreviewLabel: {
+    fontSize: fontEq(13),
+    fontWeight: "500",
+    marginBottom: getHeightEquivalent(6),
+  },
+  datePreviewValue: {
+    fontSize: fontEq(16),
+    fontWeight: "600",
+  },
+  datePreviewSeparator: {
+    width: 1,
+    height: getHeightEquivalent(40),
+    backgroundColor: paint.border,
+    marginHorizontal: getWidthEquivalent(18),
+  },
+  calendarSubHint: {
+    fontSize: fontEq(12),
+    textAlign: "center",
+    marginTop: getHeightEquivalent(12),
+    fontStyle: "italic",
+  },
+  calendarWrapper: {
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: paint.border,
+    overflow: "hidden",
+    backgroundColor: paint.white,
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.08,
+    shadowRadius: 3,
   },
   calendarLabel: {
     fontSize: fontEq(16),

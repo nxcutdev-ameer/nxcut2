@@ -217,11 +217,9 @@ export const paymentRepository = {
     console.log("📍 Using locations:", locations);
 
     // build start and end of day
-    const startOfDay = new Date(date);
-    startOfDay.setHours(0, 0, 0, 0);
-
-    const endOfDay = new Date(date);
-    endOfDay.setHours(23, 59, 59, 999);
+    const [year, month, day] = date.split("-").map(Number);
+    const startOfDay = new Date(year, month - 1, day, 0, 0, 0, 0);
+    const endOfDay = new Date(year, month - 1, day, 23, 59, 59, 999);
 
     let query = supabase
       .from("sale_payment_methods")
@@ -300,11 +298,9 @@ export const paymentRepository = {
     console.log("📍 Using locations for sale items:", locations);
 
     // build start and end of day
-    const startOfDay = new Date(date);
-    startOfDay.setHours(0, 0, 0, 0);
-
-    const endOfDay = new Date(date);
-    endOfDay.setHours(23, 59, 59, 999);
+    const [year, month, day] = date.split("-").map(Number);
+    const startOfDay = new Date(year, month - 1, day, 0, 0, 0, 0);
+    const endOfDay = new Date(year, month - 1, day, 23, 59, 59, 999);
 
     let query = supabase
       .from("sale_items") // 👈 adjust table name if needed

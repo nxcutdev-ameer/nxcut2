@@ -11,7 +11,7 @@ import { LineChart } from "react-native-gifted-charts";
 import PerformanceDashboardScreenStyles from "../PerformanceDashboardScreen/PerformanceDashboardScreenStyles";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { colors } from "../../../Constants/colors";
-import { SelectPeriodModal } from "./SelectPeriodModal";
+import SelectPeriodModal from "../../../Components/SelectPeriodModal";
 import {
   fontEq,
   formatCurrency,
@@ -46,24 +46,6 @@ const PerfromanceDashboardScreen = () => {
     lineGraphData,
   } = usePerformanceDashboardScreenVM();
 
-  if (showMonthFilter) {
-    return (
-      <SelectPeriodModal
-        onClose={() => setShowMonthFilter(false)}
-        visible={showMonthFilter}
-        updateVisible={setShowMonthFilter}
-        onApply={(fromDate: string, toDate: string) => {
-          // Convert ISO dates to YYYY-MM-DD format for the API
-          const startDate = new Date(fromDate).toISOString().split("T")[0];
-          const endDate = new Date(toDate).toISOString().split("T")[0];
-          updateDateFilter({
-            start_date: startDate,
-            end_date: endDate,
-          });
-        }}
-      />
-    );
-  }
   return (
     <SafeAreaView
       edges={["left", "right", "top"]}
@@ -711,7 +693,25 @@ const PerfromanceDashboardScreen = () => {
         </View>
       </ScrollView>
 
-      {/* Filter Panel Modal */}
+      <SelectPeriodModal
+        visible={showMonthFilter}
+        onClose={() => setShowMonthFilter(false)}
+        onApply={({ fromDate, toDate }) => {
+          const toLocalISODate = (isoString: string) => {
+            const date = new Date(isoString);
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, "0");
+            const day = String(date.getDate()).padStart(2, "0");
+            return `${year}-${month}-${day}`;
+          };
+
+          updateDateFilter({
+            start_date: toLocalISODate(fromDate),
+            end_date: toLocalISODate(toDate),
+          });
+          setShowMonthFilter(false);
+        }}
+      />
       <FilterPanelModal
         visible={showFilterPanel}
         onClose={closeFilterPanel}

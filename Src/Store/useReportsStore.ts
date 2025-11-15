@@ -51,6 +51,9 @@ interface ReportStore {
     enabled: boolean;
     salesByLocationTTL: number;
   };
+  salesByLocationPrevious: SalesByLocationRow[] | null;
+  salesByLocationLastGood: SalesByLocationRow[];
+  pendingSalesByLocationRequest: symbol | null;
 
   fetchPayments: () => Promise<void>;
   setFilter: (
@@ -68,6 +71,7 @@ interface ReportStore {
   setSalesCacheEnabled: (enabled: boolean) => void;
   setSalesCacheTTL: (ttlMs: number) => void;
   clearSalesByLocationCache: () => void;
+  restoreSalesByLocationFallback: () => void;
 }
 
 export const useReportStore = create<ReportStore>((set, get) => ({
@@ -128,6 +132,9 @@ export const useReportStore = create<ReportStore>((set, get) => ({
     enabled: true,
     salesByLocationTTL: 2 * 60 * 1000,
   },
+  salesByLocationPrevious: null,
+  salesByLocationLastGood: [],
+  pendingSalesByLocationRequest: null,
   setSalesCacheEnabled: (enabled: boolean) =>
     set((state) => ({
       cacheConfig: {
@@ -143,6 +150,14 @@ export const useReportStore = create<ReportStore>((set, get) => ({
       },
     })),
   clearSalesByLocationCache: () => set({ salesByLocationCache: {} }),
+  restoreSalesByLocationFallback: () =>
+    set((state) => ({
+      salesByLocationSummary:
+        state.salesByLocationLastGood.length > 0
+          ? state.salesByLocationLastGood.slice()
+          : state.salesByLocationSummary,
+      salesByLocationError: null,
+    })),
 
   fetchPayments: async () => {
     const { paymentTransactionFilter } = get();
@@ -235,6 +250,18 @@ export const useReportStore = create<ReportStore>((set, get) => ({
       locations: normalizedLocationIds,
     });
 
+    const requestToken = Symbol("salesByLocationRequest");
+
+    set((state) => ({
+      salesByLocationLoading: true,
+      salesByLocationError: null,
+      pendingSalesByLocationRequest: requestToken,
+      salesByLocationPrevious:
+        state.salesByLocationSummary.length > 0
+          ? state.salesByLocationSummary.slice()
+          : state.salesByLocationPrevious,
+    }));
+
     const { cacheConfig, salesByLocationCache } = get();
 
     if (cacheConfig.enabled) {
@@ -242,11 +269,16 @@ export const useReportStore = create<ReportStore>((set, get) => ({
       const isValid =
         cached && Date.now() - cached.fetchedAt <= cacheConfig.salesByLocationTTL;
       if (isValid) {
-        set({
+        set((state) => ({
           salesByLocationSummary: cached.data,
           salesByLocationLoading: false,
           salesByLocationError: null,
-        });
+          pendingSalesByLocationRequest:
+            state.pendingSalesByLocationRequest === requestToken
+              ? null
+              : state.pendingSalesByLocationRequest,
+          salesByLocationLastGood: cached.data.slice(),
+        }));
         return;
       }
     }
@@ -261,16 +293,34 @@ export const useReportStore = create<ReportStore>((set, get) => ({
       const response = await reportsRepository.getSalesByLocationSummary({
         start_date: startDate,
         end_date: endDateWithTime,
-        location_ids: normalizedLocationIds,
+       // location_ids: normalizedLocationIds,
       });
 
       const normalizedResponse = Array.isArray(response) ? response : [];
+      const containsCorruptedValues = normalizedResponse.some((row: any) => {
+        if (!row) {
+          return true;
+        }
+        const numericFields = [
+          row.total_sales_amount,
+          row.transaction_count,
+          row.avg_transaction_value,
+          row.card_amount,
+          row.cash_amount,
+          row.online_amount,
+          row.other_amount,
+        ];
+        return numericFields.some(
+          (value) => typeof value !== "number" || Number.isNaN(value)
+        );
+      });
+
       console.log(
         "[reports-store] Sales by location params:",
         {
           startDate,
           endDate: endDateWithTime,
-          locationIds: normalizedLocationIds,
+       //   locationIds: normalizedLocationIds,
         }
       );
       console.log(
@@ -284,40 +334,79 @@ export const useReportStore = create<ReportStore>((set, get) => ({
         );
       }
 
-      set((state) => ({
-        salesByLocationSummary: normalizedResponse,
-        salesByLocationLoading: false,
-        salesByLocationError: null,
-        salesByLocationCache: cacheConfig.enabled
-          ? {
-              ...state.salesByLocationCache,
-              [cacheKey]: {
-                data: normalizedResponse,
-                fetchedAt: Date.now(),
-              },
-            }
-          : state.salesByLocationCache,
-      }));
+      if (containsCorruptedValues) {
+        console.warn(
+          "[reports-store] Corrupted sales by location data detected, restoring previous snapshot"
+        );
+        set((state) => {
+          if (state.pendingSalesByLocationRequest !== requestToken) {
+            return {};
+          }
+          const fallbackData =
+            state.salesByLocationPrevious ?? state.salesByLocationLastGood;
+
+          return {
+            salesByLocationSummary:
+              fallbackData && fallbackData.length > 0
+                ? fallbackData.slice()
+                : [],
+            salesByLocationLoading: false,
+            salesByLocationError:
+              "Received invalid sales distribution data. Restored previous values.",
+            pendingSalesByLocationRequest: null,
+          };
+        });
+        return;
+      }
+
+      set((state) => {
+        if (state.pendingSalesByLocationRequest !== requestToken) {
+          return {};
+        }
+
+        return {
+          salesByLocationSummary: normalizedResponse,
+          salesByLocationLoading: false,
+          salesByLocationError: null,
+          salesByLocationCache: cacheConfig.enabled
+            ? {
+                ...state.salesByLocationCache,
+                [cacheKey]: {
+                  data: normalizedResponse,
+                  fetchedAt: Date.now(),
+                },
+              }
+            : state.salesByLocationCache,
+          salesByLocationLastGood: normalizedResponse.slice(),
+          salesByLocationPrevious: null,
+          pendingSalesByLocationRequest: null,
+        };
+      });
     } catch (err: any) {
       console.error("[reports-store] Error fetching sales by location summary:", err);
-      if (cacheConfig.enabled) {
-        const fallback = salesByLocationCache[cacheKey];
-        if (fallback) {
-          console.warn(
-            "[reports-store] Using cached sales by location data due to fetch error"
-          );
-          set({
-            salesByLocationSummary: fallback.data,
-            salesByLocationLoading: false,
-            salesByLocationError: null,
-          });
-          return;
+      set((state) => {
+        const isLatest = state.pendingSalesByLocationRequest === requestToken;
+        const fallbackFromCache =
+          cacheConfig.enabled && salesByLocationCache[cacheKey]
+            ? salesByLocationCache[cacheKey].data.slice()
+            : null;
+        const fallbackData = fallbackFromCache
+          ? fallbackFromCache
+          : state.salesByLocationPrevious ?? state.salesByLocationLastGood;
+
+        if (!isLatest) {
+          return {};
         }
-      }
-      set({
-        salesByLocationSummary: [],
-        salesByLocationLoading: false,
-        salesByLocationError: err?.message ?? "Unknown error",
+
+        return {
+          salesByLocationSummary:
+            fallbackData && fallbackData.length > 0
+              ? fallbackData.slice()
+              : state.salesByLocationSummary,
+          salesByLocationLoading: false,
+          salesByLocationError: err?.message ?? "Unknown error",
+          pendingSalesByLocationRequest: null,
+        };
       });
     }
   },

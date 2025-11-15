@@ -1,4 +1,4 @@
-import React, { FC, ReactElement, useEffect, useState, useRef } from "react";
+import React, { FC, ReactElement, useEffect, useMemo, useRef, useState } from "react";
 import {
   View,
   Text,
@@ -29,7 +29,7 @@ import {
   X,
 } from "lucide-react-native";
 import { NavigationProp, useNavigation } from "@react-navigation/native";
-import { SelectPeriodModal } from "./SelectPeriodModal";
+import SelectPeriodModal from "../../../Components/SelectPeriodModal";
 import LottieView from "lottie-react-native";
 import { BottomSheetModal, BottomSheetBackdrop } from "@gorhom/bottom-sheet";
 import { paymentRepository } from "../../../Repository/paymentsRepository";
@@ -47,6 +47,7 @@ export const PaymentTransactionsScreen = () => {
     loading,
     fetchPayments,
     paymentTransactionFilter,
+    setFilter,
     resetPaymentFilter,
   } = useReportStore();
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
@@ -70,6 +71,43 @@ export const PaymentTransactionsScreen = () => {
   //   );
   // };
   // Format date
+  const formatDateRangeLabel = (from?: string, to?: string) => {
+    if (!from || !to) {
+      return "Select Period";
+    }
+
+    const start = new Date(from);
+    const end = new Date(to);
+
+    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
+      return "Select Period";
+    }
+
+    const dateFormatter: Intl.DateTimeFormatOptions = {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    };
+
+    const startText = start.toLocaleDateString("en-US", dateFormatter);
+    const endText = end.toLocaleDateString("en-US", dateFormatter);
+
+    if (startText === endText) {
+      return startText;
+    }
+
+    return `${startText} - ${endText}`;
+  };
+
+  const selectedPeriodLabel = useMemo(
+    () =>
+      formatDateRangeLabel(
+        paymentTransactionFilter?.fromDate,
+        paymentTransactionFilter?.toDate
+      ),
+    [paymentTransactionFilter?.fromDate, paymentTransactionFilter?.toDate]
+  );
+
   const formatDateTime = (dateString: string) => {
     if (!dateString) return "-";
 
@@ -491,18 +529,25 @@ export const PaymentTransactionsScreen = () => {
     </View>
   );
 
-  if (showMonthFilter) {
-    return (
-      <SelectPeriodModal
-        onClose={() => setShowMonthFilter(false)}
-        visible={showMonthFilter}
-        updateVisible={setShowMonthFilter}
-      />
-    );
-  }
-
   return (
     <SafeAreaView edges={["top", "left", "right"]} style={styles.container}>
+      {showMonthFilter && (
+        <SelectPeriodModal
+          visible={showMonthFilter}
+          onClose={() => setShowMonthFilter(false)}
+          onApply={(range) => {
+            setFilter(
+              {
+                fromDate: range.fromDate,
+                toDate: range.toDate,
+              },
+              true
+            );
+          }}
+          initialFromDate={paymentTransactionFilter.fromDate}
+          initialToDate={paymentTransactionFilter.toDate}
+        />
+      )}
       <View style={styles.headNav}>
         <TouchableOpacity
           onPress={() => navigation.goBack()}
@@ -532,16 +577,12 @@ export const PaymentTransactionsScreen = () => {
           Detailed view of all payment transactions.
         </Text>
         <View style={styles.headerActions}>
-          {/* <TouchableOpacity
-            style={[styles.button, { width: getWidthEquivalent(60) }]}
-          >
-            <SlidersVertical size={20} />
-          </TouchableOpacity> */}
           <TouchableOpacity
             onPress={() => setShowMonthFilter(true)}
-            style={styles.button}
+            style={styles.periodFilterButton}
           >
-            <Text style={styles.buttonText}>Month To Date</Text>
+            <SlidersVertical size={18} color={colors.text} />
+            <Text style={styles.periodFilterButtonText}>{selectedPeriodLabel}</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -808,20 +849,20 @@ const styles = StyleSheet.create({
     gap: 8,
     marginVertical: getHeightEquivalent(25),
   },
-  button: {
-    paddingHorizontal: getWidthEquivalent(12),
-    paddingVertical: 8,
-    borderRadius: 30,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.background,
-    height: getHeightEquivalent(45),
+  periodFilterButton: {
+    flexDirection: "row",
     alignItems: "center",
+    paddingHorizontal: getWidthEquivalent(16),
+    paddingVertical: getHeightEquivalent(12),
+    backgroundColor: colors.backgroundSecondary,
+    borderRadius: getWidthEquivalent(20),
     justifyContent: "center",
+    gap: getWidthEquivalent(8),
   },
-  buttonText: {
+  periodFilterButtonText: {
+    fontSize: fontEq(14),
+    fontWeight: "600",
     color: colors.text,
-    fontWeight: "500",
   },
   tableContainer: {
     flex: 1,

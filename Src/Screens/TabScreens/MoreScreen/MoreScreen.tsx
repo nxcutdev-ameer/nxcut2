@@ -102,12 +102,12 @@ const MoreScreen = () => {
         <View style={[MoreScreenStyles.walletCard, shadows.medium]}>
           <Text style={MoreScreenStyles.walletLabel}>Business wallet</Text>
           <Text style={MoreScreenStyles.walletAmount}>AED 0.00</Text>
-          <TouchableOpacity
+          {/* <TouchableOpacity
             onPress={() => navigation.navigate("WalletScreen")}
             style={MoreScreenStyles.walletButton}
           >
             <Text style={MoreScreenStyles.walletButtonText}>View wallet</Text>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
         </View>
 
         {/* Menu Grid */}
