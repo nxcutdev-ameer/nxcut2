@@ -243,6 +243,8 @@ PODS:
     - ExpoModulesCore
   - ExpoSplashScreen (31.0.10):
     - ExpoModulesCore
+  - ExpoSystemUI (6.0.8):
+    - ExpoModulesCore
   - EXStructuredHeaders (5.0.0)
   - EXUpdates (29.0.12):
     - EASClient
@@ -2394,6 +2396,7 @@ DEPENDENCIES:
   - ExpoPrint (from `../node_modules/expo-print/ios`)
   - ExpoSharing (from `../node_modules/expo-sharing/ios`)
   - ExpoSplashScreen (from `../node_modules/expo-splash-screen/ios`)
+  - ExpoSystemUI (from `../node_modules/expo-system-ui/ios`)
   - EXStructuredHeaders (from `../node_modules/expo-structured-headers/ios`)
   - EXUpdates (from `../node_modules/expo-updates/ios`)
   - EXUpdatesInterface (from `../node_modules/expo-updates-interface/ios`)
@@ -2523,6 +2526,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/expo-sharing/ios"
   ExpoSplashScreen:
     :path: "../node_modules/expo-splash-screen/ios"
+  ExpoSystemUI:
+    :path: "../node_modules/expo-system-ui/ios"
   EXStructuredHeaders:
     :path: "../node_modules/expo-structured-headers/ios"
   EXUpdates:
@@ -2711,6 +2716,7 @@ SPEC CHECKSUMS:
   ExpoPrint: ad836bb90da10793509651c0ea1f39e120db001e
   ExpoSharing: 6f52a070c3083c11717cf2236ae8fd6ac45bf028
   ExpoSplashScreen: 9d2ff8fa08f2c00336a83f93bebffed3a8312519
+  ExpoSystemUI: 9441d46a8efbf9224d1b2e6b18042452ffd0ed79
   EXStructuredHeaders: c951e77f2d936f88637421e9588c976da5827368
   EXUpdates: 8e58be5901c047420e21c4bf6adaadf7abe383ad
   EXUpdatesInterface: 1436757deb0d574b84bba063bd024c315e0ec08b
@@ -2797,6 +2803,6 @@ SPEC CHECKSUMS:
   RNWorklets: 28ee7370ca8da356fcc914e3e68b97e9752196d2
   Yoga: 5934998fbeaef7845dbf698f698518695ab4cd1a
 
-PODFILE CHECKSUM: 771f470df7a1b98fda6f7ff6b6aa3f929081b894
+PODFILE CHECKSUM: d12a9fedb6bdb3c91f7afa089d1987b991692bcd
 
 COCOAPODS: 1.16.2
