@@ -3,7 +3,10 @@
     "package": "com.qdealsllc.nxcut"
   },
   "ios": {
-    "bundleIdentifier": "com.qdealsllc.nxcut"
+    "bundleIdentifier": "com.qdealsllc.nxcut",
+    "infoPlist": {
+      "ITSAppUsesNonExemptEncryption": false
+    }
   },
   "extra": {
     "eas": {
