@@ -1,5 +1,6 @@
 import React from "react";
 import { Text, View, TouchableOpacity, ScrollView } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 import { colors, theme, shadows } from "../../../Constants/colors";
 
 import {
@@ -99,7 +100,12 @@ const MoreScreen = () => {
       </View>
       <ScrollView style={MoreScreenStyles.container}>
         {/* Wallet Card */}
-        <View style={[MoreScreenStyles.walletCard, shadows.medium]}>
+        <LinearGradient
+          colors={[colors.gradient.start, colors.gradient.middle, colors.gradient.end]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={[MoreScreenStyles.walletCard, shadows.medium]}
+        >
           <Text style={MoreScreenStyles.walletLabel}>Business wallet</Text>
           <Text style={MoreScreenStyles.walletAmount}>AED 0.00</Text>
           {/* <TouchableOpacity
@@ -108,7 +114,7 @@ const MoreScreen = () => {
           >
             <Text style={MoreScreenStyles.walletButtonText}>View wallet</Text>
           </TouchableOpacity> */}
-        </View>
+        </LinearGradient>
 
         {/* Menu Grid */}
         <View style={MoreScreenStyles.menuGrid}>

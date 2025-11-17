@@ -453,6 +453,38 @@ export const DashBoardScreenStyles = StyleSheet.create({
     marginTop: getHeightEquivalent(15),
     gap: getWidthEquivalent(12),
   },
+  pieChartLegendContainer: {
+    marginTop: getHeightEquivalent(16),
+    gap: getHeightEquivalent(12),
+  },
+  pieChartLegendGroup: {
+    width: "100%",
+    backgroundColor: paint.white,
+    borderRadius: getWidthEquivalent(12),
+    borderWidth: 1,
+    borderColor: paint.border,
+    paddingVertical: getHeightEquivalent(12),
+    paddingHorizontal: getWidthEquivalent(14),
+    gap: getHeightEquivalent(8),
+  },
+  pieChartLegendGroupHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  pieChartLegendGroupTitle: {
+    fontSize: fontEq(14),
+    fontWeight: "700",
+    color: paint.text,
+  },
+  pieChartLegendGroupTotal: {
+    fontSize: fontEq(14),
+    fontWeight: "600",
+    color: paint.primary,
+  },
+  pieChartLegendGroupBody: {
+    gap: getHeightEquivalent(8),
+  },
   legendItem: {
     flexDirection: "row",
     alignItems: "center",
@@ -464,6 +496,47 @@ export const DashBoardScreenStyles = StyleSheet.create({
     alignItems: "center",
     gap: getHeightEquivalent(4),
     minWidth: getWidthEquivalent(60),
+  },
+  pieChartLegendRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  pieChartLegendRowLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: getWidthEquivalent(8),
+  },
+  pieChartLegendColor: {
+    width: getWidthEquivalent(12),
+    height: getWidthEquivalent(12),
+    borderRadius: getWidthEquivalent(6),
+  },
+  pieChartLegendLabel: {
+    fontSize: fontEq(13),
+    fontWeight: "600",
+    color: paint.text,
+  },
+  pieChartLegendRowRight: {
+    alignItems: "flex-end",
+    gap: getHeightEquivalent(2),
+  },
+  pieChartLegendValue: {
+    fontSize: fontEq(13),
+    fontWeight: "600",
+    color: paint.text,
+  },
+  pieChartLegendPercent: {
+    fontSize: fontEq(11),
+    fontWeight: "500",
+    color: paint.textSecondary,
+  },
+  pieChartLegendEmpty: {
+    fontSize: fontEq(12),
+    fontWeight: "500",
+    color: paint.textSecondary,
+    textAlign: "center",
+    marginTop: getHeightEquivalent(10),
   },
   legendColor: {
     width: getWidthEquivalent(10),

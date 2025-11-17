@@ -12,7 +12,7 @@ import {
   DollarSign,
   X,
 } from "lucide-react-native";
-import { SelectPeriodModal } from "./SelectPeriodModal";
+import SelectPeriodModal from "../../../Components/SelectPeriodModal";
 import LottieView from "lottie-react-native";
 import useFinanceSummaryScreenVM from "./FinanceSummaryScreenVM";
 import { styles } from "./FinanceSummaryScreenStyles";
@@ -35,6 +35,7 @@ const FinanceSummaryScreen = () => {
     showPeriodPicker,
     setShowPeriodPicker,
     selectedPeriod,
+    dateFilter,
     updateDateFilter,
     handlePeriodSelection,
     handleExport,
@@ -56,10 +57,11 @@ const FinanceSummaryScreen = () => {
   if (showMonthFilter) {
     return (
       <SelectPeriodModal
-        onClose={() => setShowMonthFilter(false)}
         visible={showMonthFilter}
-        updateVisible={setShowMonthFilter}
+        onClose={() => setShowMonthFilter(false)}
         onApply={updateDateFilter}
+        initialFromDate={dateFilter.fromDate}
+        initialToDate={dateFilter.toDate}
       />
     );
   }
@@ -134,7 +136,7 @@ const FinanceSummaryScreen = () => {
         key: "discounts",
         label: "Discounts",
         isIndented: true,
-        textColor: "red" as const,
+        textColor: "blue" as const,
       },
       {
         key: "refunds",
@@ -195,7 +197,7 @@ const FinanceSummaryScreen = () => {
         key: "unpaidSales",
         label: "Unpaid sales in period",
         isIndented: true,
-        textColor: "red" as const,
+        textColor: "blue" as const,
       },
       {
         key: "cardPayments",
@@ -568,68 +570,13 @@ const FinanceSummaryScreen = () => {
                 label="Discounts"
                 amount={salesSection.discounts}
                 isIndented={true}
-                textColor="red"
+                textColor="blue"
               />
               <TableRow
                 label="Refunds / Returns"
                 amount={salesSection.refunds}
                 isIndented={true}
                 textColor="blue"
-              />
-              <TableRow
-                label="Net sales"
-                amount={salesSection.netSales}
-                isHighlighted={true}
-              />
-              <TableRow
-                label="Taxes"
-                amount={salesSection.taxes}
-                isIndented={true}
-                textColor="blue"
-              />
-              <TableRow
-                label="Total sales"
-                amount={salesSection.totalSales}
-                isHighlighted={true}
-              />
-              <TableRow
-                label="Gift card sales"
-                amount={salesSection.giftCardSales}
-                isIndented={true}
-                textColor="blue"
-              />
-              <TableRow
-                label="Service charges"
-                amount={salesSection.serviceCharges}
-                isIndented={true}
-                textColor="blue"
-              />
-              <TableRow
-                label="Tips"
-                amount={salesSection.tips}
-                isIndented={true}
-                textColor="blue"
-              />
-              <TableRow
-                label="Net other sales"
-                amount={salesSection.netOtherSales}
-                isHighlighted={true}
-              />
-              <TableRow
-                label="Tax on other sales"
-                amount={salesSection.taxOnOtherSales}
-                isIndented={true}
-                textColor="blue"
-              />
-              <TableRow
-                label="Total other sales"
-                amount={salesSection.totalOtherSales}
-                isHighlighted={true}
-              />
-              <TableRow
-                label="Total sales + other sales"
-                amount={salesSection.totalSalesPlusOther}
-                isHighlighted={true}
               />
               <TableRow
                 label="Sales paid in period"
@@ -641,7 +588,7 @@ const FinanceSummaryScreen = () => {
                 label="Unpaid sales in period"
                 amount={salesSection.unpaidSales}
                 isIndented={true}
-                textColor="red"
+                textColor="blue"
               />
               <TableRow
                 label="Card"

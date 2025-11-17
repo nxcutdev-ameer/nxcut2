@@ -5,8 +5,7 @@ import {
   ScrollView,
   RefreshControl,
 } from "react-native";
-import Modal from "react-native-modal";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { appointmentsRepository } from "../../../Repository/appointmentsRepository";
 import { DashBoardScreenStyles } from "./DashBoardScreenStyles";
 import {
@@ -36,7 +35,6 @@ import {
   TableSkeleton,
   PieChartSkeleton,
 } from "../../../Components/SkeletonLoader";
-import { FilterScreenStyles } from "./FilterScreenStyles";
 
 const DashBoardScreen = () => {
   // Date filter state - defined first so it can be passed to VM
@@ -92,35 +90,167 @@ const DashBoardScreen = () => {
     refetchAllDataWithDateRange,
   } = useDashBoardScreenVM({ startDate, endDate });
 
-  // Prepare pie chart data using aggregated summary
-  const chartColors = ["#6B46C1", "#3B82F6", "#10B981", "#F59E0B", "#EF4444"];
+  const defaultPaymentMethodColors = {
+    card: "#3B82F6",
+    cash: "#10B981",
+    online: "#F59E0B",
+    other: "#8B5CF6",
+  } as const;
 
-  const pieChartData = (salesByLocationSummary || [])
-    .sort((a, b) => b.total_sales_amount - a.total_sales_amount)
-    .slice(0, 5)
-    .map((location, index) => ({
-      value: location.total_sales_amount,
-      color: chartColors[index % chartColors.length],
-      text: `${location.payment_method_count ?? location.transaction_count}`,
-      textPosition: "center" as const,
-      textColor: colors.colors.white,
-      textSize: fontEq(10),
-      fontWeight: "bold" as const,
-      label: location.location_name || "Unknown",
-      amount: location.total_sales_amount,
-      textBackgroundRadius: 15,
-      textBackgroundColor: "rgba(0,0,0,0.3)",
-      textBackgroundPadding: 2,
-      cardAmount: location.card_amount,
-      cashAmount: location.cash_amount,
-      onlineAmount: location.online_amount,
-      otherAmount: location.other_amount,
-      average: location.avg_transaction_value,
-    }));
+  type PaymentMethodKey = keyof typeof defaultPaymentMethodColors;
 
-  const totalPieChartValue = pieChartData.reduce(
-    (sum: number, item) => sum + item.value,
-    0
+  const locationMethodPalettes: Record<
+    PaymentMethodKey,
+    string
+  >[] = [
+    {
+      card: "#6366F1",
+      cash: "#8B5CF6",
+      online: "#C084FC",
+      other: "#A855F7",
+    },
+    {
+      card: "#0EA5E9",
+      cash: "#38BDF8",
+      online: "#67E8F9",
+      other: "#0369A1",
+    },
+    {
+      card: "#22C55E",
+      cash: "#4ADE80",
+      online: "#86EFAC",
+      other: "#15803D",
+    },
+    {
+      card: "#F97316",
+      cash: "#FB923C",
+      online: "#FDBA74",
+      other: "#EA580C",
+    },
+    {
+      card: "#EC4899",
+      cash: "#F472B6",
+      online: "#FBCFE8",
+      other: "#BE185D",
+    },
+  ];
+
+  type PaymentSlice = {
+    value: number;
+    color: string;
+    text: string;
+    textPosition: "center";
+    textColor: string;
+    textSize: number;
+    fontWeight: "bold";
+    label: string;
+    amount: number;
+    textBackgroundRadius: number;
+    textBackgroundColor: string;
+    textBackgroundPadding: number;
+    locationLabel: string;
+    methodLabel: string;
+    locationTotal: number;
+  };
+
+  const formatAmountText = (amount: number) =>
+    amount >= 1000
+      ? `${(amount / 1000).toFixed(1).replace(/\.0$/, "")}k`
+      : `${Math.round(amount)}`;
+
+  const formatCurrency = (amount: number) =>
+    `AED ${Math.round(amount).toLocaleString("en-US", {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    })}`;
+
+  const pieChartData = useMemo<PaymentSlice[]>(() => {
+    if (!Array.isArray(salesByLocationSummary) || salesByLocationSummary.length === 0) {
+      return [];
+    }
+
+    const sortedLocations = [...salesByLocationSummary].sort(
+      (a, b) => (b.total_sales_amount || 0) - (a.total_sales_amount || 0)
+    );
+
+    return sortedLocations.slice(0, 5).flatMap((location, index) => {
+      const slices: PaymentSlice[] = [];
+      const locationLabel = location.location_name || "Unknown";
+      const locationTotal =
+        (location.card_amount || 0) +
+        (location.cash_amount || 0) +
+        (location.online_amount || 0) +
+        (location.other_amount || 0);
+
+      const palette =
+        locationMethodPalettes[index % locationMethodPalettes.length] ||
+        defaultPaymentMethodColors;
+
+      const addSlice = (
+        amount: number | undefined,
+        methodLabel: string,
+        colorKey: PaymentMethodKey
+      ) => {
+        const value = amount ?? 0;
+        if (value <= 0) {
+          return;
+        }
+
+        const color = palette[colorKey] ?? defaultPaymentMethodColors[colorKey];
+
+        slices.push({
+          value,
+          color,
+          text: formatAmountText(value),
+          textPosition: "center",
+          textColor: colors.colors.white,
+          textSize: fontEq(10),
+          fontWeight: "bold",
+          label: `${locationLabel} • ${methodLabel}`,
+          amount: value,
+          textBackgroundRadius: 15,
+          textBackgroundColor: "rgba(0,0,0,0.3)",
+          textBackgroundPadding: 2,
+          locationLabel,
+          methodLabel,
+          locationTotal,
+        });
+      };
+
+      addSlice(location.card_amount, "Card", "card");
+      addSlice(location.cash_amount, "Cash", "cash");
+      addSlice(location.online_amount, "Online", "online");
+      addSlice(location.other_amount, "Other", "other");
+
+      return slices;
+    });
+  }, [salesByLocationSummary]);
+
+  const pieChartLegendGroups = useMemo(
+    () =>
+      Object.entries(
+        pieChartData.reduce(
+          (acc, slice) => {
+            if (!acc[slice.locationLabel]) {
+              acc[slice.locationLabel] = {
+                total: 0,
+                slices: [] as PaymentSlice[],
+              };
+            }
+
+            acc[slice.locationLabel].total += slice.value;
+            acc[slice.locationLabel].slices.push(slice);
+            return acc;
+          },
+          {} as Record<string, { total: number; slices: PaymentSlice[] }>
+        )
+      ).sort(([, a], [, b]) => b.total - a.total),
+    [pieChartData]
+  );
+
+  const totalPieChartValue = useMemo(
+    () => pieChartData.reduce((sum: number, item) => sum + item.value, 0),
+    [pieChartData]
   );
 
   const showPieChartSkeleton = salesByLocationLoading;
@@ -333,35 +463,78 @@ const DashBoardScreen = () => {
                 />
               </View>
 
-              {/* Legend - Horizontal */}
-              <View style={DashBoardScreenStyles.pieChartLegendHorizontal}>
-                {pieChartData.map((item, index) => (
-                  <View
-                    key={index}
-                    style={DashBoardScreenStyles.legendItemHorizontal}
-                  >
+              {/* Legend - Location with Payment Breakdown */}
+              <View style={DashBoardScreenStyles.pieChartLegendContainer}>
+                {pieChartLegendGroups.length > 0 ? (
+                  pieChartLegendGroups.map(([locationLabel, group]) => (
                     <View
-                      style={[
-                        DashBoardScreenStyles.legendColor,
-                        { backgroundColor: item.color },
-                      ]}
-                    />
-                    <Text
-                      style={DashBoardScreenStyles.legendTextHorizontal}
-                      numberOfLines={1}
+                      key={locationLabel}
+                      style={DashBoardScreenStyles.pieChartLegendGroup}
                     >
-                      {item.label}
-                    </Text>
-                    <View style={{ alignItems: "flex-end" }}>
-                      <Text style={DashBoardScreenStyles.legendValueHorizontal}>
-                        {Math.round(item.amount).toLocaleString()} AED
-                      </Text>
-                      <Text style={DashBoardScreenStyles.legendSubValue}>
-                        Avg: {Math.round(item.average).toLocaleString()} AED
-                      </Text>
+                      <View
+                        style={DashBoardScreenStyles.pieChartLegendGroupHeader}
+                      >
+                        <Text
+                          style={DashBoardScreenStyles.pieChartLegendGroupTitle}
+                        >
+                          {locationLabel}
+                        </Text>
+                        <Text
+                          style={DashBoardScreenStyles.pieChartLegendGroupTotal}
+                        >
+                          {formatCurrency(group.total)}
+                        </Text>
+                      </View>
+                      <View style={DashBoardScreenStyles.pieChartLegendGroupBody}>
+                        {group.slices
+                          .slice()
+                          .sort((a, b) => b.value - a.value)
+                          .map((slice) => (
+                            <View
+                              key={`${locationLabel}-${slice.methodLabel}`}
+                              style={DashBoardScreenStyles.pieChartLegendRow}
+                            >
+                              <View
+                                style={DashBoardScreenStyles.pieChartLegendRowLeft}
+                              >
+                                <View
+                                  style={[
+                                    DashBoardScreenStyles.pieChartLegendColor,
+                                    { backgroundColor: slice.color },
+                                  ]}
+                                />
+                                <Text
+                                  style={DashBoardScreenStyles.pieChartLegendLabel}
+                                >
+                                  {slice.methodLabel}
+                                </Text>
+                              </View>
+                              <View
+                                style={DashBoardScreenStyles.pieChartLegendRowRight}
+                              >
+                                <Text
+                                  style={DashBoardScreenStyles.pieChartLegendValue}
+                                >
+                                  {formatCurrency(slice.amount)}
+                                </Text>
+                                <Text
+                                  style={DashBoardScreenStyles.pieChartLegendPercent}
+                                >
+                                  {group.total > 0
+                                    ? `${((slice.amount / group.total) * 100).toFixed(1)}%`
+                                    : "0%"}
+                                </Text>
+                              </View>
+                            </View>
+                          ))}
+                      </View>
                     </View>
-                  </View>
-                ))}
+                  ))
+                ) : (
+                  <Text style={DashBoardScreenStyles.pieChartLegendEmpty}>
+                    No payment data available
+                  </Text>
+                )}
               </View>
             </View>
           ) : (

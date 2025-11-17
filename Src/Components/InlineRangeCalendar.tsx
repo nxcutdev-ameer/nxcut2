@@ -228,14 +228,16 @@ export const InlineRangeCalendar: React.FC<InlineRangeCalendarProps> = ({
           const disabled = isDisabled(date, validRange);
           const isToday = isSameDay(date, today);
 
-          const backgroundColor = selectionStart || selectionEnd
-            ? paint.primary
+          const isRangeEdge = selectionStart || selectionEnd;
+
+          const backgroundColor = isRangeEdge
+            ? paint.primaryLight
             : inRange
-            ? `${paint.primary}33`
+            ? paint.gray[200]
             : "transparent";
 
-          const textColor = selectionStart || selectionEnd
-            ? paint.white
+          const textColor = isRangeEdge
+            ? paint.black ?? paint.text
             : !isCurrentMonth || disabled
             ? `${paint.textSecondary}80`
             : paint.text;
@@ -259,6 +261,12 @@ export const InlineRangeCalendar: React.FC<InlineRangeCalendarProps> = ({
                   selectionEnd && styles.rangeEnd,
                   inRange && styles.rangeBetween,
                   { backgroundColor },
+                  isRangeEdge
+                    ? {
+                        borderColor: paint.primary,
+                        borderWidth: 1,
+                      }
+                    : null,
                 ]}
               >
                 <Text

@@ -1,5 +1,4 @@
 import "react-native-url-polyfill/auto";
-import { StatusBar } from "expo-status-bar";
 import StackNavigator from "./Src/Navigations/RootStackNavigator";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { ToastProvider } from "react-native-toast-notifications";

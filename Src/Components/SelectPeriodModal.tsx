@@ -1,15 +1,27 @@
-import React, { useEffect, useMemo, useState } from "react";
-import { Modal, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
-import { DatePickerModal } from "react-native-paper-dates";
+import React, { useEffect, useState } from "react";
+import {
+  Modal,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 import { X } from "lucide-react-native";
 import { colors } from "../Constants/colors";
-import { MD3LightTheme, Provider as PaperProvider } from "react-native-paper";
 import {
   fontEq,
   getHeightEquivalent,
   getWidthEquivalent,
 } from "../Utils/helpers";
+import {
+  InlineRangeCalendar,
+  type DateRangeValue,
+} from "./InlineRangeCalendar";
 
 type PeriodRange = { fromDate: string; toDate: string };
 
@@ -98,10 +110,9 @@ const SelectPeriodModal: React.FC<SelectPeriodModalProps> = ({
   initialFromDate,
   initialToDate,
   title = "Select Period",
-  mode = "picker",
+  mode: _mode = "picker",
 }) => {
   const insets = useSafeAreaInsets();
-  const [showDatePicker, setShowDatePicker] = useState(false);
   const [selectedStartDate, setSelectedStartDate] = useState<Date | undefined>(
     toDateOrUndefined(initialFromDate)
   );
@@ -111,27 +122,35 @@ const SelectPeriodModal: React.FC<SelectPeriodModalProps> = ({
   const [selectedQuickOption, setSelectedQuickOption] = useState<string | null>(
     null
   );
+  const monthToDatePeriod = predefinedPeriods.find(
+    (period) => period.label === "Month to Date"
+  );
 
   useEffect(() => {
-    if (visible) {
+    if (!visible) {
+      return;
+    }
+
+    const hasInitialRange = Boolean(initialFromDate && initialToDate);
+
+    if (hasInitialRange) {
       setSelectedStartDate(toDateOrUndefined(initialFromDate));
       setSelectedEndDate(toDateOrUndefined(initialToDate));
       setSelectedQuickOption(null);
-      setShowDatePicker(false);
+      return;
     }
-  }, [visible, initialFromDate, initialToDate]);
 
-  const handleDateConfirm = ({
-    startDate,
-    endDate,
-  }: {
-    startDate?: Date;
-    endDate?: Date;
-  }) => {
-    if (startDate) setSelectedStartDate(startDate);
-    if (endDate) setSelectedEndDate(endDate);
-    setShowDatePicker(false);
-  };
+    if (monthToDatePeriod) {
+      const { start, end } = monthToDatePeriod.getValue();
+      setSelectedStartDate(new Date(start));
+      setSelectedEndDate(new Date(end));
+      setSelectedQuickOption(monthToDatePeriod.label);
+    } else {
+      setSelectedStartDate(undefined);
+      setSelectedEndDate(undefined);
+      setSelectedQuickOption(null);
+    }
+  }, [visible, initialFromDate, initialToDate, monthToDatePeriod]);
 
   const handleApplyRange = () => {
     if (!selectedStartDate || !selectedEndDate) {
@@ -145,7 +164,10 @@ const SelectPeriodModal: React.FC<SelectPeriodModalProps> = ({
     toDate.setHours(23, 59, 59, 999);
 
     if (onApply) {
-      onApply({ fromDate: fromDate.toISOString(), toDate: toDate.toISOString() });
+      onApply({
+        fromDate: fromDate.toISOString(),
+        toDate: toDate.toISOString(),
+      });
     }
 
     if (onDateRangeSelect) {
@@ -162,23 +184,11 @@ const SelectPeriodModal: React.FC<SelectPeriodModalProps> = ({
     setSelectedQuickOption(period.label);
   };
 
-  const handleCustomDatePress = () => {
+  const handleCalendarChange = ({ startDate, endDate }: DateRangeValue) => {
     setSelectedQuickOption(null);
-    setShowDatePicker(true);
+    setSelectedStartDate(startDate);
+    setSelectedEndDate(endDate);
   };
-
-  const datePickerTheme = useMemo(
-    () => ({
-      ...MD3LightTheme,
-      colors: {
-        ...MD3LightTheme.colors,
-        surface: "#FFFFFF",
-        onSurface: colors.text,
-        backdrop: "rgba(0,0,0,0.35)",
-      },
-    }),
-    []
-  );
 
   return (
     <Modal
@@ -208,50 +218,30 @@ const SelectPeriodModal: React.FC<SelectPeriodModalProps> = ({
             </TouchableOpacity>
           </View>
 
-          <View style={styles.content}>
+          <ScrollView
+            style={styles.content}
+            contentContainerStyle={styles.contentContainer}
+            showsVerticalScrollIndicator={false}
+          >
             <View style={styles.dateRangeSection}>
               <Text style={styles.sectionTitle}>Custom Date Range</Text>
-
-              {mode === "picker" ? (
-                <TouchableOpacity
-                  onPress={handleCustomDatePress}
-                  style={styles.dateRangeButton}
-                >
-                  <View style={styles.dateRange}>
-                    <View style={styles.dateItem}>
-                      <Text style={styles.dateLabel}>From</Text>
-                      <Text style={styles.dateValue}>
-                        {formatDisplayDate(selectedStartDate)}
-                      </Text>
-                    </View>
-                    <View style={styles.dateSeparator} />
-                    <View style={styles.dateItem}>
-                      <Text style={styles.dateLabel}>To</Text>
-                      <Text style={styles.dateValue}>
-                        {formatDisplayDate(selectedEndDate)}
-                      </Text>
-                    </View>
+              <View style={styles.dateRangeButton}>
+                <View style={styles.dateRange}>
+                  <View style={styles.dateItem}>
+                    <Text style={styles.dateLabel}>From</Text>
+                    <Text style={styles.dateValue}>
+                      {formatDisplayDate(selectedStartDate)}
+                    </Text>
                   </View>
-                </TouchableOpacity>
-              ) : (
-                <View style={styles.dateRangeButton}>
-                  <View style={styles.dateRange}>
-                    <View style={styles.dateItem}>
-                      <Text style={styles.dateLabel}>From</Text>
-                      <Text style={styles.dateValue}>
-                        {formatDisplayDate(selectedStartDate)}
-                      </Text>
-                    </View>
-                    <View style={styles.dateSeparator} />
-                    <View style={styles.dateItem}>
-                      <Text style={styles.dateLabel}>To</Text>
-                      <Text style={styles.dateValue}>
-                        {formatDisplayDate(selectedEndDate)}
-                      </Text>
-                    </View>
+                  <View style={styles.dateSeparator} />
+                  <View style={styles.dateItem}>
+                    <Text style={styles.dateLabel}>To</Text>
+                    <Text style={styles.dateValue}>
+                      {formatDisplayDate(selectedEndDate)}
+                    </Text>
                   </View>
                 </View>
-              )}
+              </View>
             </View>
 
             <View style={styles.predefinedSection}>
@@ -279,23 +269,16 @@ const SelectPeriodModal: React.FC<SelectPeriodModalProps> = ({
                   </TouchableOpacity>
                 ))}
               </View>
+              <View style={styles.calendarWrapper}>
+                <InlineRangeCalendar
+                  startDate={selectedStartDate}
+                  endDate={selectedEndDate}
+                  onChange={handleCalendarChange}
+                  locale="en-US"
+                />
+              </View>
             </View>
-          </View>
-
-          {mode === "picker" && (
-            <PaperProvider theme={datePickerTheme}>
-              <DatePickerModal
-                locale="en-US"
-                mode="range"
-                visible={showDatePicker}
-                onDismiss={() => setShowDatePicker(false)}
-                startDate={selectedStartDate}
-                endDate={selectedEndDate}
-                onConfirm={handleDateConfirm}
-                label="Select date range"     
-              />
-            </PaperProvider>
-          )}
+          </ScrollView>
           <View style={styles.footer}>
             <TouchableOpacity
               onPress={handleApplyRange}
@@ -361,6 +344,8 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: getWidthEquivalent(20),
     paddingTop: getHeightEquivalent(20),
+  },
+  contentContainer: {
     paddingBottom: getHeightEquivalent(24),
   },
   sectionTitle: {
@@ -433,9 +418,18 @@ const styles = StyleSheet.create({
     color: colors.borderFocus,
     fontWeight: "600",
   },
+  calendarWrapper: {
+    marginTop: getHeightEquivalent(24),
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.white,
+    overflow: "hidden",
+  },
   footer: {
     paddingHorizontal: getWidthEquivalent(20),
-    paddingVertical: getHeightEquivalent(16),
+    paddingVertical: getHeightEquivalent(12),
+    marginBottom: getHeightEquivalent(-20),
     borderTopWidth: 1,
     borderTopColor: colors.border,
     backgroundColor: colors.white,

@@ -152,7 +152,7 @@ export const styles = StyleSheet.create({
   },
   // Blue text for sub-fields
   tableCellTextBlue: {
-    fontSize: fontEq(10),
+    fontSize: fontEq(14),
     fontWeight: "500",
     color: "#007AFF",
     alignSelf: "center",
@@ -292,7 +292,7 @@ export const styles = StyleSheet.create({
   },
   dailyAmountText: {
     textAlign: "center",
-    fontSize: fontEq(12),
+    fontSize: fontEq(14),
   },
   // Sticky table styles
   stickyTableContainer: {

@@ -7,7 +7,7 @@ import {
   ActivityIndicator,
   RefreshControl,
 } from "react-native";
-import React from "react";
+import React, { useMemo } from "react";
 import { ClientScreenStyles } from "./ClientScreenStyles";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Plus, Search, X } from "lucide-react-native";
@@ -46,6 +46,38 @@ const ClientScreen = () => {
     showEmptyState,
     showLoadMoreButton,
   } = useClientScreenVM();
+
+  const isWalkInCustomer = (client: ClientBO) => {
+    const firstName = client.first_name?.trim().toLowerCase() ?? "";
+    const lastName = client.last_name?.trim().toLowerCase() ?? "";
+    const fullName = `${client.first_name ?? ""} ${client.last_name ?? ""}`
+      .trim()
+      .toLowerCase();
+
+    if (fullName === "walk-in customer") {
+      return true;
+    }
+
+    if (firstName === "walk-in" && (!lastName || lastName === "customer")) {
+      return true;
+    }
+
+    if (!firstName && lastName === "walk-in customer") {
+      return true;
+    }
+
+    return false;
+  };
+
+  const filteredClients = useMemo(
+    () => clients.filter((client) => !isWalkInCustomer(client)),
+    [clients]
+  );
+
+  const excludedClientCount = clients.length - filteredClients.length;
+  const adjustedTotal = Math.max(total - excludedClientCount, 0);
+  const shouldShowEmptyState =
+    showEmptyState || (!isLoading && filteredClients.length === 0);
 
   const renderClientCard = ({ item }: { item: ClientBO }) => (
     <TouchableOpacity
@@ -119,7 +151,7 @@ const ClientScreen = () => {
     >
       <View style={ClientScreenStyles.header}>
         <Text style={ClientScreenStyles.headerText}>
-          Clients ({total.toLocaleString()})
+          Clients ({adjustedTotal.toLocaleString()})
         </Text>
         <View style={ClientScreenStyles.actionContainer}>
           {/* <TouchableOpacity
@@ -179,11 +211,11 @@ const ClientScreen = () => {
           </TouchableOpacity> */}
         </View>
 
-        {showEmptyState ? (
+        {shouldShowEmptyState ? (
           renderEmptyState()
         ) : (
           <FlatList
-            data={clients}
+            data={filteredClients}
             renderItem={renderClientCard}
             keyExtractor={(item) => item.id}
             showsVerticalScrollIndicator={false}

@@ -638,11 +638,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   totalLabel: {
-    fontSize: fontEq(16),
+    fontSize: fontEq(14),
     fontWeight: "700",
   },
   totalValue: {
-    fontSize: fontEq(18),
+    fontSize: fontEq(14),
     fontWeight: "700",
   },
   statusContainer: {

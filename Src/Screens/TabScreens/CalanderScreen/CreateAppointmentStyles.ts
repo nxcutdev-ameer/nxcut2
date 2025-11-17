@@ -306,13 +306,13 @@ export const CreateAppointmentStyles = StyleSheet.create({
     marginBottom: getHeightEquivalent(16),
   },
   totalLabel: {
-    fontSize: fontEq(18),
+    fontSize: fontEq(16),
     fontWeight: "600",
     color: colors.text,
   },
   totalAmount: {
-    fontSize: fontEq(18),
-    fontWeight: "700",
+    fontSize: fontEq(16),
+    fontWeight: "600",
     color: colors.primary,
   },
   saveButton: {

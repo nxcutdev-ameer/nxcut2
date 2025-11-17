@@ -11,7 +11,7 @@ import {
   Platform,
   Keyboard,
 } from "react-native";
-import React, { useState, useRef, useEffect, Fragment } from "react";
+import React, { useState, useRef, useEffect, Fragment, useMemo } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
   ChevronLeft,
@@ -370,6 +370,20 @@ const CreateAppointmentScreen = ({ route }: any) => {
     showEmptyState,
     showLoadMoreButton,
   } = useClientScreenVM();
+
+  const filteredClients = useMemo(
+    () =>
+      clients.filter((client) => {
+        const fullName = `${client.first_name ?? ""} ${client.last_name ?? ""}`
+          .trim()
+          .toLowerCase();
+        return fullName !== "walk-in customer";
+      }),
+    [clients]
+  );
+
+  const shouldShowEmptyState =
+    showEmptyState || (!isLoading && filteredClients.length === 0);
 
   const renderEmptyState = () => (
     <View style={CreateAppointmentStyles.emptyStateContainer}>
@@ -1028,7 +1042,7 @@ const CreateAppointmentScreen = ({ route }: any) => {
                   Loading clients...
                 </Text>
               </View>
-            ) : showEmptyState ? (
+            ) : shouldShowEmptyState ? (
               renderEmptyState()
             ) : (
               <ScrollView
@@ -1044,7 +1058,7 @@ const CreateAppointmentScreen = ({ route }: any) => {
                   paddingTop: getHeightEquivalent(10),
                 }}
               >
-                {clients.map((item) => (
+                {filteredClients.map((item) => (
                   <TouchableOpacity
                     key={item.id}
                     style={CreateAppointmentStyles.clientCardContainer}
