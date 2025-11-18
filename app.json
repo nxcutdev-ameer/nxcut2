@@ -1,16 +1,41 @@
 {
-  "android": {
-    "package": "com.qdealsllc.nxcut"
-  },
-  "ios": {
-    "bundleIdentifier": "com.qdealsllc.nxcut",
-    "infoPlist": {
-      "ITSAppUsesNonExemptEncryption": false
-    }
-  },
-  "extra": {
-    "eas": {
-      "projectId": "a70fb7da-69f6-4497-b893-c89cfe1371da"
+  "expo": {
+    "name": "Nxcut",
+    "slug": "nxcut",
+    "version": "1.0.9",
+    "orientation": "portrait",
+    "icon": "./assets/nxcutLogo.png",
+    "splash": {
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "userInterfaceStyle": "light",
+    "ios": {
+      "bundleIdentifier": "com.qdealsllc.nxcut",
+      "buildNumber": "9",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "package": "com.qdealsllc.nxcut",
+      "versionCode": 9,
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/nxcutLogo.png",
+        "backgroundColor": "#ffffff"
+      }
+    },
+    "plugins": ["expo-splash-screen", "expo-system-ui"],
+    "updates": {
+      "url": "https://u.expo.dev/YOUR-UPDATE-ID"
+    },
+    "runtimeVersion": {
+      "policy": "sdkVersion"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "a70fb7da-69f6-4497-b893-c89cfe1371da"
+      }
     }
   }
 }
