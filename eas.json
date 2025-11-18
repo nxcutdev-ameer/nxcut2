@@ -7,14 +7,26 @@
     "development": {
       "developmentClient": true,
       "distribution": "internal",
-      "channel": "development"
+      "channel": "development",
+      "env": {
+        "EXPO_PUBLIC_SUPABASE_URL": "https://ddhntljaamudkquaryrj.supabase.co",
+        "EXPO_PUBLIC_SUPABASE_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRkaG50bGphYW11ZGtxdWFyeXJqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkxNTMwNTQsImV4cCI6MjA2NDcyOTA1NH0.oHK99SrJJxdyxhRh3tEX6px_ezwjXPsVcYoL6vVbkDU",
+        "EXPO_PUBLIC_SUPABASE_GRAPHQL_URL": "https://ddhntljaamudkquaryrj.supabase.co/graphql/v1",
+        "BASE_URL": "https://pos2.pages.dev"
+      }
     },
     "preview": {
       "distribution": "internal",
       "android": {
         "buildType": "apk"
       },
-      "channel": "preview"
+      "channel": "preview",
+      "env": {
+        "EXPO_PUBLIC_SUPABASE_URL": "https://ddhntljaamudkquaryrj.supabase.co",
+        "EXPO_PUBLIC_SUPABASE_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRkaG50bGphYW11ZGtxdWFyeXJqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkxNTMwNTQsImV4cCI6MjA2NDcyOTA1NH0.oHK99SrJJxdyxhRh3tEX6px_ezwjXPsVcYoL6vVbkDU",
+        "EXPO_PUBLIC_SUPABASE_GRAPHQL_URL": "https://ddhntljaamudkquaryrj.supabase.co/graphql/v1",
+        "BASE_URL": "https://pos2.pages.dev"
+      }
     },
     "production": {
       "android": {
@@ -22,7 +34,13 @@
       },
       "distribution": "store",
       "autoIncrement": false,
-      "channel": "production"
+      "channel": "production",
+      "env": {
+        "EXPO_PUBLIC_SUPABASE_URL": "https://ddhntljaamudkquaryrj.supabase.co",
+        "EXPO_PUBLIC_SUPABASE_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRkaG50bGphYW11ZGtxdWFyeXJqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkxNTMwNTQsImV4cCI6MjA2NDcyOTA1NH0.oHK99SrJJxdyxhRh3tEX6px_ezwjXPsVcYoL6vVbkDU",
+        "EXPO_PUBLIC_SUPABASE_GRAPHQL_URL": "https://ddhntljaamudkquaryrj.supabase.co/graphql/v1",
+        "BASE_URL": "https://pos2.pages.dev"
+      }
     }
   },
   "submit": {
