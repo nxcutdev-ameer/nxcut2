@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "Nxcut",
-    "slug": "nxcut",
+    "slug": "nxcut-nwq15agvmp1-rzo14zffy",
     "version": "1.1.1",
     "orientation": "portrait",
     "icon": "./assets/nxcutLogo.png",
@@ -25,11 +25,19 @@
         "backgroundColor": "#ffffff"
       }
     },
-    "plugins": ["expo-splash-screen", "expo-system-ui"],
+    "plugins": [
+      "expo-splash-screen",
+      "expo-system-ui"
+    ],
     "updates": {
       "url": "https://u.expo.dev/YOUR-UPDATE-ID"
     },
     "runtimeVersion": "1.1.1",
-    "owner": "qdealsllc"
+    "owner": "qdealsllc",
+    "extra": {
+      "eas": {
+        "projectId": "7ea039bf-2230-4914-b5df-afd344ff249f"
+      }
+    }
   }
 }
