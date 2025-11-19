@@ -25,10 +25,7 @@
         "backgroundColor": "#ffffff"
       }
     },
-    "plugins": [
-      "expo-splash-screen",
-      "expo-system-ui"
-    ],
+    "plugins": ["expo-splash-screen", "expo-system-ui"],
     "updates": {
       "url": "https://u.expo.dev/YOUR-UPDATE-ID"
     },
