@@ -66,5 +66,15 @@
       "react-native-safe-area-context": "^5.6.2"
     }
   },
+   "expo": {
+    "plugins": [
+      [
+        "expo-version",
+        {
+          "version": "sync"
+        }
+      ]
+    ]
+  },
   "private": true
 }
