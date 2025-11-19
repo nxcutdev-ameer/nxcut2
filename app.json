@@ -25,15 +25,14 @@
         "backgroundColor": "#ffffff"
       }
     },
-    "plugins": ["expo-splash-screen", "expo-system-ui"],
+    "plugins": [
+      "expo-splash-screen",
+      "expo-system-ui"
+    ],
     "updates": {
       "url": "https://u.expo.dev/YOUR-UPDATE-ID"
     },
     "runtimeVersion": "1.1.1",
-    "extra": {
-      "eas": {
-        "projectId": "a70fb7da-69f6-4497-b893-c89cfe1371da"
-      }
-    }
+    "owner": "qdealsllc"
   }
 }
