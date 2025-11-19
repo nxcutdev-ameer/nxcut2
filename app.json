@@ -12,14 +12,14 @@
     "userInterfaceStyle": "light",
     "ios": {
       "bundleIdentifier": "com.qdealsllc.nxcut",
-      "buildNumber": "10",
+      "buildNumber": "11",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
       "package": "com.qdealsllc.nxcut",
-      "versionCode": 10,
+      "versionCode": 11,
       "adaptiveIcon": {
         "foregroundImage": "./assets/nxcutLogo.png",
         "backgroundColor": "#ffffff"
