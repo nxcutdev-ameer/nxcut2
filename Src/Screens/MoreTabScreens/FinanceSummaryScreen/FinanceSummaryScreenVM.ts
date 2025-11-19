@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { NavigationProp, useNavigation } from "@react-navigation/native";
+import { NavigationProp, useFocusEffect, useNavigation } from "@react-navigation/native";
 import {
   financeRepository,
   FinanceSalesBO,
@@ -53,35 +53,46 @@ const useFinanceSummaryScreenVM = () => {
   const [showExportModal, setShowExportModal] = useState<boolean>(false);
   const [showPeriodPicker, setShowPeriodPicker] = useState<boolean>(false);
   const [selectedPeriod, setSelectedPeriod] = useState<string>("Month");
+  const [selectedPeriodLabel, setSelectedPeriodLabel] = useState<string>("Month to date");
   const [showDailyBreakdown, setShowDailyBreakdown] = useState<boolean>(false);
   const [dateFilter, setDateFilter] = useState<{
     fromDate: string;
     toDate: string;
-  }>({
-    fromDate: new Date().toISOString(),
-    toDate: new Date().toISOString(),
+  }>(() => {
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    startOfMonth.setHours(0, 0, 0, 0);
+    const endOfToday = new Date(now);
+    endOfToday.setHours(23, 59, 59, 999);
+
+    return {
+      fromDate: startOfMonth.toISOString(),
+      toDate: endOfToday.toISOString(),
+    };
   });
 
-  useEffect(() => {
-    // Initialize with last 6 months for Month mode
+  const syncMonthToDate = useCallback(() => {
     const now = new Date();
-    const sixMonthsAgo = new Date(now);
-    sixMonthsAgo.setMonth(now.getMonth() - 6);
-
-    // Start from first day of 6 months ago
-    const firstDay = new Date(sixMonthsAgo.getFullYear(), sixMonthsAgo.getMonth(), 1);
-    // End at last day of current month
-    const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    startOfMonth.setHours(0, 0, 0, 0);
+    const endOfToday = new Date(now);
+    endOfToday.setHours(23, 59, 59, 999);
 
     setDateFilter({
-      fromDate: firstDay.toISOString(),
-      toDate: lastDay.toISOString(),
+      fromDate: startOfMonth.toISOString(),
+      toDate: endOfToday.toISOString(),
     });
 
-    // Set default mode to Month and enable daily breakdown
     setSelectedPeriod("Month");
+    setSelectedPeriodLabel("Month to date");
     setShowDailyBreakdown(true);
   }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      syncMonthToDate();
+    }, [syncMonthToDate])
+  );
 
   useEffect(() => {
     if (dateFilter.fromDate && dateFilter.toDate) {
@@ -169,6 +180,7 @@ const useFinanceSummaryScreenVM = () => {
 
   const handlePeriodSelection = useCallback((period: string) => {
     setSelectedPeriod(period);
+    setSelectedPeriodLabel(period === "Month" ? "Month to date" : period);
     setShowPeriodPicker(false);
     setShowDailyBreakdown(true);
 
@@ -698,7 +710,8 @@ const useFinanceSummaryScreenVM = () => {
     fetchFinanceSalesData,
     isDateRangeSelectionDisabled,
     handleDisabledDateRangePress,
-    getDateRangeText
+    getDateRangeText,
+    selectedPeriodLabel
   };
 };
 

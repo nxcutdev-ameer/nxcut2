@@ -149,6 +149,16 @@ export const InlineRangeCalendar: React.FC<InlineRangeCalendarProps> = ({
     return getDaysGrid(currentMonth, locale, startWeekOnMonday);
   }, [currentMonth, locale, startWeekOnMonday]);
 
+  const nextMonth = useMemo(() => {
+    const next = new Date(currentMonth);
+    next.setMonth(currentMonth.getMonth() + 1, 1);
+    return next;
+  }, [currentMonth]);
+
+  const nextMonthData = useMemo(() => {
+    return getDaysGrid(nextMonth, locale, startWeekOnMonday);
+  }, [nextMonth, locale, startWeekOnMonday]);
+
   const goToPreviousMonth = () => {
     const prev = new Date(currentMonth);
     prev.setMonth(currentMonth.getMonth() - 1);
@@ -192,99 +202,128 @@ export const InlineRangeCalendar: React.FC<InlineRangeCalendarProps> = ({
     return new Date(now.getFullYear(), now.getMonth(), now.getDate());
   }, []);
 
-  return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity
-          onPress={goToPreviousMonth}
-          style={styles.navButton}
-          accessibilityRole="button"
-        >
-          <ChevronLeft size={20} color={paint.text} />
-        </TouchableOpacity>
-        <Text style={[styles.monthLabel, { color: paint.text }]}>{monthLabel}</Text>
-        <TouchableOpacity
-          onPress={goToNextMonth}
-          style={styles.navButton}
-          accessibilityRole="button"
-        >
-          <ChevronRight size={20} color={paint.text} />
-        </TouchableOpacity>
-      </View>
+  const renderMonth = (
+    monthDate: Date,
+    monthGrid: ReturnType<typeof getDaysGrid>,
+    showNavigation: boolean,
+    keySuffix: "primary" | "secondary"
+  ) => {
+    const label = monthDate.toLocaleDateString(locale, {
+      month: "long",
+      year: "numeric",
+    });
 
-      <View style={styles.weekRow}>
-        {weekDayNames.map((day) => (
-          <Text key={day} style={[styles.weekDayLabel, { color: paint.textSecondary }]}>
-            {day}
-          </Text>
-        ))}
-      </View>
-
-      <View style={styles.daysContainer}>
-        {grid.map(({ date, isCurrentMonth }) => {
-          const selectionStart = isSameDay(date, startDate);
-          const selectionEnd = isSameDay(date, endDate);
-          const inRange = isWithin(date, startDate, endDate) && !selectionStart && !selectionEnd;
-          const disabled = isDisabled(date, validRange);
-          const isToday = isSameDay(date, today);
-
-          const isRangeEdge = selectionStart || selectionEnd;
-
-          const backgroundColor = isRangeEdge
-            ? paint.primaryLight
-            : inRange
-            ? paint.gray[200]
-            : "transparent";
-
-          const textColor = isRangeEdge
-            ? paint.black ?? paint.text
-            : !isCurrentMonth || disabled
-            ? `${paint.textSecondary}80`
-            : paint.text;
-
-          return (
+    return (
+      <View style={styles.monthSection} key={`${label}-${keySuffix}`}>
+        <View style={styles.header}>
+          {showNavigation ? (
             <TouchableOpacity
-              key={`${date.toISOString()}`}
-              style={styles.dayWrapper}
-              onPress={() => handleSelectDate(date)}
-              disabled={disabled}
+              onPress={goToPreviousMonth}
+              style={styles.navButton}
               accessibilityRole="button"
-              accessibilityState={{
-                disabled,
-                selected: selectionStart || selectionEnd,
-              }}
             >
-              <View
-                style={[
-                  styles.dayInner,
-                  selectionStart && styles.rangeStart,
-                  selectionEnd && styles.rangeEnd,
-                  inRange && styles.rangeBetween,
-                  { backgroundColor },
-                  isRangeEdge
-                    ? {
-                        borderColor: paint.primary,
-                        borderWidth: 1,
-                      }
-                    : null,
-                ]}
+              <ChevronLeft size={20} color={paint.text} />
+            </TouchableOpacity>
+          ) : (
+            <View style={styles.navButtonPlaceholder} />
+          )}
+
+          <Text style={[styles.monthLabel, { color: paint.text }]}>{label}</Text>
+
+          {showNavigation ? (
+            <TouchableOpacity
+              onPress={goToNextMonth}
+              style={styles.navButton}
+              accessibilityRole="button"
+            >
+              <ChevronRight size={20} color={paint.text} />
+            </TouchableOpacity>
+          ) : (
+            <View style={styles.navButtonPlaceholder} />
+          )}
+        </View>
+
+        <View style={styles.weekRow}>
+          {weekDayNames.map((day) => (
+            <Text key={`${day}-${keySuffix}`} style={[styles.weekDayLabel, { color: paint.textSecondary }]}>
+              {day}
+            </Text>
+          ))}
+        </View>
+
+        <View style={styles.daysContainer}>
+          {monthGrid.grid.map(({ date, isCurrentMonth }) => {
+            const selectionStart = isSameDay(date, startDate);
+            const selectionEnd = isSameDay(date, endDate);
+            const inRange = isWithin(date, startDate, endDate) && !selectionStart && !selectionEnd;
+            const disabled = isDisabled(date, validRange);
+            const isToday = isSameDay(date, today);
+
+            const isRangeEdge = selectionStart || selectionEnd;
+
+            const backgroundColor = isRangeEdge
+              ? paint.black
+              : inRange
+              ? paint.gray[200]
+              : "transparent";
+
+            const textColor = isRangeEdge
+              ? paint.white
+              : !isCurrentMonth || disabled
+              ? `${paint.textSecondary}80`
+              : paint.text;
+
+            return (
+              <TouchableOpacity
+                key={`${date.toISOString()}-${keySuffix}`}
+                style={styles.dayWrapper}
+                onPress={() => handleSelectDate(date)}
+                disabled={disabled}
+                accessibilityRole="button"
+                accessibilityState={{
+                  disabled,
+                  selected: selectionStart || selectionEnd,
+                }}
               >
-                <Text
+                <View
                   style={[
-                    styles.dayLabel,
-                    { color: textColor },
-                    isToday && !selectionStart && !selectionEnd
-                      ? { borderColor: paint.primary, borderWidth: 1, borderRadius: 999 }
+                    styles.dayInner,
+                    selectionStart && styles.rangeStart,
+                    selectionEnd && styles.rangeEnd,
+                    inRange && styles.rangeBetween,
+                    { backgroundColor },
+                    isRangeEdge
+                      ? {
+                          borderColor: paint.primary,
+                          borderWidth: 1,
+                        }
                       : null,
                   ]}
                 >
-                  {date.getDate()}
-                </Text>
-              </View>
-            </TouchableOpacity>
-          );
-        })}
+                  <Text
+                    style={[
+                      styles.dayLabel,
+                      { color: textColor },
+                      isToday && !selectionStart && !selectionEnd
+                        ? { borderColor: paint.primary, borderWidth: 1, borderRadius: 999 }
+                        : null,
+                    ]}
+                  >
+                    {date.getDate()}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
       </View>
+    );
+  };
+
+  return (
+    <View style={styles.container}>
+      {renderMonth(currentMonth, { grid, weekDayNames }, true, "primary")}
+      {renderMonth(nextMonth, nextMonthData, false, "secondary")}
     </View>
   );
 };
@@ -293,6 +332,9 @@ const styles = {
   container: {
     paddingVertical: getHeightEquivalent(12),
     paddingHorizontal: getWidthEquivalent(8),
+  },
+  monthSection: {
+    marginBottom: getHeightEquivalent(16),
   },
   header: {
     flexDirection: "row" as const,
@@ -306,6 +348,10 @@ const styles = {
     borderRadius: getWidthEquivalent(17),
     alignItems: "center" as const,
     justifyContent: "center" as const,
+  },
+  navButtonPlaceholder: {
+    width: getWidthEquivalent(34),
+    height: getWidthEquivalent(34),
   },
   monthLabel: {
     fontSize: fontEq(18),

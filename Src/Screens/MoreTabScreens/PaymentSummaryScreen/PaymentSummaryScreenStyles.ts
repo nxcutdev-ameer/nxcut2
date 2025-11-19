@@ -78,6 +78,7 @@ export const PaymentSummaryScreenStyles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
+    gap: getWidthEquivalent(12),
   },
   todayButton: {
     paddingHorizontal: getWidthEquivalent(16),
@@ -110,6 +111,16 @@ export const PaymentSummaryScreenStyles = StyleSheet.create({
     borderRadius: getWidthEquivalent(20),
     flex: 1,
     justifyContent: "center",
+  },
+  secondaryFilterButton: {
+    width: getWidthEquivalent(40),
+    height: getWidthEquivalent(40),
+    borderRadius: getWidthEquivalent(22),
+    backgroundColor: colors.colors.white,
+    alignItems: "center",
+    justifyContent: "center",
+    borderColor: colors.colors.black,
+    borderWidth: 1,
   },
   filterButtonText: {
     fontSize: fontEq(14),

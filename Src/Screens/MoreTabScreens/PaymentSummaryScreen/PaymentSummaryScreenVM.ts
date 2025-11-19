@@ -20,17 +20,19 @@ const usePaymentSummaryScreenVM = () => {
   >([]);
   const [loading, setLoading] = useState<boolean>(true);
 
-  // Initialize with "This Month" date range
-  const getThisMonthRange = () => {
+  // Initialize with Month to date range
+  const getMonthToDateRange = () => {
     const now = new Date();
     const start = new Date(now.getFullYear(), now.getMonth(), 1);
-    const end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    start.setHours(0, 0, 0, 0);
+    const end = new Date(now);
+    end.setHours(23, 59, 59, 999);
     return { start, end };
   };
 
-  const thisMonth = getThisMonthRange();
-  const [startDate, setStartDate] = useState<Date>(thisMonth.start);
-  const [endDate, setEndDate] = useState<Date>(thisMonth.end);
+  const monthToDate = getMonthToDateRange();
+  const [startDate, setStartDate] = useState<Date>(monthToDate.start);
+  const [endDate, setEndDate] = useState<Date>(monthToDate.end);
 
   useEffect(() => {
     fetchDataForDateRange(startDate, endDate);
@@ -2344,23 +2346,36 @@ const usePaymentSummaryScreenVM = () => {
   };
 
   const getDateRangeDisplay = () => {
+    const now = new Date();
     const isSameDay = startDate.toDateString() === endDate.toDateString();
+    const isMonthToDate =
+      startDate.getDate() === 1 &&
+      startDate.getMonth() === endDate.getMonth() &&
+      startDate.getFullYear() === endDate.getFullYear() &&
+      endDate.getFullYear() === now.getFullYear() &&
+      endDate.getMonth() === now.getMonth() &&
+      endDate.getDate() === now.getDate();
+
+    if (isMonthToDate) {
+      return "Month to date";
+    }
+
     if (isSameDay) {
       return startDate.toLocaleDateString("en-US", {
         day: "2-digit",
         month: "short",
         year: "numeric",
       });
-    } else {
-      return `${startDate.toLocaleDateString("en-US", {
-        day: "2-digit",
-        month: "short",
-      })} - ${endDate.toLocaleDateString("en-US", {
-        day: "2-digit",
-        month: "short",
-        year: "numeric",
-      })}`;
     }
+
+    return `${startDate.toLocaleDateString("en-US", {
+      day: "2-digit",
+      month: "short",
+    })} - ${endDate.toLocaleDateString("en-US", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    })}`;
   };
 
   const formatCurrency = (amount: number) => {

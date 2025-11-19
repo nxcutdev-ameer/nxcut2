@@ -1,4 +1,12 @@
-import React, { FC, ReactElement, useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  FC,
+  ReactElement,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   View,
   Text,
@@ -108,7 +116,7 @@ export const PaymentTransactionsScreen = () => {
     [paymentTransactionFilter?.fromDate, paymentTransactionFilter?.toDate]
   );
 
-  const formatDateTime = (dateString: string) => {
+  const formatDateTime = useCallback((dateString: string) => {
     if (!dateString) return "-";
 
     try {
@@ -145,8 +153,8 @@ export const PaymentTransactionsScreen = () => {
     } catch (error) {
       return "-";
     }
-  };
-  const formatDataForExport = () => {
+  }, []);
+  const formatDataForExport = useCallback(() => {
     return paymentTransactions.map((item) => ({
       "Sale No.": item.sale_id || "",
       "Payment Date": formatDateTime(item.created_at),
@@ -168,7 +176,7 @@ export const PaymentTransactionsScreen = () => {
       "Payment Method": item.payment_method || "",
       Amount: item.amount || "",
     }));
-  };
+  }, [formatDateTime, paymentTransactions]);
 
   const generateCSV = (data: any[]) => {
     if (data.length === 0) return "";
@@ -314,219 +322,242 @@ export const PaymentTransactionsScreen = () => {
   };
 
   // Define consistent column widths
-  const columnWidths = {
-    paymentDate: getWidthEquivalent(190),
-    saleDate: getWidthEquivalent(110),
-    saleNo: getWidthEquivalent(110),
-    client: getWidthEquivalent(170),
-    location: getWidthEquivalent(150),
-    teamMember: getWidthEquivalent(150),
-    transactionType: getWidthEquivalent(150),
-    paymentMethod: getWidthEquivalent(150),
-    amount: getWidthEquivalent(110),
-  } as const;
+  const columnWidths = useMemo(
+    () => ({
+      paymentDate: getWidthEquivalent(190),
+      saleDate: getWidthEquivalent(110),
+      saleNo: getWidthEquivalent(110),
+      client: getWidthEquivalent(170),
+      location: getWidthEquivalent(150),
+      teamMember: getWidthEquivalent(150),
+      transactionType: getWidthEquivalent(150),
+      paymentMethod: getWidthEquivalent(150),
+      amount: getWidthEquivalent(110),
+    }),
+    []
+  );
 
-  const tableContentWidth = Object.values(columnWidths).reduce(
-    (total, width) => total + width,
-    0
+  const tableContentWidth = useMemo(
+    () =>
+      Object.values(columnWidths).reduce(
+        (total, width) => total + width,
+        0
+      ),
+    [columnWidths]
   );
 
   const screenWidth = Dimensions.get("window").width;
   const horizontalPadding = getWidthEquivalent(24);
   const scrollContentWidth = Math.max(screenWidth, tableContentWidth);
 
-  const TableHeader = () => (
-    <View style={[styles.tableHeader, { minWidth: tableContentWidth }]}>
-      <View
-        style={[
-          styles.cellContainer,
-          styles.tableCell,
-          { width: columnWidths.saleNo },
-        ]}
-      >
-        <Text style={styles.tableHeaderText}>Sale No.</Text>
+  const tableHeader = useMemo(
+    () => (
+      <View style={[styles.tableHeader, { minWidth: tableContentWidth }]}>
+        <View
+          style={[
+            styles.cellContainer,
+            styles.tableCell,
+            { width: columnWidths.saleNo },
+          ]}
+        >
+          <Text style={styles.tableHeaderText}>Sale No.</Text>
+        </View>
+        <View
+          style={[
+            styles.cellContainer,
+            styles.tableCell,
+            { width: columnWidths.paymentDate },
+          ]}
+        >
+          <Text style={styles.tableHeaderText}>Payment Date</Text>
+        </View>
+        <View
+          style={[
+            styles.cellContainer,
+            styles.tableCell,
+            { width: columnWidths.saleDate },
+          ]}
+        >
+          <Text style={styles.tableHeaderText}>Sale Date</Text>
+        </View>
+        <View
+          style={[
+            styles.cellContainer,
+            styles.tableCell,
+            { width: columnWidths.client },
+          ]}
+        >
+          <Text style={styles.tableHeaderText}>Client</Text>
+        </View>
+        <View
+          style={[
+            styles.cellContainer,
+            styles.tableCell,
+            { width: columnWidths.location },
+          ]}
+        >
+          <Text style={styles.tableHeaderText}>Location</Text>
+        </View>
+        <View
+          style={[
+            styles.cellContainer,
+            styles.tableCell,
+            { width: columnWidths.teamMember },
+          ]}
+        >
+          <Text style={styles.tableHeaderText}>Team Member</Text>
+        </View>
+        <View
+          style={[
+            styles.cellContainer,
+            styles.tableCell,
+            { width: columnWidths.transactionType },
+          ]}
+        >
+          <Text style={styles.tableHeaderText}>Transaction Type</Text>
+        </View>
+        <View
+          style={[
+            styles.cellContainer,
+            styles.tableCell,
+            { width: columnWidths.paymentMethod },
+          ]}
+        >
+          <Text style={styles.tableHeaderText}>Payment Method</Text>
+        </View>
+        <View
+          style={[
+            styles.cellContainer,
+            styles.tableCell,
+            { width: columnWidths.amount },
+          ]}
+        >
+          <Text style={styles.tableHeaderText}>Amount</Text>
+        </View>
       </View>
-      <View
-        style={[
-          styles.cellContainer,
-          styles.tableCell,
-          { width: columnWidths.paymentDate },
-        ]}
-      >
-        <Text style={styles.tableHeaderText}>Payment Date</Text>
-      </View>
-      <View
-        style={[
-          styles.cellContainer,
-          styles.tableCell,
-          { width: columnWidths.saleDate },
-        ]}
-      >
-        <Text style={styles.tableHeaderText}>Sale Date</Text>
-      </View>
-      <View
-        style={[
-          styles.cellContainer,
-          styles.tableCell,
-          { width: columnWidths.client },
-        ]}
-      >
-        <Text style={styles.tableHeaderText}>Client</Text>
-      </View>
-      <View
-        style={[
-          styles.cellContainer,
-          styles.tableCell,
-          { width: columnWidths.location },
-        ]}
-      >
-        <Text style={styles.tableHeaderText}>Location</Text>
-      </View>
-      <View
-        style={[
-          styles.cellContainer,
-          styles.tableCell,
-          { width: columnWidths.teamMember },
-        ]}
-      >
-        <Text style={styles.tableHeaderText}>Team Member</Text>
-      </View>
-      <View
-        style={[
-          styles.cellContainer,
-          styles.tableCell,
-          { width: columnWidths.transactionType },
-        ]}
-      >
-        <Text style={styles.tableHeaderText}>Transaction Type</Text>
-      </View>
-      <View
-        style={[
-          styles.cellContainer,
-          styles.tableCell,
-          { width: columnWidths.paymentMethod },
-        ]}
-      >
-        <Text style={styles.tableHeaderText}>Payment Method</Text>
-      </View>
-      <View
-        style={[
-          styles.cellContainer,
-          styles.tableCell,
-          { width: columnWidths.amount },
-        ]}
-      >
-        <Text style={styles.tableHeaderText}>Amount</Text>
-      </View>
-    </View>
+    ),
+    [columnWidths, tableContentWidth]
   );
 
-  const TableRow = ({ item }: { item: any }) => (
-    <View style={[styles.tableRow, { minWidth: tableContentWidth }]}>
-      <TouchableOpacity
-        onPress={() =>
-          item.sale_id
-            ? navigation.navigate("TransactionDetailsScreen", {
-                saleId: String(item.sale_id),
-                fallbackTransaction: {
-                  payment_method: item.payment_method,
-                  amount: item.amount,
-                  sales: {
-                    id: Number(item.sale_id),
-                    created_at: item.created_at,
-                    location: item.sale?.location,
-                    client: item.sale?.client,
+  const renderTableRow = useCallback(
+    ({ item }: { item: any }) => (
+      <View style={[styles.tableRow, { minWidth: tableContentWidth }]}>
+        <TouchableOpacity
+          onPress={() =>
+            item.sale_id
+              ? navigation.navigate("TransactionDetailsScreen", {
+                  saleId: String(item.sale_id),
+                  fallbackTransaction: {
+                    payment_method: item.payment_method,
+                    amount: item.amount,
+                    sales: {
+                      id: Number(item.sale_id),
+                      created_at: item.created_at,
+                      location: item.sale?.location,
+                      client: item.sale?.client,
+                    },
                   },
-                },
-              })
-            : undefined
-        }
-        style={[
-          styles.cellContainer,
-          styles.tableCell,
-          { width: columnWidths.saleNo },
-        ]}
-        activeOpacity={item.sale_id ? 0.7 : 1}
-        disabled={!item.sale_id}
-      >
-        <Text
+                })
+              : undefined
+          }
           style={[
+            styles.cellContainer,
             styles.tableCell,
-            item.sale_id ? styles.linkText : styles.disabledLinkText,
+            { width: columnWidths.saleNo },
           ]}
-          numberOfLines={1}
+          activeOpacity={item.sale_id ? 0.7 : 1}
+          disabled={!item.sale_id}
         >
-          {item.sale_id || "-"}
-        </Text>
-      </TouchableOpacity>
-      <View style={[styles.cellContainer, { width: columnWidths.paymentDate }]}>
-        <Text style={styles.tableCell} numberOfLines={1} ellipsizeMode="tail">
-          {formatDateTime(item.created_at)}
-        </Text>
-      </View>
-      <View style={[styles.cellContainer, { width: columnWidths.saleDate }]}>
-        <Text style={styles.tableCell} numberOfLines={1} ellipsizeMode="tail">
-          {formatDateTime(item.created_at)}
-        </Text>
-      </View>
-      <View style={[styles.cellContainer, { width: columnWidths.client }]}>
-        <Text style={styles.tableCell} numberOfLines={1} ellipsizeMode="tail">
-          {(() => {
-            const client = item.sale?.client;
-            if (!client) return "-";
-            const parts = [client.first_name, client.last_name]
-              .map((part: string | undefined | null) =>
-                part ? String(part).trim() : ""
-              )
-              .filter((part: string) => part.length > 0);
-            if (parts.length > 0) {
-              return parts.join(" ");
-            }
-            if (client.email) return client.email;
-            if (client.phone) return client.phone;
-            return "-";
-          })()}
-        </Text>
-      </View>
-      <View style={[styles.cellContainer, { width: columnWidths.location }]}>
-        <Text style={styles.tableCell} numberOfLines={1} ellipsizeMode="tail">
-          {item.sale?.location?.name || "-"}
-        </Text>
-      </View>
-      <View style={[styles.cellContainer, { width: columnWidths.teamMember }]}>
-        <Text style={styles.tableCell} numberOfLines={1} ellipsizeMode="tail">
-          {item.sale?.appointment?.appointment_services &&
-          item.sale.appointment.appointment_services.length > 0
-            ? item.sale.appointment.appointment_services
-                .map(
-                  (service: { staff: { first_name: any } }) =>
-                    service.staff?.first_name
+          <Text
+            style={[
+              styles.tableCell,
+              item.sale_id ? styles.linkText : styles.disabledLinkText,
+            ]}
+            numberOfLines={1}
+          >
+            {item.sale_id || "-"}
+          </Text>
+        </TouchableOpacity>
+        <View style={[styles.cellContainer, { width: columnWidths.paymentDate }]}>
+          <Text style={styles.tableCell} numberOfLines={1} ellipsizeMode="tail">
+            {formatDateTime(item.created_at)}
+          </Text>
+        </View>
+        <View style={[styles.cellContainer, { width: columnWidths.saleDate }]}>
+          <Text style={styles.tableCell} numberOfLines={1} ellipsizeMode="tail">
+            {formatDateTime(item.created_at)}
+          </Text>
+        </View>
+        <View style={[styles.cellContainer, { width: columnWidths.client }]}>
+          <Text style={styles.tableCell} numberOfLines={1} ellipsizeMode="tail">
+            {(() => {
+              const client = item.sale?.client;
+              if (!client) return "-";
+              const parts = [client.first_name, client.last_name]
+                .map((part: string | undefined | null) =>
+                  part ? String(part).trim() : ""
                 )
-                .filter(Boolean)
-                .join(", ")
-            : "No staff assigned"}
-        </Text>
+                .filter((part: string) => part.length > 0);
+              if (parts.length > 0) {
+                return parts.join(" ");
+              }
+              if (client.email) return client.email;
+              if (client.phone) return client.phone;
+              return "-";
+            })()}
+          </Text>
+        </View>
+        <View style={[styles.cellContainer, { width: columnWidths.location }]}>
+          <Text style={styles.tableCell} numberOfLines={1} ellipsizeMode="tail">
+            {item.sale?.location?.name || "-"}
+          </Text>
+        </View>
+        <View style={[styles.cellContainer, { width: columnWidths.teamMember }]}>
+          <Text style={styles.tableCell} numberOfLines={1} ellipsizeMode="tail">
+            {item.sale?.appointment?.appointment_services &&
+            item.sale.appointment.appointment_services.length > 0
+              ? item.sale.appointment.appointment_services
+                  .map(
+                    (service: { staff: { first_name: any } }) =>
+                      service.staff?.first_name
+                  )
+                  .filter(Boolean)
+                  .join(", ")
+              : "No staff assigned"}
+          </Text>
+        </View>
+        <View
+          style={[styles.cellContainer, { width: columnWidths.transactionType }]}
+        >
+          <Text style={styles.tableCell} numberOfLines={1} ellipsizeMode="tail">
+            Sales {/* {item.transaction_type || "-"} */}
+          </Text>
+        </View>
+        <View
+          style={[styles.cellContainer, { width: columnWidths.paymentMethod }]}
+        >
+          <Text style={styles.tableCell} numberOfLines={1} ellipsizeMode="tail">
+            {item.payment_method || "-"}
+          </Text>
+        </View>
+        <View style={[styles.cellContainer, { width: columnWidths.amount }]}>
+          <Text style={styles.tableCell} numberOfLines={1}>
+            {item.amount || "-"}
+          </Text>
+        </View>
       </View>
-      <View
-        style={[styles.cellContainer, { width: columnWidths.transactionType }]}
-      >
-        <Text style={styles.tableCell} numberOfLines={1} ellipsizeMode="tail">
-          Sales {/* {item.transaction_type || "-"} */}
-        </Text>
-      </View>
-      <View
-        style={[styles.cellContainer, { width: columnWidths.paymentMethod }]}
-      >
-        <Text style={styles.tableCell} numberOfLines={1} ellipsizeMode="tail">
-          {item.payment_method || "-"}
-        </Text>
-      </View>
-      <View style={[styles.cellContainer, { width: columnWidths.amount }]}>
-        <Text style={styles.tableCell} numberOfLines={1}>
-          {item.amount || "-"}
-        </Text>
-      </View>
-    </View>
+    ),
+    [
+      columnWidths,
+      formatDateTime,
+      navigation,
+      tableContentWidth,
+    ]
+  );
+
+  const keyExtractor = useCallback(
+    (item: any, index: number) => `${item.sale_id}-${index}`,
+    []
   );
 
   return (
@@ -544,8 +575,8 @@ export const PaymentTransactionsScreen = () => {
               true
             );
           }}
-          initialFromDate={paymentTransactionFilter.fromDate}
-          initialToDate={paymentTransactionFilter.toDate}
+          initialFromDate={paymentTransactionFilter?.fromDate}
+          initialToDate={paymentTransactionFilter?.toDate}
         />
       )}
       <View style={styles.headNav}>
@@ -602,7 +633,7 @@ export const PaymentTransactionsScreen = () => {
         >
           <View style={[styles.tableWrapper, { width: tableContentWidth }]}>
             {/* Table Header */}
-            <TableHeader />
+            {tableHeader}
 
             {/* Table Body with Vertical Scroll */}
             <View style={styles.tableBody}>
@@ -623,8 +654,8 @@ export const PaymentTransactionsScreen = () => {
               ) : (
                 <FlatList
                   data={paymentTransactions}
-                  keyExtractor={(item, index) => `${item.sale_id}-${index}`}
-                  renderItem={({ item }) => <TableRow item={item} />}
+                  keyExtractor={keyExtractor}
+                  renderItem={renderTableRow}
                   showsVerticalScrollIndicator={true}
                   style={styles.flatList}
                   ListEmptyComponent={() => (

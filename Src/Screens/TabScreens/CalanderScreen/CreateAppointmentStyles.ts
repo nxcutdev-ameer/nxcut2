@@ -693,7 +693,7 @@ export const CreateAppointmentStyles = StyleSheet.create({
     gap: getWidthEquivalent(12),
   },
   selectionButtonText: {
-    fontSize: fontEq(16),
+    fontSize: fontEq(14),
     fontWeight: "500",
     color: colors.text,
     flex: 1,
@@ -723,7 +723,7 @@ export const CreateAppointmentStyles = StyleSheet.create({
     borderColor: colors.primary,
   },
   modalListItemText: {
-    fontSize: fontEq(16),
+    fontSize: fontEq(14),
     fontWeight: "500",
     color: colors.text,
     flex: 1,

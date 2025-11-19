@@ -178,7 +178,7 @@ const AppointmentDetailsScreen = () => {
         {/* Appointment Time Card */}
         <View style={[styles.card, { backgroundColor: paint.white }]}>
           <View style={styles.cardHeader}>
-            <Clock size={24} color={paint.primary} />
+            <Clock size={18} color={paint.primary} />
             <Text style={[styles.cardTitle, { color: paint.text }]}>
               Appointment Time
             </Text>
@@ -186,7 +186,7 @@ const AppointmentDetailsScreen = () => {
 
           <View style={styles.infoRow}>
             <View style={styles.infoIcon}>
-              <Calendar size={20} color={paint.primary} />
+              <Calendar size={18} color={paint.primary} />
             </View>
             <View style={styles.infoContent}>
               <Text style={[styles.infoLabel, { color: paint.textSecondary }]}>
@@ -200,7 +200,7 @@ const AppointmentDetailsScreen = () => {
 
           <View style={styles.infoRow}>
             <View style={styles.infoIcon}>
-              <Clock size={20} color={paint.primary} />
+              <Clock size={18} color={paint.primary} />
             </View>
             <View style={styles.infoContent}>
               <Text style={[styles.infoLabel, { color: paint.textSecondary }]}>
@@ -215,7 +215,7 @@ const AppointmentDetailsScreen = () => {
 
           <View style={styles.infoRow}>
             <View style={styles.infoIcon}>
-              <Clock size={20} color={paint.primary} />
+              <Clock size={18} color={paint.primary} />
             </View>
             <View style={styles.infoContent}>
               <Text style={[styles.infoLabel, { color: paint.textSecondary }]}>
@@ -231,7 +231,7 @@ const AppointmentDetailsScreen = () => {
         {/* Service Details Card */}
         <View style={[styles.card, { backgroundColor: paint.white }]}>
           <View style={styles.cardHeader}>
-            <Scissors size={24} color={paint.primary} />
+            <Scissors size={18} color={paint.primary} />
             <Text style={[styles.cardTitle, { color: paint.text }]}>
               Service Details
             </Text>
@@ -292,7 +292,7 @@ const AppointmentDetailsScreen = () => {
         {/* Staff Information Card */}
         <View style={[styles.card, { backgroundColor: paint.white }]}>
           <View style={styles.cardHeader}>
-            <Users size={24} color={paint.primary} />
+            <Users size={18} color={paint.primary} />
             <Text style={[styles.cardTitle, { color: paint.text }]}>
               Staff Member
             </Text>

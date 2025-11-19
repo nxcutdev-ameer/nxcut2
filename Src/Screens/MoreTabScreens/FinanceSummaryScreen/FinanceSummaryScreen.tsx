@@ -35,6 +35,7 @@ const FinanceSummaryScreen = () => {
     showPeriodPicker,
     setShowPeriodPicker,
     selectedPeriod,
+    selectedPeriodLabel,
     dateFilter,
     updateDateFilter,
     handlePeriodSelection,
@@ -507,12 +508,12 @@ const FinanceSummaryScreen = () => {
           >
             <SlidersVertical size={20} />
           </TouchableOpacity> */}
-          <TouchableOpacity
-            onPress={() => setShowPeriodPicker(true)}
+          {/* <TouchableOpacity
+            onPress={() => {setShowPeriodPicker(true)}}
             style={styles.button}
           >
-            <Text style={styles.buttonText}>{selectedPeriod}</Text>
-          </TouchableOpacity>
+            <Text style={styles.buttonText}>{selectedPeriodLabel}</Text>
+          </TouchableOpacity> */}
           <TouchableOpacity
             onPress={handleMonthToDatePress}
             style={[
@@ -752,7 +753,7 @@ const FinanceSummaryScreen = () => {
             </View>
 
             {/* Period Options */}
-            <View style={styles.exportOptions}>
+            {/* <View style={styles.exportOptions}>
               {["Day", "Week", "Month", "Quarter", "Year"].map((period) => (
                 <TouchableOpacity
                   key={period}
@@ -781,16 +782,16 @@ const FinanceSummaryScreen = () => {
                   </Text>
                 </TouchableOpacity>
               ))}
-            </View>
+            </View> */}
           </View>
         </SafeAreaView>
       </Modal>
-      <CustomToast
+      {/* <CustomToast
         message={toast.message}
         visible={toast.visible}
         type={toast.type}
         onHide={hideToast}
-      />
+      /> */}
     </SafeAreaView>
   );
 };

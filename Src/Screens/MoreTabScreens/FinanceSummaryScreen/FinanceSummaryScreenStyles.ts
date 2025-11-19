@@ -63,6 +63,7 @@ export const styles = StyleSheet.create({
     justifyContent: "center",
     borderWidth: 1,
     borderColor: colors.border,
+    width: getWidthEquivalent(220),
   },
   buttonText: {
     fontSize: fontEq(14),

@@ -13,6 +13,8 @@ import {
 import { colors } from "../Constants/colors";
 import PerformanceDashboardScreenStyles from "../Screens/MoreTabScreens/PerformanceDashboardScreen/PerformanceDashboardScreenStyles";
 
+export type FilterOptionId = "location" | "team_member";
+
 interface FilterPanelModalProps {
   visible: boolean;
   onClose: () => void;
@@ -25,6 +27,7 @@ interface FilterPanelModalProps {
   pageFilter: any;
   toggleLocationFilter: (locationId: string) => void;
   toggleTeamMemberFilter: (staffId: string) => void;
+  allowedFilters?: readonly FilterOptionId[];
 }
 
 const FilterPanelModal: React.FC<FilterPanelModalProps> = ({
@@ -39,8 +42,9 @@ const FilterPanelModal: React.FC<FilterPanelModalProps> = ({
   pageFilter,
   toggleLocationFilter,
   toggleTeamMemberFilter,
+  allowedFilters,
 }) => {
-  const filterOptions = [
+  const baseFilterOptions = [
     {
       id: "location",
       label: "Location",
@@ -54,6 +58,10 @@ const FilterPanelModal: React.FC<FilterPanelModalProps> = ({
       iconColor: colors.primary,
     },
   ];
+
+  const filterOptions = allowedFilters
+    ? baseFilterOptions.filter((option) => allowedFilters.includes(option.id as FilterOptionId))
+    : baseFilterOptions;
 
   return (
     <Modal

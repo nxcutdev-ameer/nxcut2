@@ -47,8 +47,6 @@ const DashBoardScreen = () => {
   const [showFilterScreen, setShowFilterScreen] = useState(false);
   const [selectedPeriod, setSelectedPeriod] = useState("Month to date");
   const [refreshing, setRefreshing] = useState(false);
-  const [pieChartLoaded, setPieChartLoaded] = useState(false);
-  const [pieChartFetchActive, setPieChartFetchActive] = useState(false);
 
   const {
     navigation,
@@ -253,22 +251,7 @@ const DashBoardScreen = () => {
     [pieChartData]
   );
 
-  const showPieChartSkeleton = salesByLocationLoading;
-
-  useEffect(() => {
-    if (salesByLocationLoading) {
-      setPieChartFetchActive(true);
-      setPieChartLoaded(false);
-      return;
-    }
-
-    if (pieChartFetchActive) {
-      setPieChartLoaded(true);
-      setPieChartFetchActive(false);
-    }
-  }, [salesByLocationLoading, pieChartFetchActive]);
-
-  const shouldShowPieChartSkeleton = showPieChartSkeleton && !pieChartLoaded;
+  const showPieChartSkeleton = salesByLocationLoading && pieChartData.length === 0;
 
   // Filter handlers
   const handleFilterApply = (start: Date, end: Date, period: string) => {
@@ -316,16 +299,6 @@ const DashBoardScreen = () => {
     });
   }, [startDate, endDate]);
 
-  useEffect(() => {
-    testFunction();
-  }, []);
-
-  const testFunction = async () => {
-    let responce = await appointmentsRepository.fetchCommissionCalculations(
-      8,
-      2025
-    );
-  };
   return (
     <View style={DashBoardScreenStyles.mainContainer}>
       <View style={DashBoardScreenStyles.Header}>
@@ -422,7 +395,7 @@ const DashBoardScreen = () => {
           </View>
 
           {/* Pie Chart - Sales Distribution */}
-          {shouldShowPieChartSkeleton ? (
+          {showPieChartSkeleton ? (
             <PieChartSkeleton />
           ) : pieChartData.length > 0 ? (
             <View style={DashBoardScreenStyles.pieChartSection}>
@@ -439,7 +412,7 @@ const DashBoardScreen = () => {
                   innerRadius={getWidthEquivalent(45)}
                   sectionAutoFocus
                   isAnimated
-                  animationDuration={800}
+                  animationDuration={400}
                   strokeWidth={3}
                   strokeColor={colors.colors.white}
                   edgesRadius={5}

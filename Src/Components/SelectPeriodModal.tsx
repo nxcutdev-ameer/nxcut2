@@ -1,5 +1,8 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
+  Animated,
+  Dimensions,
+  Easing,
   Modal,
   ScrollView,
   StyleSheet,
@@ -22,6 +25,8 @@ import {
   InlineRangeCalendar,
   type DateRangeValue,
 } from "./InlineRangeCalendar";
+
+const AnimatedSafeAreaView = Animated.createAnimatedComponent(SafeAreaView);
 
 type PeriodRange = { fromDate: string; toDate: string };
 
@@ -113,6 +118,10 @@ const SelectPeriodModal: React.FC<SelectPeriodModalProps> = ({
   mode: _mode = "picker",
 }) => {
   const insets = useSafeAreaInsets();
+  const screenHeight = Dimensions.get("window").height;
+  const [internalVisible, setInternalVisible] = useState(visible);
+  const slideAnim = useRef(new Animated.Value(visible ? 0 : 1)).current;
+  const isClosingRef = useRef(false);
   const [selectedStartDate, setSelectedStartDate] = useState<Date | undefined>(
     toDateOrUndefined(initialFromDate)
   );
@@ -125,6 +134,54 @@ const SelectPeriodModal: React.FC<SelectPeriodModalProps> = ({
   const monthToDatePeriod = predefinedPeriods.find(
     (period) => period.label === "Month to Date"
   );
+
+  const animateToValue = useCallback(
+    (toValue: number, onFinished?: () => void) => {
+      Animated.timing(slideAnim, {
+        toValue,
+        duration: 300,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      }).start(({ finished }) => {
+        if (finished) {
+          onFinished?.();
+        }
+      });
+    },
+    [slideAnim]
+  );
+
+  const animateIn = useCallback(() => {
+    isClosingRef.current = false;
+    animateToValue(0);
+  }, [animateToValue]);
+
+  const animateOut = useCallback(
+    (after?: () => void) => {
+      if (isClosingRef.current) {
+        return;
+      }
+
+      isClosingRef.current = true;
+      animateToValue(1, () => {
+        isClosingRef.current = false;
+        setInternalVisible(false);
+        after?.();
+      });
+    },
+    [animateToValue]
+  );
+
+  useEffect(() => {
+    if (visible) {
+      slideAnim.stopAnimation();
+      slideAnim.setValue(1);
+      setInternalVisible(true);
+      animateIn();
+    } else if (internalVisible && !isClosingRef.current) {
+      animateOut();
+    }
+  }, [visible, internalVisible, animateIn, animateOut, slideAnim]);
 
   useEffect(() => {
     if (!visible) {
@@ -152,6 +209,10 @@ const SelectPeriodModal: React.FC<SelectPeriodModalProps> = ({
     }
   }, [visible, initialFromDate, initialToDate, monthToDatePeriod]);
 
+  const closeModal = useCallback(() => {
+    animateOut(onClose);
+  }, [animateOut, onClose]);
+
   const handleApplyRange = () => {
     if (!selectedStartDate || !selectedEndDate) {
       return;
@@ -174,7 +235,7 @@ const SelectPeriodModal: React.FC<SelectPeriodModalProps> = ({
       onDateRangeSelect(fromDate, toDate);
     }
 
-    onClose();
+    closeModal();
   };
 
   const handlePredefinedPeriod = (period: (typeof predefinedPeriods)[0]) => {
@@ -190,18 +251,47 @@ const SelectPeriodModal: React.FC<SelectPeriodModalProps> = ({
     setSelectedEndDate(endDate);
   };
 
+  const overlayOpacity = visible
+    ? 1
+    : slideAnim.interpolate({
+        inputRange: [0, 1],
+        outputRange: [1, 0],
+        extrapolate: "clamp",
+      });
+
+  const translateY = slideAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, screenHeight],
+    extrapolate: "clamp",
+  });
+
+  const containerOpacity = slideAnim.interpolate({
+    inputRange: [0, 0.1, 1],
+    outputRange: [1, 0.25, 0],
+    extrapolate: "clamp",
+  });
+
+  const shouldRenderModal = visible || internalVisible;
+
+  if (!shouldRenderModal) {
+    return null;
+  }
+
   return (
     <Modal
-      visible={visible}
+      visible={shouldRenderModal}
       animationType="none"
       presentationStyle="overFullScreen"
       transparent
       hardwareAccelerated
       statusBarTranslucent
-      onRequestClose={onClose}
+      onRequestClose={closeModal}
     >
-      <View style={styles.overlay}>
-        <SafeAreaView
+      <Animated.View
+        pointerEvents={visible ? "auto" : "none"}
+        style={[styles.overlay, { opacity: overlayOpacity }]}
+      >
+        <AnimatedSafeAreaView
           edges={["left", "right"]}
           style={[
             styles.filterContainer,
@@ -209,11 +299,12 @@ const SelectPeriodModal: React.FC<SelectPeriodModalProps> = ({
               paddingTop: insets.top,
               paddingBottom: insets.bottom,
             },
+            { transform: [{ translateY }], opacity: containerOpacity },
           ]}
         >
           <View style={styles.filterHeader}>
             <Text style={styles.filterHeaderTitle}>{title}</Text>
-            <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+            <TouchableOpacity onPress={closeModal} style={styles.closeButton}>
               <X size={25} color={colors.text} />
             </TouchableOpacity>
           </View>
@@ -300,8 +391,8 @@ const SelectPeriodModal: React.FC<SelectPeriodModalProps> = ({
               </Text>
             </TouchableOpacity>
           </View>
-        </SafeAreaView>
-      </View>
+        </AnimatedSafeAreaView>
+      </Animated.View>
     </Modal>
   );
 };
@@ -384,9 +475,9 @@ const styles = StyleSheet.create({
   },
   dateSeparator: {
     width: 2,
-    height: 20,
+    height: 10,
     backgroundColor: colors.border,
-    marginHorizontal: getWidthEquivalent(16),
+    marginHorizontal: getWidthEquivalent(10),
   },
   predefinedSection: {
     marginBottom: getHeightEquivalent(20),

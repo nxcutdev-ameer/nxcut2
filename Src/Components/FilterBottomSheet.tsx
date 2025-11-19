@@ -1,11 +1,10 @@
-import React from 'react';
+import React, { memo } from 'react';
 import {
   Modal,
   View,
   Text,
   TouchableOpacity,
   StyleSheet,
-  Animated,
 } from 'react-native';
 import colors from '../Constants/colors';
 import {
@@ -22,7 +21,12 @@ interface FilterBottomSheetProps {
   title: string;
 }
 
-const FilterBottomSheet: React.FC<FilterBottomSheetProps> = ({
+const filterOptions = [
+  { label: 'Last 7 days', value: 7 as const },
+  { label: 'Last 30 days', value: 30 as const },
+];
+
+const FilterBottomSheetComponent: React.FC<FilterBottomSheetProps> = ({
   visible,
   onClose,
   activeFilter,
@@ -30,16 +34,6 @@ const FilterBottomSheet: React.FC<FilterBottomSheetProps> = ({
   title,
 }) => {
   const { colors: paint } = colors;
-
-  console.log('[FilterBottomSheet] visible prop:', {
-    type: typeof visible,
-    value: visible,
-  });
-
-  const filterOptions = [
-    { label: 'Last 7 days', value: 7 as const },
-    { label: 'Last 30 days', value: 30 as const },
-  ];
 
   return (
     <Modal
@@ -54,62 +48,68 @@ const FilterBottomSheet: React.FC<FilterBottomSheetProps> = ({
           activeOpacity={1}
           onPress={onClose}
         />
-        <View style={[styles.bottomSheet, { backgroundColor: paint.white }]}>
-          <TouchableOpacity activeOpacity={1} onPress={() => {}}>
-            {/* Handle */}
-            <View style={[styles.handle, { backgroundColor: paint.border }]} />
+        {visible ? (
+          <View style={[styles.bottomSheet, { backgroundColor: paint.white }]}>
+            <TouchableOpacity activeOpacity={1} onPress={() => {}}>
+              {/* Handle */}
+              <View style={[styles.handle, { backgroundColor: paint.border }]} />
 
-            {/* Title */}
-            <Text style={[styles.title, { color: paint.text }]}>
-              Filter {title}
-            </Text>
+              {/* Title */}
+              <Text style={[styles.title, { color: paint.text }]}
+              >
+                Filter {title}
+              </Text>
 
-            {/* Filter Options */}
-            <View style={styles.optionsContainer}>
-              {filterOptions.map((option) => (
-                <TouchableOpacity
-                  key={option.value}
-                  style={[
-                    styles.option,
-                    { borderColor: paint.border },
-                    activeFilter === option.value && {
-                      backgroundColor: paint.primary,
-                      borderColor: paint.primary,
-                    },
-                  ]}
-                  onPress={() => onFilterSelect(option.value)}
-                >
-                  <Text
+              {/* Filter Options */}
+              <View style={styles.optionsContainer}>
+                {filterOptions.map((option) => (
+                  <TouchableOpacity
+                    key={option.value}
                     style={[
-                      styles.optionText,
-                      { color: paint.text },
+                      styles.option,
+                      { borderColor: paint.border },
                       activeFilter === option.value && {
-                        color: paint.white,
-                        fontWeight: '700',
+                        backgroundColor: paint.primary,
+                        borderColor: paint.primary,
                       },
                     ]}
+                    onPress={() => onFilterSelect(option.value)}
                   >
-                    {option.label}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
+                    <Text
+                      style={[
+                        styles.optionText,
+                        { color: paint.text },
+                        activeFilter === option.value && {
+                          color: paint.white,
+                          fontWeight: '700',
+                        },
+                      ]}
+                    >
+                      {option.label}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
 
-            {/* Cancel Button */}
-            <TouchableOpacity
-              style={[styles.cancelButton, { borderColor: paint.border }]}
-              onPress={onClose}
-            >
-              <Text style={[styles.cancelText, { color: paint.textSecondary }]}>
-                Cancel
-              </Text>
+              {/* Cancel Button */}
+              <TouchableOpacity
+                style={[styles.cancelButton, { borderColor: paint.border }]}
+                onPress={onClose}
+              >
+                <Text style={[styles.cancelText, { color: paint.textSecondary }]}
+                >
+                  Cancel
+                </Text>
+              </TouchableOpacity>
             </TouchableOpacity>
-          </TouchableOpacity>
-        </View>
+          </View>
+        ) : null}
       </View>
     </Modal>
   );
 };
+
+const FilterBottomSheet = memo(FilterBottomSheetComponent);
 
 const styles = StyleSheet.create({
   overlay: {

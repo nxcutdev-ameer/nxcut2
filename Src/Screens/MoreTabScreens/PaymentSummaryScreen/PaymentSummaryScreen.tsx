@@ -5,6 +5,7 @@ import usePaymentSummaryScreenVM from "./PaymentSummaryScreenVM";
 import SelectPeriodModal from "../../../Components/SelectPeriodModal";
 import PaymentSummaryTable from "../../../Components/PaymentSummaryTable";
 import ExportBottomSheet from "../../../Components/ExportBottomSheet";
+import FilterPanelModal from "../../../Components/FilterPanelModal";
 import {
   ArrowLeft,
   SlidersVertical,
@@ -12,11 +13,25 @@ import {
   Plus,
 } from "lucide-react-native";
 import colors from "../../../Constants/colors";
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
+
+type PageFilterState = {
+  location_ids: string[];
+  staff_ids: string[];
+};
 
 const PaymentSummaryScreen = () => {
   const [showPeriodFilter, setShowPeriodFilter] = useState(false);
   const [exportSheetOpen, setExportSheetOpen] = useState(false);
+  const [showAdvancedFilter, setShowAdvancedFilter] = useState(false);
+  const [expandedFilter, setExpandedFilter] = useState<string | null>(null);
+  const [pageFilter, setPageFilter] = useState<PageFilterState>({
+    location_ids: [],
+    staff_ids: [],
+  });
+
+  const allLocations = useMemo<any[]>(() => [], []);
+  const allTeamMembers = useMemo<any[]>(() => [], []);
 
   const {
     navigation,
@@ -85,6 +100,15 @@ const PaymentSummaryScreen = () => {
               {getDateRangeDisplay()}
             </Text>
           </TouchableOpacity>
+          {/* <TouchableOpacity
+            style={PaymentSummaryScreenStyles.secondaryFilterButton}
+            onPress={() => {
+              console.log("Opening advanced filters...");
+              setShowAdvancedFilter(true);
+            }}
+          >
+            <SlidersVertical size={18} color={colors.colors.text} />
+          </TouchableOpacity> */}
         </View>
       </View>
 
@@ -121,6 +145,45 @@ const PaymentSummaryScreen = () => {
         onExportCSV={exportAsCSV}
         onExportPDF={exportAsPDF}
         onExportExcel={exportAsExcel}
+      />
+
+      <FilterPanelModal
+        visible={showAdvancedFilter}
+        onClose={() => setShowAdvancedFilter(false)}
+        onClear={() => {
+          setPageFilter({ location_ids: [], staff_ids: [] });
+          setExpandedFilter(null);
+        }}
+        onApply={() => {
+          setShowAdvancedFilter(false);
+          fetchPaymentSummary();
+        }}
+        expandedFilter={expandedFilter}
+        toggleFilterAccordion={(filterType: string) => {
+          setExpandedFilter((prev) => (prev === filterType ? null : filterType));
+        }}
+        allLocations={allLocations}
+        allTeamMembers={allTeamMembers}
+        pageFilter={pageFilter}
+        allowedFilters={["location"]}
+        toggleLocationFilter={(locationId: string) => {
+          setPageFilter((prev) => {
+            const exists = prev.location_ids.includes(locationId);
+            const location_ids = exists
+              ? prev.location_ids.filter((id) => id !== locationId)
+              : [...prev.location_ids, locationId];
+            return { ...prev, location_ids };
+          });
+        }}
+        toggleTeamMemberFilter={(staffId: string) => {
+          setPageFilter((prev) => {
+            const exists = prev.staff_ids.includes(staffId);
+            const staff_ids = exists
+              ? prev.staff_ids.filter((id) => id !== staffId)
+              : [...prev.staff_ids, staffId];
+            return { ...prev, staff_ids };
+          });
+        }}
       />
     </SafeAreaView>
   );

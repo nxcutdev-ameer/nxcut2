@@ -140,7 +140,7 @@ const TransactionDetailsScreen: React.FC<TransactionDetailsProps> = ({
               <Ionicons
                 name="cash-outline"
                 size={18}
-                color={colors.success}
+                color={colors.black}
                 style={styles.summaryIcon}
               />
               <View style={styles.summaryTextGroup}>
@@ -495,7 +495,7 @@ const styles = StyleSheet.create({
     marginTop: secondarySpacing * 0.3,
     fontSize: priceFontSize,
     fontWeight: "600",
-    color: colors.success,
+    color: colors.black,
   },
   emptyState: {
     alignItems: "center",
