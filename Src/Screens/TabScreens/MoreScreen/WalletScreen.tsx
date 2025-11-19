@@ -9,6 +9,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
+import { StackNavigationProp } from "@react-navigation/stack";
 import {
   ChevronDown,
   ChevronLeft,
@@ -20,10 +21,16 @@ import {
 } from "lucide-react-native";
 import { getHeightEquivalent, getWidthEquivalent } from "../../../Utils/helpers";
 import { colors } from "../../../Constants/colors";
+import { RootStackParamList } from "../../../Navigations/RootStackNavigator";
 import Modal from "react-native-modal";
 
+type WalletScreenNavigationProp = StackNavigationProp<
+  RootStackParamList,
+  "WalletScreen"
+>;
+
 function WalletScreen() {
-  const navigation = useNavigation();
+  const navigation = useNavigation<WalletScreenNavigationProp>();
   const [isActionsModalVisible, setIsActionsModalVisible] = useState(false);
 
   const walletActions = useMemo(
