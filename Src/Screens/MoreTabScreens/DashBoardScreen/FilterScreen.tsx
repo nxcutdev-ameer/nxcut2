@@ -395,7 +395,7 @@ const FilterScreen: React.FC<FilterScreenProps> = ({
               onPress={onClose}
               style={FilterScreenStyles.closeButton}
             >
-              <X size={24} color={paint.text} />
+              <X size={20} color={paint.text} />
             </TouchableOpacity>
           </View>
         </View>
@@ -421,7 +421,7 @@ const FilterScreen: React.FC<FilterScreenProps> = ({
                 FilterScreenStyles.dropdown,
                 {
                   backgroundColor: paint.background,
-                  borderColor: paint.border,
+                  borderColor: paint.black,
                 },
               ]}
               onPress={() => setShowPeriodDropdown(!showPeriodDropdown)}
@@ -490,7 +490,7 @@ const FilterScreen: React.FC<FilterScreenProps> = ({
                     FilterScreenStyles.dateInput,
                     {
                       backgroundColor: paint.background,
-                      borderColor: startDateError ? paint.danger : paint.border,
+                      borderColor: startDateError ? paint.danger : paint.black,
                       color: paint.text,
                     },
                   ]}
@@ -526,7 +526,7 @@ const FilterScreen: React.FC<FilterScreenProps> = ({
                     FilterScreenStyles.dateInput,
                     {
                       backgroundColor: paint.background,
-                      borderColor: endDateError ? paint.danger : paint.border,
+                      borderColor: endDateError ? paint.danger : paint.black,
                       color: paint.text,
                     },
                   ]}
@@ -585,8 +585,8 @@ const FilterScreen: React.FC<FilterScreenProps> = ({
               FilterScreenStyles.applyButton,
               {
                 backgroundColor: isApplyDisabled
-                  ? `${paint.primary}80`
-                  : paint.primary,
+                  ? `${paint.black}80`
+                  : paint.black,
               },
             ]}
             onPress={handleApply}

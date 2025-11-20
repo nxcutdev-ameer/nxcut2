@@ -32,8 +32,8 @@ export const FilterScreenStyles = StyleSheet.create({
     justifyContent: "space-between",
   },
   headerTitle: {
-    fontSize: fontEq(24),
-    fontWeight: "700",
+    fontSize: fontEq(20),
+    fontWeight: "600",
   },
   closeButton: {
     width: 40,
@@ -66,7 +66,7 @@ export const FilterScreenStyles = StyleSheet.create({
     borderWidth: 1,
   },
   dropdownText: {
-    fontSize: fontEq(16),
+    fontSize: fontEq(14),
     fontWeight: "500",
   },
   dropdownMenu: {
@@ -115,7 +115,7 @@ export const FilterScreenStyles = StyleSheet.create({
     paddingVertical: getHeightEquivalent(14),
     borderRadius: 12,
     borderWidth: 1,
-    fontSize: fontEq(15),
+    fontSize: fontEq(14),
     fontWeight: "500",
   },
   errorText: {

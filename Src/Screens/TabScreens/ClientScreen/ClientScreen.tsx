@@ -167,15 +167,15 @@ const ClientScreen = () => {
               navigateToAddClient();
             }}
           >
-            <Plus size={20} />
             <Text style={ClientScreenStyles.actionButtonText}>Add</Text>
+            <Plus size={20} />
           </TouchableOpacity>
         </View>
       </View>
 
       <View style={ClientScreenStyles.bodyContainer}>
         <View style={ClientScreenStyles.titleContentContainer}>
-          <Text style={ClientScreenStyles.title}>Clients List</Text>
+          {/* <Text style={ClientScreenStyles.title}>Clients List</Text> */}
           <Text style={ClientScreenStyles.subTitle}>
             View, add, edit and delete client's details
           </Text>

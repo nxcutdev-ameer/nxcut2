@@ -482,7 +482,6 @@ const FinanceSummaryScreen = () => {
         </TouchableOpacity>
 
         <View style={styles.titleContainer}>
-          <DollarSign size={25} color={"#10b981"} fill={"#10b981"} />
           <TouchableOpacity
             onPress={() => {
               console.log("EllipsisVertical pressed");

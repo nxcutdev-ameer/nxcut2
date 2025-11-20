@@ -30,6 +30,8 @@ export interface SalesByLocationRow {
   online_amount: number;
   payment_method_count?: number;
   other_amount: number;
+  total_sales_all_methods?: number;
+  redeem_amount?: number;
 }
 
 //const EXCLUDED_PAYMENT_METHODS = new Set(["membership", "voucher", "courtesy"]);
@@ -209,6 +211,15 @@ export const reportsRepository = {
           online_amount: online,
           payment_method_count: paymentMethodCount,
           other_amount: derivedOther,
+          total_sales_all_methods:
+            row.total_sales_all_methods !== undefined &&
+            row.total_sales_all_methods !== null
+              ? Number(row.total_sales_all_methods) || 0
+              : undefined,
+          redeem_amount:
+            row.redeem_amount !== undefined && row.redeem_amount !== null
+              ? Number(row.redeem_amount) || 0
+              : undefined,
         } as SalesByLocationRow;
       });
     } catch (error) {

@@ -17,7 +17,7 @@ export const MoreScreenStyles = StyleSheet.create({
     padding: theme.spacing.md,
   },
   header: {
-    flexDirection: "row",
+    flexDirection: "row-reverse",
     justifyContent: "space-between",
     alignItems: "center",
     marginBottom: theme.spacing.xs,

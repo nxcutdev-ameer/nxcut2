@@ -81,7 +81,7 @@ const MoreScreen = () => {
     <SafeAreaView style={MoreScreenStyles.mainContainer}>
       {/* Header */}
       <View style={MoreScreenStyles.header}>
-        <Boxes size={24} color={colors.text} />
+        {/* <Boxes size={24} color={colors.text} /> */}
         <View style={MoreScreenStyles.headerRight}>
           <TouchableOpacity
             onPress={() => navigation.navigate("NotificationScreen")}

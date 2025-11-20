@@ -260,18 +260,32 @@ export const InlineRangeCalendar: React.FC<InlineRangeCalendarProps> = ({
             const isToday = isSameDay(date, today);
 
             const isRangeEdge = selectionStart || selectionEnd;
+            const isSingleDayRange =
+              selectionStart && selectionEnd && startDate && endDate && isSameDay(startDate, endDate);
 
-            const backgroundColor = isRangeEdge
-              ? paint.black
-              : inRange
-              ? paint.gray[200]
-              : "transparent";
+            const baseColor = paint.black;
+            const betweenColor = paint.gray[200];
 
             const textColor = isRangeEdge
               ? paint.white
               : !isCurrentMonth || disabled
-              ? `${paint.textSecondary}80`
+              ? `${paint.textSecondary}66`
               : paint.text;
+
+            let rangeBackgroundStyle = null;
+            if (startDate && endDate && !isSingleDayRange) {
+              if (selectionStart) {
+                rangeBackgroundStyle = styles.rangeBackgroundStart;
+              } else if (selectionEnd) {
+                rangeBackgroundStyle = styles.rangeBackgroundEnd;
+              } else if (inRange) {
+                rangeBackgroundStyle = styles.rangeBackgroundBetween;
+              }
+            } else if (inRange && !isRangeEdge) {
+              rangeBackgroundStyle = styles.rangeBackgroundBetween;
+            }
+
+            const showBackground = rangeBackgroundStyle && !selectionStart && !selectionEnd;
 
             return (
               <TouchableOpacity
@@ -288,29 +302,40 @@ export const InlineRangeCalendar: React.FC<InlineRangeCalendarProps> = ({
                 <View
                   style={[
                     styles.dayInner,
-                    selectionStart && styles.rangeStart,
-                    selectionEnd && styles.rangeEnd,
-                    inRange && styles.rangeBetween,
-                    { backgroundColor },
-                    isRangeEdge
-                      ? {
-                          borderColor: paint.primary,
-                          borderWidth: 1,
-                        }
-                      : null,
+                    rangeBackgroundStyle,
                   ]}
                 >
-                  <Text
+                  {showBackground && (
+                    <View
+                      style={[
+                        styles.rangeBackground,
+                        { backgroundColor: betweenColor },
+                        rangeBackgroundStyle,
+                      ]}
+                    />
+                  )}
+                  <View
                     style={[
-                      styles.dayLabel,
-                      { color: textColor },
-                      isToday && !selectionStart && !selectionEnd
-                        ? { borderColor: paint.primary, borderWidth: 1, borderRadius: 999 }
-                        : null,
+                      styles.dayCircle,
+                      selectionStart && styles.rangeCircle,
+                      selectionEnd && styles.rangeCircle,
+                      (selectionStart || selectionEnd) && { backgroundColor: baseColor },
+                      !isSingleDayRange && selectionStart && styles.rangeCircleStart,
+                      !isSingleDayRange && selectionEnd && styles.rangeCircleEnd,
                     ]}
                   >
-                    {date.getDate()}
-                  </Text>
+                    <Text
+                      style={[
+                        styles.dayLabel,
+                        { color: textColor },
+                        isToday && !selectionStart && !selectionEnd
+                          ? { borderColor: paint.black, borderWidth: 1, borderRadius: 999 }
+                          : null,
+                      ]}
+                    >
+                      {date.getDate()}
+                    </Text>
+                  </View>
                 </View>
               </TouchableOpacity>
             );
@@ -354,7 +379,7 @@ const styles = {
     height: getWidthEquivalent(34),
   },
   monthLabel: {
-    fontSize: fontEq(18),
+    fontSize: fontEq(16),
     fontWeight: "600" as const,
   },
   weekRow: {
@@ -365,8 +390,9 @@ const styles = {
   weekDayLabel: {
     width: `${100 / DAYS_IN_WEEK}%`,
     textAlign: "center" as const,
-    fontSize: fontEq(13),
-    fontWeight: "500" as const,
+    fontSize: fontEq(11),
+    fontWeight: "400" as const,
+    letterSpacing: 0.4,
   },
   daysContainer: {
     flexDirection: "row" as const,
@@ -378,28 +404,56 @@ const styles = {
     alignItems: "center" as const,
   },
   dayInner: {
-    minWidth: getWidthEquivalent(34),
-    minHeight: getWidthEquivalent(34),
-    borderRadius: getWidthEquivalent(10),
+    width: "100%",
+    minHeight: getWidthEquivalent(30),
     alignItems: "center" as const,
     justifyContent: "center" as const,
   },
   dayLabel: {
-    fontSize: fontEq(15),
-    fontWeight: "600" as const,
+    fontSize: fontEq(13),
+    fontWeight: "500" as const,
     paddingHorizontal: getWidthEquivalent(4),
     paddingVertical: getHeightEquivalent(2),
   },
-  rangeStart: {
-  //  borderTopLeftRadius: getWidthEquivalent(16),
-   // borderBottomLeftRadius: getWidthEquivalent(16),
+  dayCircle: {
+    width: getWidthEquivalent(32),
+    height: getWidthEquivalent(32),
+    borderRadius: getWidthEquivalent(16),
+    alignItems: "center" as const,
+    justifyContent: "center" as const,
   },
-  rangeEnd: {
-  //  borderTopRightRadius: getWidthEquivalent(16),
-  //  borderBottomRightRadius: getWidthEquivalent(16),
+  rangeCircle: {
+    alignSelf: "center" as const,
   },
-  rangeBetween: {
-    borderRadius: getWidthEquivalent(8),
+  rangeCircleStart: {
+    marginLeft: getWidthEquivalent(4),
+  },
+  rangeCircleEnd: {
+    marginRight: getWidthEquivalent(4),
+  },
+  rangeBackground: {
+    position: "absolute" as const,
+    top: getHeightEquivalent(4),
+    bottom: getHeightEquivalent(4),
+    left: 0,
+    right: 0,
+    borderRadius: 0,
+  },
+  rangeBackgroundBetween: {
+    left: 0,
+    right: 0,
+  },
+  rangeBackgroundStart: {
+    //left: getWidthEquivalent(1),
+    right: 0,
+    borderTopRightRadius: getWidthEquivalent(6),
+    borderBottomRightRadius: getWidthEquivalent(6),
+  },
+  rangeBackgroundEnd: {
+    left: 0,
+   // right: getWidthEquivalent(4),
+    borderTopLeftRadius: getWidthEquivalent(6),
+    borderBottomLeftRadius: getWidthEquivalent(6),
   },
 } as const;
 

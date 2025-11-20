@@ -589,7 +589,7 @@ export const PaymentTransactionsScreen = () => {
         </TouchableOpacity>
 
         <View style={styles.titleContainer}>
-          <Star size={25} color={"#fbbf24"} fill={"#fbbf24"} />
+          {/* <Star size={25} color={"#fbbf24"} fill={"#fbbf24"} /> */}
           <TouchableOpacity
             onPress={() => {
               console.log("EllipsisVertical pressed");

@@ -110,14 +110,14 @@ const ClientDetail = () => {
           style={ClientDetailStyles.actionButton}
           onPress={handleCall}
         >
-          <Phone size={20} color={colors.white} />
+          <Phone size={20} color={colors.black} />
           <Text style={ClientDetailStyles.actionButtonText}>Call</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={[ClientDetailStyles.actionButton, ClientDetailStyles.whatsappButton]}
           onPress={handleWhatsApp}
         >
-          <FontAwesome name="whatsapp" size={20} color={colors.white} />
+          <FontAwesome name="whatsapp" size={20} color={colors.black} />
           <Text style={ClientDetailStyles.actionButtonText}>WhatsApp</Text>
         </TouchableOpacity>
       </View>
@@ -159,8 +159,8 @@ const ClientDetailStyles = StyleSheet.create({
     paddingHorizontal: getWidthEquivalent(24),
   },
   clientImageContainer: {
-    height: getHeightEquivalent(80),
-    width: getHeightEquivalent(80),
+    height: getHeightEquivalent(100),
+    width: getHeightEquivalent(100),
     borderRadius: 100,
     alignItems: "center",
     justifyContent: "center",
@@ -168,8 +168,8 @@ const ClientDetailStyles = StyleSheet.create({
     marginBottom: getHeightEquivalent(10),
   },
   clientInitials: {
-    fontSize: fontEq(28),
-    fontWeight: "600",
+    fontSize: fontEq(24),
+    fontWeight: "700",
     color: "#3C096C",
   },
   clientNameRow: {
@@ -184,7 +184,7 @@ const ClientDetailStyles = StyleSheet.create({
     marginRight: getWidthEquivalent(12),
   },
   clientName: {
-    fontSize: fontEq(20),
+    fontSize: fontEq(16),
     fontWeight: "700",
     color: colors.black,
     marginBottom: getHeightEquivalent(4),
@@ -196,7 +196,7 @@ const ClientDetailStyles = StyleSheet.create({
     textAlign: "center",
   },
   clientSalesBadge: {
-    backgroundColor: colors.gray[100],
+    backgroundColor: colors.gray[50],
     borderRadius: 10,
     paddingVertical: getHeightEquivalent(6),
     paddingHorizontal: getWidthEquivalent(14),
@@ -205,13 +205,13 @@ const ClientDetailStyles = StyleSheet.create({
   },
   clientSales: {
     fontSize: fontEq(14),
-    fontWeight: "600",
+    fontWeight: "500",
     color: colors.gray[700],
   },
   infoCard: {
     marginHorizontal: 20,
     padding: 20,
-    backgroundColor: colors.gray[100],
+    backgroundColor: colors.gray[50],
     borderRadius: 12,
     elevation: 2,
   },
@@ -228,17 +228,23 @@ const ClientDetailStyles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     paddingVertical: getHeightEquivalent(12),
-    borderRadius: 10,
-    backgroundColor: colors.primary,
+    borderRadius: 50,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.white,
     gap: getWidthEquivalent(8),
   },
   whatsappButton: {
-    backgroundColor: "#25D366",
+    backgroundColor: "white",
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 50,
+    gap: getWidthEquivalent(8),
   },
   actionButtonText: {
-    fontSize: fontEq(16),
-    fontWeight: "600",
-    color: colors.white,
+    fontSize: fontEq(14),
+    fontWeight: "500",
+    color: colors.black,
   },
   label: {
     fontSize: fontEq(14),

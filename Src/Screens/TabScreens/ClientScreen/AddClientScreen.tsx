@@ -186,14 +186,13 @@ const AddClientScreen: React.FC<AddClientScreenProps> = ({
   return (
     <SafeAreaView style={AddClientStyles.container}>
       <View style={AddClientStyles.header}>
+        <Text style={AddClientStyles.headerTitle}>Add a new client</Text>
         <TouchableOpacity
           onPress={() => navigation.goBack()}
           style={AddClientStyles.closeButton}
         >
-          <X size={24} color={colors.text} />
+          <X size={20} color={colors.text} />
         </TouchableOpacity>
-        <Text style={AddClientStyles.headerTitle}>Add New Client</Text>
-        <View style={AddClientStyles.headerSpacer} />
       </View>
 
       <ScrollView style={AddClientStyles.scrollView}>
@@ -377,7 +376,7 @@ const AddClientScreen: React.FC<AddClientScreenProps> = ({
             disabled={isSaving}
           >
             <Text style={AddClientStyles.saveButtonText}>
-              {isSaving ? "Saving..." : "Save Client"}
+              {isSaving ? "Saving..." : "Save"}
             </Text>
           </TouchableOpacity>
         </View>

@@ -38,13 +38,13 @@ export const styles = StyleSheet.create({
     borderBottomColor: colors.border,
   },
   headerText: {
-    fontSize: fontEq(28),
+    fontSize: fontEq(22),
     fontWeight: "700",
     color: colors.text,
     marginBottom: getHeightEquivalent(8),
   },
   subHeaderText: {
-    fontSize: fontEq(16),
+    fontSize: fontEq(14),
     color: colors.textSecondary,
     marginBottom: getHeightEquivalent(20),
     lineHeight: getHeightEquivalent(22),

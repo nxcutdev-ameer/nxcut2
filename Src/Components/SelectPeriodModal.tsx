@@ -305,7 +305,7 @@ const SelectPeriodModal: React.FC<SelectPeriodModalProps> = ({
           <View style={styles.filterHeader}>
             <Text style={styles.filterHeaderTitle}>{title}</Text>
             <TouchableOpacity onPress={closeModal} style={styles.closeButton}>
-              <X size={25} color={colors.text} />
+              <X size={20} color={colors.text} />
             </TouchableOpacity>
           </View>
 
@@ -315,19 +315,19 @@ const SelectPeriodModal: React.FC<SelectPeriodModalProps> = ({
             showsVerticalScrollIndicator={false}
           >
             <View style={styles.dateRangeSection}>
-              <Text style={styles.sectionTitle}>Custom Date Range</Text>
+              {/* <Text style={styles.sectionTitle}>Custom Date Range</Text> */}
               <View style={styles.dateRangeButton}>
                 <View style={styles.dateRange}>
                   <View style={styles.dateItem}>
-                    <Text style={styles.dateLabel}>From</Text>
                     <Text style={styles.dateValue}>
+                      <Text style={styles.dateLabel}>From</Text>{" "}
                       {formatDisplayDate(selectedStartDate)}
                     </Text>
                   </View>
                   <View style={styles.dateSeparator} />
                   <View style={styles.dateItem}>
-                    <Text style={styles.dateLabel}>To</Text>
                     <Text style={styles.dateValue}>
+                      <Text style={styles.dateLabel}>To</Text>{" "}
                       {formatDisplayDate(selectedEndDate)}
                     </Text>
                   </View>
@@ -429,7 +429,7 @@ const styles = StyleSheet.create({
   closeButton: {
     padding: 8,
     borderRadius: 20,
-    backgroundColor: colors.gray[100],
+    backgroundColor: colors.white,
   },
   content: {
     flex: 1,
@@ -465,12 +465,13 @@ const styles = StyleSheet.create({
   },
   dateLabel: {
     fontSize: fontEq(14),
-    color: colors.textSecondary,
+    fontWeight: "500",
+    color: colors.text,
     marginBottom: 4,
   },
   dateValue: {
-    fontSize: fontEq(16),
-    fontWeight: "600",
+    fontSize: fontEq(14),
+    fontWeight: "400",
     color: colors.text,
   },
   dateSeparator: {
@@ -526,9 +527,9 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
   },
   filterButton: {
-    backgroundColor: colors.primary,
+    backgroundColor: colors.black,
     paddingVertical: getHeightEquivalent(16),
-    borderRadius: 12,
+    borderRadius: 50,
     alignItems: "center",
     justifyContent: "center",
   },

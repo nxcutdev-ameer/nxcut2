@@ -655,10 +655,14 @@ const useDashBoardScreenVM = (dateRange?: {
       return 0;
     }
 
-    return topFiveSalesSummary.reduce(
-      (sum, location) => sum + (location.total_sales_amount || 0),
-      0
-    );
+    return topFiveSalesSummary.reduce((sum, location) => {
+      const locationTotal =
+        location.total_sales_all_methods !== undefined
+          ? location.total_sales_all_methods
+          : location.total_sales_amount;
+
+      return sum + (locationTotal || 0);
+    }, 0);
   }, [topFiveSalesSummary]);
 
   const totalAppointmentsCount = useMemo(() => {
