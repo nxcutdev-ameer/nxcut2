@@ -41,6 +41,26 @@ interface DraggableCalendarColumnProps {
   minHour: number;
   maxHour: number;
   onScrollEnable?: (enabled: boolean) => void;
+  editingState?: {
+    appointmentId: string;
+    pendingStaffId: string;
+    resetKey: number;
+  } | null;
+  onStartEditing?: (
+    appointment: {
+      title: string;
+      start: Date;
+      end: Date;
+      data: AppointmentCalanderBO;
+    },
+    staffId: string
+  ) => void;
+  onAppointmentPreview?: (
+    appointmentServiceId: string,
+    newStartTime: Date,
+    newEndTime: Date,
+    targetStaffId: string
+  ) => void;
 }
 
 const DraggableCalendarColumn: React.FC<DraggableCalendarColumnProps> = ({
@@ -56,6 +76,9 @@ const DraggableCalendarColumn: React.FC<DraggableCalendarColumnProps> = ({
   minHour,
   maxHour,
   onScrollEnable,
+  editingState,
+  onStartEditing,
+  onAppointmentPreview,
 }) => {
   const navigation = useNavigation<any>();
   const [selectedSlot, setSelectedSlot] = useState<{
@@ -102,55 +125,6 @@ const DraggableCalendarColumn: React.FC<DraggableCalendarColumnProps> = ({
     { length: maxHour - minHour + 1 },
     (_, i) => minHour + i
   );
-
-  const handleDragEnd = (
-    appointmentServiceId: string,
-    newStartTime: Date,
-    newEndTime: Date,
-    columnsMoved: number
-  ) => {
-    let targetStaffId: string | undefined = undefined;
-
-    if (columnsMoved !== 0) {
-      const targetIndex = columnIndex + columnsMoved;
-
-      // Validate target index is within bounds
-      if (targetIndex >= 0 && targetIndex < allStaffIds.length) {
-        targetStaffId = allStaffIds[targetIndex];
-        console.log(
-          `[DraggableCalendarColumn] Moving appointment ${appointmentServiceId}:`
-        );
-        console.log(`  From: column ${columnIndex} (staff: ${staffId})`);
-        console.log(`  To: column ${targetIndex} (staff: ${targetStaffId})`);
-        console.log(`  Columns moved: ${columnsMoved}`);
-      } else {
-        console.log(
-          `[DraggableCalendarColumn] Target column ${targetIndex} out of bounds (0-${
-            allStaffIds.length - 1
-          }), keeping in current column`
-        );
-      }
-    } else {
-      console.log(
-        `[DraggableCalendarColumn] No column change for appointment ${appointmentServiceId}`
-      );
-    }
-
-    // Fire and forget - don't await, let backend update happen in background
-    // UI is already updated optimistically
-    onAppointmentUpdate(
-      appointmentServiceId,
-      newStartTime,
-      newEndTime,
-      targetStaffId
-    ).catch((error) => {
-      console.error(
-        "[DraggableCalendarColumn] Background update failed:",
-        error
-      );
-      // Error handling will be done in the VM layer
-    });
-  };
 
   const handleResizeEnd = (
     appointmentServiceId: string,
@@ -414,23 +388,63 @@ const DraggableCalendarColumn: React.FC<DraggableCalendarColumnProps> = ({
         ]}
       >
         {appointmentsWithLayout.map((appointment) => {
+          const isEditing =
+            editingState?.appointmentId === appointment.data.id;
+          const canDrag = Boolean(isEditing);
+          const resetTrigger = isEditing ? editingState?.resetKey : undefined;
+
           const availableWidth = showHours
             ? columnWidth - getWidthEquivalent(60)
             : columnWidth;
           const appointmentWidth = availableWidth / appointment.totalColumns;
           const leftOffset = appointmentWidth * appointment.column;
 
+          const handleAppointmentLongPress = () => {
+            if (!onStartEditing) {
+              return;
+            }
+
+            // Prevent starting a new edit while another appointment is active
+            if (editingState && !isEditing) {
+              return;
+            }
+
+            onStartEditing(appointment, staffId);
+          };
+
+          const handleAppointmentDragEnd = (
+            newStart: Date,
+            newEnd: Date,
+            columnsMoved: number
+          ) => {
+            if (!isEditing) {
+              return;
+            }
+
+            let targetStaffId = staffId;
+
+            if (columnsMoved !== 0) {
+              const targetIndex = columnIndex + columnsMoved;
+
+              if (targetIndex >= 0 && targetIndex < allStaffIds.length) {
+                targetStaffId = allStaffIds[targetIndex];
+              }
+            }
+
+            onAppointmentPreview?.(
+              appointment.data.id,
+              newStart,
+              newEnd,
+              targetStaffId
+            );
+          };
+
           return (
             <DraggableAppointment
               key={`${appointment.data.id}-${appointment.index}`}
               event={appointment}
               onDragEnd={(newStart, newEnd, columnsMoved) =>
-                handleDragEnd(
-                  appointment.data.id,
-                  newStart,
-                  newEnd,
-                  columnsMoved
-                )
+                handleAppointmentDragEnd(newStart, newEnd, columnsMoved)
               }
               onResizeEnd={(newEnd) =>
                 handleResizeEnd(appointment.data.id, appointment.start, newEnd)
@@ -439,9 +453,14 @@ const DraggableCalendarColumn: React.FC<DraggableCalendarColumnProps> = ({
               columnWidth={appointmentWidth}
               leftOffset={leftOffset}
               minHour={minHour}
+              maxHour={maxHour}
               staffIndex={appointment.index}
               staffId={staffId}
               onScrollEnable={onScrollEnable}
+              onLongPress={handleAppointmentLongPress}
+              canDrag={canDrag}
+              isEditing={isEditing}
+              resetTrigger={resetTrigger}
               onPress={() =>
                 navigation.navigate("AppointmentDetailsScreen", {
                   appointment: appointment.data,
@@ -506,8 +525,8 @@ const styles = StyleSheet.create({
   },
   hourLabel: {
     fontSize: fontEq(12),
-    fontWeight: "600",
-    color: colors.textSecondary,
+    fontWeight: "700",
+    color: colors.black,
   },
   quarterLine: {
     position: "absolute",

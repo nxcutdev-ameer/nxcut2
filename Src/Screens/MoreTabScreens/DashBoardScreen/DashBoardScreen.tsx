@@ -119,6 +119,8 @@ const DashBoardScreen = () => {
     textColor: string;
     textSize: number;
     fontWeight: "bold";
+    shiftTextX?: number;
+    shiftTextY?: number;
     label: string;
     amount: number;
     textBackgroundRadius: number;
@@ -234,6 +236,8 @@ const DashBoardScreen = () => {
             textColor: colors.colors.white,
             textSize: fontEq(10),
             fontWeight: "bold",
+            shiftTextX: -getWidthEquivalent(7),
+            shiftTextY: getHeightEquivalent(7),
             label: locationLabel,
             amount: value,
             textBackgroundRadius: 18,
@@ -255,6 +259,8 @@ const DashBoardScreen = () => {
             textColor: colors.colors.white,
             textSize: fontEq(9),
             fontWeight: "bold",
+            shiftTextX: -getWidthEquivalent(6),
+            shiftTextY: getHeightEquivalent(6),
             label: `${locationLabel} Redeem`,
             amount: redeemAmount,
             textBackgroundRadius: 16,
@@ -326,7 +332,7 @@ const DashBoardScreen = () => {
           onPress={() => navigation.goBack()}
           style={DashBoardScreenStyles.backButton}
         >
-          <ChevronLeft size={24} color={colors.colors.text} />
+          <ChevronLeft size={20} color={colors.colors.black} />
           <Text style={DashBoardScreenStyles.backText}>Back</Text>
         </TouchableOpacity>
       </View>
@@ -530,7 +536,7 @@ const DashBoardScreen = () => {
                                   DashBoardScreenStyles.pieChartLegendLabel
                                 }
                               >
-                                Redeem
+                                Redemption 
                               </Text>
                             </View>
                             <View

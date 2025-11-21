@@ -49,7 +49,7 @@ export const LocationScreenStyles = StyleSheet.create({
     borderColor: colors.borderFocus,
   },
   locationText: {
-    fontSize: fontEq(20),
+    fontSize: fontEq(18),
     color: colors.text,
     fontWeight: "700",
     marginBottom: getHeightEquivalent(10),

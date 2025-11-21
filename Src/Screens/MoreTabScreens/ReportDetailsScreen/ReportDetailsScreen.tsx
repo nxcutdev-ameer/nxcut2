@@ -43,11 +43,11 @@ const ReportsDetailsScreen = () => {
           onPress={() => navigation.goBack()}
           style={ReportDetailsScreenStyles.backButton}
         >
-          <ArrowLeft size={24} color={colors.colors.text} />
+          <ArrowLeft size={20} color={colors.colors.black} />
           <Text
             style={{
-              fontSize: fontEq(18),
-              color: colors.colors.text,
+              fontSize: fontEq(16),
+              color: colors.colors.black,
               fontWeight: "500",
               marginLeft: getWidthEquivalent(5),
             }}

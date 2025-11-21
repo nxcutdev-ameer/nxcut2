@@ -61,7 +61,7 @@ const MoreScreen = () => {
     {
       label: "Reports",
       icon: BarChart,
-      onPress: () => navigation.navigate("ReportsScreen"),
+      onPress: () => navigation.navigate("ReportsDetailsScreen"),
     },
     // { label: "Add-ons", icon: Grid, onPress: showComingSoon },
     // {

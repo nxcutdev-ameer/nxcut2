@@ -45,7 +45,7 @@ const ListItem: React.FC<ListItemProps> = ({
             <Text style={styles.badgeText}>{badgeValue}</Text>
           </View>
         )}
-        <ChevronRight size={18} color={colors.textSecondary} />
+        <ChevronRight size={18} color={colors.black} />
       </View>
     </TouchableOpacity>
   );
@@ -60,8 +60,8 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     paddingVertical: theme.spacing.md,
     paddingHorizontal: theme.spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.borderLight,
+    // borderBottomWidth: 1,
+    // borderBottomColor: colors.borderLight,
   },
   left: {
     flexDirection: "row",
@@ -70,7 +70,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 15,
-    color: colors.text,
+    color: colors.black,
     fontWeight: "500",
   },
   right: {
@@ -90,6 +90,6 @@ const styles = StyleSheet.create({
   badgeText: {
     fontSize: 13,
     fontWeight: "600",
-    color: colors.textSecondary,
+    color: colors.black,
   },
 });

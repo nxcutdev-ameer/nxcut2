@@ -270,7 +270,7 @@ const TeamScreen = () => {
           onPress={() => navigation.goBack()}
           style={TeamScreenStyles.backArrow}
         >
-          <ArrowLeft size={24} color={colors.colors.text} />
+          <ArrowLeft size={20} color={colors.colors.black} />
           <Text style={TeamScreenStyles.backArrowText}>Back</Text>
         </TouchableOpacity>
         <View style={TeamScreenStyles.headerRightContainer}>
@@ -297,7 +297,7 @@ const TeamScreen = () => {
             <TextInput
               style={TeamScreenStyles.searchInput}
               placeholder="Search team members..."
-              placeholderTextColor={colors.colors.textSecondary}
+              placeholderTextColor={colors.colors.gray[300]}
               value={searchQuery}
               onChangeText={setSearchQuery}
             />

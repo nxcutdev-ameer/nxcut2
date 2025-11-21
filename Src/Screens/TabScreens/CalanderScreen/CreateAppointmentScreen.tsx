@@ -527,7 +527,7 @@ const CreateAppointmentScreen = ({ route }: any) => {
                 {currentTime}
               </Text>
             </View>
-            <Edit2 size={12} color={colors.primary} />
+            <Edit2 size={12} color={colors.black} />
           </TouchableOpacity>
         </View>
 
@@ -582,7 +582,7 @@ const CreateAppointmentScreen = ({ route }: any) => {
                       }}
                     >
                       <Text style={CreateAppointmentStyles.viewProfileText}>
-                        <User size={18} color={colors.primary} /> View{" "}
+                        <User size={18} color={colors.black} /> View{" "}
                         {selectedClient.first_name} Profile
                       </Text>
                     </TouchableOpacity>
@@ -608,17 +608,17 @@ const CreateAppointmentScreen = ({ route }: any) => {
                   activeOpacity={0.7}
                 >
                   <View style={CreateAppointmentStyles.clientPlaceholderAvatar}>
-                    <User size={24} color={colors.textSecondary} />
+                    <User size={24} color={"#3C096C"} />
                   </View>
                   <View style={CreateAppointmentStyles.clientCardInfo}>
                     <Text style={CreateAppointmentStyles.clientCardPlaceholder}>
-                      Select a client
+                      Add client
                     </Text>
                     <Text style={CreateAppointmentStyles.clientCardSubtext}>
-                      Tap to choose a clients
+                      Tap to choose a client
                     </Text>
                   </View>
-                  <ChevronDown size={20} color={colors.textSecondary} />
+                  <ChevronDown size={20} color={colors.black} />
                 </TouchableOpacity>
               )}
             </View>
@@ -653,7 +653,7 @@ const CreateAppointmentScreen = ({ route }: any) => {
                               {service.name}
                             </Text>
                             <Text style={CreateAppointmentStyles.servicePrice}>
-                              AED {service.price}
+                              {service.price} AED
                             </Text>
                           </View>
                           <TouchableOpacity
@@ -679,7 +679,7 @@ const CreateAppointmentScreen = ({ route }: any) => {
                   style={CreateAppointmentStyles.addServiceButton}
                   onPress={() => setShowServiceModal(true)}
                 >
-                  <Plus size={20} color={colors.primary} />
+                  <Plus size={20} color={colors.black} />
                   <Text style={CreateAppointmentStyles.addServiceButtonText}>
                     Add service
                   </Text>
@@ -711,7 +711,7 @@ const CreateAppointmentScreen = ({ route }: any) => {
                       : "Select Location"}
                   </Text>
                 </View>
-                <ChevronDown size={20} color={colors.textSecondary} />
+                <ChevronDown size={20} color={colors.black} />
               </TouchableOpacity>
             </View>
 
@@ -769,7 +769,7 @@ const CreateAppointmentScreen = ({ route }: any) => {
                     </Text>
                   </View>
                   {availableStaff.length > 0 && (
-                    <ChevronDown size={20} color={colors.textSecondary} />
+                    <ChevronDown size={20} color={colors.black} />
                   )}
                 </TouchableOpacity>
               )}
@@ -781,7 +781,7 @@ const CreateAppointmentScreen = ({ route }: any) => {
             <View style={CreateAppointmentStyles.totalContainer}>
               <Text style={CreateAppointmentStyles.totalLabel}>Total</Text>
               <Text style={CreateAppointmentStyles.totalAmount}>
-                AED {calculateTotal().toFixed(2)}
+                {calculateTotal().toFixed(2)} AED
               </Text>
             </View>
 
@@ -920,7 +920,7 @@ const CreateAppointmentScreen = ({ route }: any) => {
                       {item.name}
                     </Text>
                     <Text style={CreateAppointmentStyles.servicePrice}>
-                      AED {item.price}
+                      {item.price} AED
                     </Text>
                   </View>
                   <Text style={CreateAppointmentStyles.serviceDuration}>
@@ -977,6 +977,7 @@ const CreateAppointmentScreen = ({ route }: any) => {
         onSwipeComplete={() => setShowClientModal(false)}
         swipeDirection={["down"]}
         style={CreateAppointmentStyles.clientModal}
+        propagateSwipe={true}
       >
         <View style={CreateAppointmentStyles.clientModalContent}>
           <View style={CreateAppointmentStyles.modalDragIndicator} />
@@ -990,7 +991,7 @@ const CreateAppointmentScreen = ({ route }: any) => {
               onPress={() => setShowClientModal(false)}
               style={CreateAppointmentStyles.clientModalCloseButton}
             >
-              <X size={20} color={colors.textSecondary} />
+              <X size={20} color={colors.black} />
             </TouchableOpacity>
           </View>
 
@@ -1004,6 +1005,7 @@ const CreateAppointmentScreen = ({ route }: any) => {
             <TextInput
               style={CreateAppointmentStyles.searchInput}
               placeholder="Search clients..."
+              placeholderTextColor={colors.textSecondary}
               value={searchTerm}
               onChangeText={setSearchTerm}
               autoCapitalize="none"
@@ -1027,9 +1029,9 @@ const CreateAppointmentScreen = ({ route }: any) => {
             }}
             style={CreateAppointmentStyles.addButton}
           >
-            <Plus size={20} color={colors.white} />
+            <Plus size={20} color={colors.black} />
             <Text style={CreateAppointmentStyles.addButtonText}>
-              Add new client
+              Add client
             </Text>
           </TouchableOpacity>
 
@@ -1080,9 +1082,7 @@ const CreateAppointmentScreen = ({ route }: any) => {
                       <Text style={CreateAppointmentStyles.clientName}>
                         {item.first_name} {item.last_name}
                       </Text>
-                      <Text style={CreateAppointmentStyles.clientEmail}>
-                        {item.email || item.first_name}
-                      </Text>
+
                       <Text style={CreateAppointmentStyles.clientPhone}>
                         {item.phone}
                       </Text>
@@ -1105,6 +1105,7 @@ const CreateAppointmentScreen = ({ route }: any) => {
         onSwipeComplete={() => setShowLocationModal(false)}
         swipeDirection={["down"]}
         style={CreateAppointmentStyles.serviceModal}
+        propagateSwipe={true}
       >
         <View style={CreateAppointmentStyles.serviceModalContent}>
           <View style={CreateAppointmentStyles.modalDragIndicator} />
@@ -1161,13 +1162,19 @@ const CreateAppointmentScreen = ({ route }: any) => {
         onSwipeComplete={() => setShowStaffModal(false)}
         swipeDirection={["down"]}
         style={CreateAppointmentStyles.serviceModal}
+        propagateSwipe={true}
       >
         <View style={CreateAppointmentStyles.serviceModalContent}>
           <View style={CreateAppointmentStyles.modalDragIndicator} />
           <Text style={CreateAppointmentStyles.serviceModalTitle}>
             Select Staff Member
           </Text>
-          <ScrollView style={CreateAppointmentStyles.modalList}>
+          <ScrollView
+            style={[
+              CreateAppointmentStyles.modalList,
+              CreateAppointmentStyles.fullHeightModalList,
+            ]}
+          >
             {availableStaff.map((staff) => (
               <TouchableOpacity
                 key={staff.id}

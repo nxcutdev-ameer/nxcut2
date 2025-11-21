@@ -105,15 +105,15 @@ export const AddClientStyles = StyleSheet.create({
     paddingHorizontal: getWidthEquivalent(12),
     paddingVertical: getHeightEquivalent(8),
     gap: getWidthEquivalent(4),
-    minWidth: getWidthEquivalent(120),
+    minWidth: getWidthEquivalent(100),
   },
   countryCodeText: {
-    fontSize: fontEq(16),
+    fontSize: fontEq(14),
     color: colors.text,
     fontWeight: "500",
   },
   countryNameText: {
-    fontSize: fontEq(11),
+    fontSize: fontEq(12),
     color: colors.textSecondary,
     marginTop: getHeightEquivalent(2),
   },
@@ -142,7 +142,7 @@ export const AddClientStyles = StyleSheet.create({
     color: colors.text,
   },
   placeholderText: {
-    color: colors.textSecondary,
+    color: colors.gray[300],
   },
   textArea: {
     minHeight: getHeightEquivalent(70),
@@ -213,15 +213,15 @@ export const AddClientStyles = StyleSheet.create({
     borderBottomColor: colors.border,
   },
   modalItemText: {
-    fontSize: fontEq(16),
-    color: colors.text,
+    fontSize: fontEq(14),
+    color: colors.black,
   },
   modalCloseButton: {
     marginTop: getHeightEquivalent(16),
     paddingVertical: getHeightEquivalent(12),
     alignItems: "center",
     backgroundColor: colors.gray[200],
-    borderRadius: getWidthEquivalent(8),
+    borderRadius: getWidthEquivalent(50),
   },
   modalCloseButtonText: {
     fontSize: fontEq(16),
@@ -231,10 +231,12 @@ export const AddClientStyles = StyleSheet.create({
   searchContainer: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: colors.gray[100],
-    borderRadius: getWidthEquivalent(8),
+    backgroundColor: colors.white,
+    borderRadius: getWidthEquivalent(50),
+    borderWidth: 1,
+    borderColor: colors.border,
     paddingHorizontal: getWidthEquivalent(12),
-    paddingVertical: getHeightEquivalent(8),
+    paddingVertical: getHeightEquivalent(12),
     marginBottom: getHeightEquivalent(16),
     gap: getWidthEquivalent(8),
   },

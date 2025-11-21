@@ -95,7 +95,7 @@ const ReportsScreen = () => {
             navigation.goBack();
           }}
         >
-          <ArrowLeft size={28} color={colors.text} />
+          <ArrowLeft size={20} color={colors.black} />
           <Text style={ReportsScreenStyles.headerText}>Back</Text>
         </TouchableOpacity>
       </View>

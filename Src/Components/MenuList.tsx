@@ -35,7 +35,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     overflow: "hidden",
     marginVertical: theme.spacing.md,
-    borderWidth: 2,
+    borderWidth: 1,
     borderColor: colors.border,
   },
 });

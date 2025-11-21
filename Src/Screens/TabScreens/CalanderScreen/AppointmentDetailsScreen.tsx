@@ -161,14 +161,14 @@ const AppointmentDetailsScreen = () => {
                 <Text
                   style={[styles.clientContact, { color: paint.textSecondary }]}
                 >
-                  📱 {appointment.appointment.client.phone}
+                    {appointment.appointment.client.phone}
                 </Text>
               )}
               {appointment.appointment.client.email && (
                 <Text
                   style={[styles.clientContact, { color: paint.textSecondary }]}
                 >
-                  ✉️ {appointment.appointment.client.email}
+                   {appointment.appointment.client.email}
                 </Text>
               )}
             </View>
@@ -178,7 +178,7 @@ const AppointmentDetailsScreen = () => {
         {/* Appointment Time Card */}
         <View style={[styles.card, { backgroundColor: paint.white }]}>
           <View style={styles.cardHeader}>
-            <Clock size={18} color={paint.primary} />
+            <Clock size={18} color={paint.black} />
             <Text style={[styles.cardTitle, { color: paint.text }]}>
               Appointment Time
             </Text>
@@ -231,7 +231,7 @@ const AppointmentDetailsScreen = () => {
         {/* Service Details Card */}
         <View style={[styles.card, { backgroundColor: paint.white }]}>
           <View style={styles.cardHeader}>
-            <Scissors size={18} color={paint.primary} />
+            <Scissors size={18} color={paint.black} />
             <Text style={[styles.cardTitle, { color: paint.text }]}>
               Service Details
             </Text>
@@ -292,7 +292,7 @@ const AppointmentDetailsScreen = () => {
         {/* Staff Information Card */}
         <View style={[styles.card, { backgroundColor: paint.white }]}>
           <View style={styles.cardHeader}>
-            <Users size={18} color={paint.primary} />
+            <Users size={18} color={paint.black} />
             <Text style={[styles.cardTitle, { color: paint.text }]}>
               Staff Member
             </Text>
@@ -304,7 +304,7 @@ const AppointmentDetailsScreen = () => {
                 styles.staffAvatar,
                 {
                   backgroundColor:
-                    appointment.staff.calendar_color || paint.primary,
+                    appointment.staff.calendar_color || paint.primaryLight,
                 },
               ]}
             >
@@ -321,7 +321,7 @@ const AppointmentDetailsScreen = () => {
                 <Text
                   style={[styles.staffContact, { color: paint.textSecondary }]}
                 >
-                  📱 {appointment.staff.phone_number}
+                   {appointment.staff.phone_number}
                 </Text>
               )}
             </View>

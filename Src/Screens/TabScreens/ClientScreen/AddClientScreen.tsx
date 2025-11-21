@@ -216,8 +216,8 @@ const AddClientScreen: React.FC<AddClientScreenProps> = ({
                 ]}
                 value={firstName}
                 onChangeText={setFirstName}
-                placeholder="Enter first name"
-                placeholderTextColor={colors.textSecondary}
+                placeholder="e.g. John"
+                placeholderTextColor={colors.gray[300]}
               />
               {errors.firstName && (
                 <Text style={AddClientStyles.errorText}>
@@ -235,8 +235,8 @@ const AddClientScreen: React.FC<AddClientScreenProps> = ({
                 ]}
                 value={lastName}
                 onChangeText={setLastName}
-                placeholder="Enter last name"
-                placeholderTextColor={colors.textSecondary}
+                placeholder="e.g. Hancock"
+                placeholderTextColor={colors.gray[300]}
               />
               {errors.lastName && (
                 <Text style={AddClientStyles.errorText}>{errors.lastName}</Text>
@@ -256,9 +256,9 @@ const AddClientScreen: React.FC<AddClientScreenProps> = ({
                   <Text style={AddClientStyles.countryCodeText}>
                     {countryCode}
                   </Text>
-                  <Text style={AddClientStyles.countryNameText}>
+                  {/* <Text style={AddClientStyles.countryNameText}>
                     {selectedCountry.substring(0, 10)}...
-                  </Text>
+                  </Text> */}
                 </View>
                 <ChevronDown size={16} color={colors.text} />
               </TouchableOpacity>
@@ -269,8 +269,8 @@ const AddClientScreen: React.FC<AddClientScreenProps> = ({
                 ]}
                 value={phone}
                 onChangeText={setPhone}
-                placeholder="Enter phone number"
-                placeholderTextColor={colors.textSecondary}
+                placeholder="e.g. +1234 567 8901"
+                placeholderTextColor={colors.gray[300]}
                 keyboardType="phone-pad"
               />
             </View>
@@ -289,8 +289,8 @@ const AddClientScreen: React.FC<AddClientScreenProps> = ({
               ]}
               value={email}
               onChangeText={setEmail}
-              placeholder="Enter email address"
-              placeholderTextColor={colors.textSecondary}
+              placeholder="example@domain.com"
+              placeholderTextColor={colors.gray[300]}
               keyboardType="email-address"
               autoCapitalize="none"
             />
@@ -318,7 +318,7 @@ const AddClientScreen: React.FC<AddClientScreenProps> = ({
                       month: "long",
                       day: "numeric",
                     })
-                  : "Select date of birth"}
+                  : "Day and month"}
               </Text>
               <Calendar size={20} color={colors.textSecondary} />
             </TouchableOpacity>
@@ -332,7 +332,7 @@ const AddClientScreen: React.FC<AddClientScreenProps> = ({
               value={notes}
               onChangeText={setNotes}
               placeholder="Enter any notes about the client"
-              placeholderTextColor={colors.textSecondary}
+              placeholderTextColor={colors.gray[300]}
               multiline
               numberOfLines={4}
             />
@@ -420,6 +420,7 @@ const AddClientScreen: React.FC<AddClientScreenProps> = ({
                   <TextInput
                     style={AddClientStyles.searchInput}
                     placeholder="Search country or code..."
+                    placeholderTextColor={colors.gray[300]}
                     value={countrySearchText}
                     onChangeText={handleCountrySearch}
                     autoCapitalize="none"

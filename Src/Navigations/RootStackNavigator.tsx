@@ -9,7 +9,6 @@ import LoginScreen from "../Screens/AuthScreens/LoginScreen/LoginScreen";
 import RegisterScreen from "../Screens/AuthScreens/RegisterScreens/RegisterScreen";
 import PasswordScreen from "../Screens/AuthScreens/PasswordScreen/PasswordScreen";
 import ProfileAreaScreen from "../Screens/ProfileAreaScreens/ProfileAreaScreen/ProfileAreaScreen";
-import ReportsScreen from "../Screens/MoreTabScreens/ReportsScreen/ReportsScreen";
 import ReportsDetailsScreen from "../Screens/MoreTabScreens/ReportDetailsScreen/ReportDetailsScreen";
 import LocationScreen from "../Screens/LocationsScreen/LocationScreen";
 import { PaymentTransactionsScreen } from "../Screens/MoreTabScreens/PaymentTransactionsScreen/PaymentTransactionsScreen";
@@ -44,7 +43,6 @@ export type RootStackParamList = {
   RegisterScreen: undefined;
   PasswordScreen: undefined;
   ProfileAreaScreen: undefined;
-  ReportsScreen: undefined;
   ReportsDetailsScreen: undefined;
   LocationScreen: undefined;
   PaymentTransactionsScreen: undefined;
@@ -100,7 +98,6 @@ const RootStackNavigator = () => {
             name="ProfileAreaScreen"
             component={ProfileAreaScreen}
           />
-          <Stack.Screen name="ReportsScreen" component={ReportsScreen} />
           <Stack.Screen
             name="ReportsDetailsScreen"
             component={ReportsDetailsScreen}

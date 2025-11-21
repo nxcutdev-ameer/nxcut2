@@ -421,7 +421,7 @@ const FilterScreen: React.FC<FilterScreenProps> = ({
                 FilterScreenStyles.dropdown,
                 {
                   backgroundColor: paint.background,
-                  borderColor: paint.black,
+                  borderColor: paint.gray[300],
                 },
               ]}
               onPress={() => setShowPeriodDropdown(!showPeriodDropdown)}
@@ -490,7 +490,7 @@ const FilterScreen: React.FC<FilterScreenProps> = ({
                     FilterScreenStyles.dateInput,
                     {
                       backgroundColor: paint.background,
-                      borderColor: startDateError ? paint.danger : paint.black,
+                      borderColor: startDateError ? paint.danger : paint.gray[300],
                       color: paint.text,
                     },
                   ]}
@@ -526,7 +526,7 @@ const FilterScreen: React.FC<FilterScreenProps> = ({
                     FilterScreenStyles.dateInput,
                     {
                       backgroundColor: paint.background,
-                      borderColor: endDateError ? paint.danger : paint.black,
+                      borderColor: endDateError ? paint.danger : paint.gray[300],
                       color: paint.text,
                     },
                   ]}

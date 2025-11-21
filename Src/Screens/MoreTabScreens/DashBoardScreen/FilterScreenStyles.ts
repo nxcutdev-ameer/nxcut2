@@ -200,7 +200,7 @@ export const FilterScreenStyles = StyleSheet.create({
   applyButton: {
     width: "100%",
     paddingVertical: getHeightEquivalent(16),
-    borderRadius: 12,
+    borderRadius: 50,
     alignItems: "center",
     justifyContent: "center",
   },

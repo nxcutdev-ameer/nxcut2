@@ -68,7 +68,7 @@ const ProfileAreaScreen = () => {
           }}
           style={ProfileAreaScreenStyles.header}
         >
-          <ArrowLeft size={24} color={colors.text} />
+          <ArrowLeft size={20} color={colors.text} />
         </TouchableOpacity>
 
         {/* Profile Info */}

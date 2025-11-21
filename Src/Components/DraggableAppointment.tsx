@@ -26,10 +26,15 @@ interface DraggableAppointmentProps {
   columnWidth: number;
   leftOffset?: number;
   minHour: number;
+  maxHour: number;
   staffIndex: number;
   staffId: string;
   onScrollEnable?: (enabled: boolean) => void;
   onPress?: () => void;
+  onLongPress?: (appointmentId: string, staffId: string) => void;
+  canDrag?: boolean;
+  isEditing?: boolean;
+  resetTrigger?: number;
 }
 
 const DraggableAppointment: React.FC<DraggableAppointmentProps> = ({
@@ -40,10 +45,15 @@ const DraggableAppointment: React.FC<DraggableAppointmentProps> = ({
   columnWidth,
   leftOffset = 0,
   minHour,
+  maxHour,
   staffIndex,
   staffId,
   onScrollEnable,
   onPress,
+  onLongPress,
+  canDrag = false,
+  isEditing = false,
+  resetTrigger,
 }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [lastSnappedSlot, setLastSnappedSlot] = useState<number | null>(null);
@@ -52,8 +62,46 @@ const DraggableAppointment: React.FC<DraggableAppointmentProps> = ({
   const lastEventTimeRef = useRef<number>(event.start.getTime());
   const touchStartTime = useRef<number>(0);
   const hasMoved = useRef(false);
+  const longPressTriggeredRef = useRef(false);
+  const longPressTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const dragEnabledRef = useRef<boolean>(canDrag);
 
   const pan = useRef(new Animated.ValueXY()).current;
+  const resetTriggerRef = useRef<number | undefined>(resetTrigger);
+
+  useEffect(() => {
+    dragEnabledRef.current = canDrag;
+    if (!canDrag) {
+      setIsDragging(false);
+      setShowPlaceholder(false);
+    }
+  }, [canDrag]);
+
+  useEffect(() => {
+    return () => {
+      if (longPressTimeoutRef.current) {
+        clearTimeout(longPressTimeoutRef.current);
+        longPressTimeoutRef.current = null;
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (resetTrigger === undefined) {
+      resetTriggerRef.current = resetTrigger;
+      return;
+    }
+
+    if (resetTriggerRef.current === resetTrigger) {
+      return;
+    }
+
+    resetTriggerRef.current = resetTrigger;
+    setIsDragging(false);
+    setShowPlaceholder(false);
+    setCommittedPosition({ x: 0, y: 0 });
+    pan.setValue({ x: 0, y: 0 });
+  }, [pan, resetTrigger]);
 
   // Calculate initial position and height
   const getInitialTop = () => {
@@ -71,6 +119,16 @@ const DraggableAppointment: React.FC<DraggableAppointmentProps> = ({
 
   const initialTop = getInitialTop();
   const initialHeight = getInitialHeight();
+  const slotHeight = hourHeight / 4; // 15-minute slots
+  const calendarHeight = (maxHour - minHour + 1) * hourHeight;
+  const maxStartY = Math.max(0, calendarHeight - initialHeight);
+
+  const clamp = (value: number, min: number, max: number) => {
+    if (max <= min) {
+      return min;
+    }
+    return Math.min(Math.max(value, min), max);
+  };
 
   // Reset committed position only when event time actually changes from backend
   useEffect(() => {
@@ -91,14 +149,15 @@ const DraggableAppointment: React.FC<DraggableAppointmentProps> = ({
 
   // Snap to 15-minute intervals
   const snapToTimeSlot = (yPosition: number) => {
-    const slotHeight = hourHeight / 4; // 15-minute slots
-    return Math.round(yPosition / slotHeight) * slotHeight;
+    const clampedPosition = clamp(yPosition, 0, maxStartY);
+    const snappedSlot = Math.round(clampedPosition / slotHeight);
+    return clamp(snappedSlot * slotHeight, 0, maxStartY);
   };
 
   // Get current time slot index
   const getTimeSlotIndex = (yPosition: number) => {
-    const slotHeight = hourHeight / 4; // 15-minute slots
-    return Math.round(yPosition / slotHeight);
+    const clampedPosition = clamp(yPosition, 0, maxStartY);
+    return Math.round(clampedPosition / slotHeight);
   };
 
   // Convert Y position to time
@@ -125,24 +184,46 @@ const DraggableAppointment: React.FC<DraggableAppointmentProps> = ({
         evt.stopPropagation();
         touchStartTime.current = Date.now();
         hasMoved.current = false;
+        longPressTriggeredRef.current = false;
 
-        // Don't start dragging immediately, wait for movement
-        // setIsDragging(true);
-        // setShowPlaceholder(true);
-        // onScrollEnable?.(false);
+        onScrollEnable?.(false);
 
-        // Start from committed position
-        pan.setOffset({
-          x: committedPosition.x,
-          y: committedPosition.y,
-        });
         pan.setValue({ x: 0, y: 0 });
+
+        if (!dragEnabledRef.current && onLongPress) {
+          if (longPressTimeoutRef.current) {
+            clearTimeout(longPressTimeoutRef.current);
+          }
+          longPressTimeoutRef.current = setTimeout(() => {
+            longPressTriggeredRef.current = true;
+            dragEnabledRef.current = true;
+            onLongPress(event.data.id, staffId);
+          }, 400);
+        }
 
         // Set initial slot for haptic feedback
         const currentY = initialTop + committedPosition.y;
         setLastSnappedSlot(getTimeSlotIndex(currentY));
       },
       onPanResponderMove: (event, gestureState) => {
+        const distanceMoved = Math.max(
+          Math.abs(gestureState.dx),
+          Math.abs(gestureState.dy)
+        );
+
+        if (!dragEnabledRef.current) {
+          if (distanceMoved > 8 && longPressTimeoutRef.current) {
+            clearTimeout(longPressTimeoutRef.current);
+            longPressTimeoutRef.current = null;
+          }
+          return;
+        }
+
+        if (longPressTimeoutRef.current) {
+          clearTimeout(longPressTimeoutRef.current);
+          longPressTimeoutRef.current = null;
+        }
+
         // Track if user has moved significantly
         if (Math.abs(gestureState.dx) > 10 || Math.abs(gestureState.dy) > 10) {
           if (!hasMoved.current) {
@@ -157,8 +238,13 @@ const DraggableAppointment: React.FC<DraggableAppointmentProps> = ({
         // Only process drag if we're in dragging mode
         if (!isDragging && !hasMoved.current) return;
 
+        const baseY = initialTop + committedPosition.y;
+        const desiredY = baseY + gestureState.dy;
+        const clampedY = clamp(desiredY, 0, maxStartY);
+        const translateY = clampedY - baseY;
+
         // Trigger haptic feedback when entering a new time slot
-        const currentY = initialTop + committedPosition.y + gestureState.dy;
+        const currentY = baseY + translateY;
         const currentSlot = getTimeSlotIndex(currentY);
 
         if (currentSlot !== lastSnappedSlot) {
@@ -168,13 +254,27 @@ const DraggableAppointment: React.FC<DraggableAppointmentProps> = ({
         }
 
         // Update animated values
-        pan.setValue({ x: gestureState.dx, y: gestureState.dy });
+        pan.setValue({ x: gestureState.dx, y: translateY });
       },
       onPanResponderRelease: (_, gesture) => {
-        const touchDuration = Date.now() - touchStartTime.current;
+        if (longPressTimeoutRef.current) {
+          clearTimeout(longPressTimeoutRef.current);
+          longPressTimeoutRef.current = null;
+        }
+
+        const longPressTriggered = longPressTriggeredRef.current;
+        longPressTriggeredRef.current = false;
+
+        if (!dragEnabledRef.current) {
+          onScrollEnable?.(true);
+          if (!hasMoved.current && !longPressTriggered && onPress) {
+            onPress();
+          }
+          return;
+        }
 
         // If it was a quick tap and didn't move much, treat as tap
-        if (!hasMoved.current && onPress) {
+        if (!hasMoved.current && onPress && !isEditing) {
           onScrollEnable?.(true);
           pan.setValue({ x: 0, y: 0 });
           onPress();
@@ -190,11 +290,13 @@ const DraggableAppointment: React.FC<DraggableAppointmentProps> = ({
         setIsDragging(false);
         setShowPlaceholder(false);
         onScrollEnable?.(true);
-        pan.flattenOffset();
 
-        const currentY = initialTop + committedPosition.y + gesture.dy;
-        const snappedY = snapToTimeSlot(currentY);
+        const baseY = initialTop + committedPosition.y;
+        const desiredY = baseY + gesture.dy;
+        const clampedY = clamp(desiredY, 0, maxStartY);
+        const snappedY = snapToTimeSlot(clampedY);
         const finalOffsetY = snappedY - initialTop;
+        const targetTranslateY = snappedY - baseY;
 
         // Calculate which staff column based on X movement
         const horizontalMovement = gesture.dx;
@@ -217,7 +319,7 @@ const DraggableAppointment: React.FC<DraggableAppointmentProps> = ({
 
         // Animate to snapped position
         Animated.spring(pan, {
-          toValue: { x: 0, y: finalOffsetY },
+          toValue: { x: 0, y: targetTranslateY },
           useNativeDriver: false,
           friction: 8,
         }).start(() => {
@@ -229,6 +331,17 @@ const DraggableAppointment: React.FC<DraggableAppointmentProps> = ({
           // Backend update will happen here, but UI is already updated
           onDragEnd(newStartTime, newEndTime, columnsMoved);
         });
+      },
+      onPanResponderTerminate: () => {
+        if (longPressTimeoutRef.current) {
+          clearTimeout(longPressTimeoutRef.current);
+          longPressTimeoutRef.current = null;
+        }
+        setIsDragging(false);
+        setShowPlaceholder(false);
+        onScrollEnable?.(true);
+        pan.setValue({ x: 0, y: 0 });
+        hasMoved.current = false;
       },
     })
   ).current;
@@ -294,6 +407,8 @@ const DraggableAppointment: React.FC<DraggableAppointmentProps> = ({
             elevation: isDragging ? 8 : 2,
             shadowOpacity: isDragging ? 0.3 : 0.1,
             zIndex: isDragging ? 1000 : 1,
+            borderWidth: isEditing ? 2 : 0,
+            borderColor: isEditing ? colors.primary : "transparent",
           },
           animatedStyle,
         ]}

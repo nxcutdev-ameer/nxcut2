@@ -187,7 +187,7 @@ const ClientScreen = () => {
             <Search size={20} color={colors.textSecondary} />
             <TextInput
               placeholder="Name, email or phone"
-              placeholderTextColor={colors.textSecondary}
+              placeholderTextColor={colors.gray[400]}
               style={ClientScreenStyles.searchInput}
               value={searchTerm}
               onChangeText={setSearchTerm}

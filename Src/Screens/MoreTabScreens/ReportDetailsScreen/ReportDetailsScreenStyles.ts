@@ -89,7 +89,7 @@ export const ReportDetailsScreenStyles = StyleSheet.create({
     width: getWidthEquivalent(280),
     borderWidth: 1,
     borderColor: colors.gray[300],
-    borderRadius: 10,
+    borderRadius: 50,
     alignItems: "center",
     flexDirection: "row",
     paddingHorizontal: getWidthEquivalent(10),

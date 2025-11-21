@@ -51,14 +51,14 @@ const LocationScreen = () => {
               >
                 {item.name}
               </Text>
-              <Text
+              {/* <Text
                 style={[
                   LocationScreenStyles.locationIDText,
                   isCurrent && LocationScreenStyles.currentLocationText,
                 ]}
               >
                 Location ID: {item.id}
-              </Text>
+              </Text> */}
             </TouchableOpacity>
           );
         }}

@@ -46,12 +46,12 @@ export const MoreScreenStyles = StyleSheet.create({
     width: getWidthEquivalent(38), //32,
     height: getWidthEquivalent(38),
     borderRadius: 30,
-    backgroundColor: colors.gray[100],
+    backgroundColor: colors.primaryLight,
     justifyContent: "center",
     alignItems: "center",
   },
   profileText: {
-    color: colors.text,
+    color: colors.primary,
     fontWeight: "bold",
   },
 
@@ -62,6 +62,7 @@ export const MoreScreenStyles = StyleSheet.create({
     padding: theme.spacing.lg,
     marginBottom: theme.spacing.lg,
     overflow: "hidden",
+    height: getHeightEquivalent(150),
   },
   walletLabel: {
     color: colors.white,
@@ -70,7 +71,7 @@ export const MoreScreenStyles = StyleSheet.create({
   },
   walletAmount: {
     color: colors.white,
-    fontSize: 20,
+    fontSize: 26,
     fontWeight: "bold",
     marginBottom: theme.spacing.sm,
   },

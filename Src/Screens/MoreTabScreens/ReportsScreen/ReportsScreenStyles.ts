@@ -15,9 +15,9 @@ const ReportsScreenStyles = StyleSheet.create({
     paddingHorizontal: getWidthEquivalent(10),
   },
   headerText: {
-    fontSize: fontEq(20),
-    fontWeight: "bold",
-    color: colors.text,
+    fontSize: fontEq(18),
+    fontWeight: "500",
+    color: colors.black,
     marginLeft: getWidthEquivalent(10),
   },
   backButton: {

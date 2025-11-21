@@ -10,13 +10,13 @@ const paint = colors.colors;
 export const SalesScreenStyles = StyleSheet.create({
   mainContainer: {
     flex: 1,
-    backgroundColor: paint.white,
+    backgroundColor: paint.background,
   },
   headerContainer: {
     height: getHeightEquivalent(60),
     width: "100%",
     borderColor: paint.border,
-    backgroundColor: paint.white,
+    backgroundColor: paint.background,
     alignItems: "center",
     flexDirection: "row",
     justifyContent: "flex-end",
@@ -47,13 +47,13 @@ export const SalesScreenStyles = StyleSheet.create({
   },
   bodyContainer: {
     flex: 1,
-    backgroundColor: paint.white,
+    backgroundColor: paint.background,
     paddingHorizontal: getWidthEquivalent(20),
   },
   bodyTitle: {
-    fontSize: fontEq(32),
-    fontWeight: "600",
-    color: paint.text,
+    fontSize: fontEq(26),
+    fontWeight: "700",
+    color: paint.black,
     marginLeft: getWidthEquivalent(8),
     marginTop: getHeightEquivalent(15),
     // lineHeight: getHeightEquivalent(28),

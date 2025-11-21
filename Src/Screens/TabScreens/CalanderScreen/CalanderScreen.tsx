@@ -5,6 +5,7 @@ import {
   ScrollView,
   Animated,
   Dimensions,
+  ActivityIndicator,
 } from "react-native";
 import React, {
   useRef,
@@ -44,6 +45,26 @@ import BottomSheet, {
   BottomSheetBackdrop,
 } from "@gorhom/bottom-sheet";
 import { CalendarList } from "react-native-calendars";
+
+type EditingState = {
+  appointmentId: string;
+  originalStaffId: string;
+  pendingStaffId: string;
+  originalStart: Date;
+  originalEnd: Date;
+  pendingStart: Date;
+  pendingEnd: Date;
+  resetKey: number;
+};
+
+type CalendarAppointment = {
+  title: string;
+  start: Date;
+  end: Date;
+  data: {
+    id: string;
+  };
+};
 
 // Filter Panel Modal Component
 const FilterPanelModal = ({
@@ -192,6 +213,126 @@ const CalanderScreen = () => {
   const verticalScrollRef = useRef<ScrollView>(null);
   const horizontalScrollRef = useRef<ScrollView>(null);
   const [scrollEnabled, setScrollEnabled] = useState(true);
+  const [editingState, setEditingState] = useState<EditingState | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+
+  const hasPendingChanges = useMemo(() => {
+    if (!editingState) {
+      return false;
+    }
+
+    return (
+      editingState.pendingStaffId !== editingState.originalStaffId ||
+      editingState.pendingStart.getTime() !== editingState.originalStart.getTime() ||
+      editingState.pendingEnd.getTime() !== editingState.originalEnd.getTime()
+    );
+  }, [editingState]);
+
+  const handleStartEditing = useCallback(
+    (appointment: CalendarAppointment, staffId: string) => {
+      setEditingState((current) => {
+        if (current?.appointmentId === appointment.data.id) {
+          return current;
+        }
+
+        return {
+          appointmentId: appointment.data.id,
+          originalStaffId: staffId,
+          pendingStaffId: staffId,
+          originalStart: appointment.start,
+          originalEnd: appointment.end,
+          pendingStart: appointment.start,
+          pendingEnd: appointment.end,
+          resetKey: Date.now(),
+        };
+      });
+    },
+    []
+  );
+
+  const handleAppointmentPreview = useCallback(
+    (
+      appointmentId: string,
+      newStartTime: Date,
+      newEndTime: Date,
+      targetStaffId: string
+    ) => {
+      setEditingState((current) => {
+        if (!current || current.appointmentId !== appointmentId) {
+          return current;
+        }
+
+        return {
+          ...current,
+          pendingStart: newStartTime,
+          pendingEnd: newEndTime,
+          pendingStaffId: targetStaffId,
+        };
+      });
+    },
+    []
+  );
+
+  const handleCancelEditing = useCallback(() => {
+    setEditingState((current) => {
+      if (!current) {
+        return null;
+      }
+
+      return {
+        ...current,
+        pendingStart: current.originalStart,
+        pendingEnd: current.originalEnd,
+        pendingStaffId: current.originalStaffId,
+        resetKey: current.resetKey + 1,
+      };
+    });
+
+    setTimeout(() => {
+      setEditingState(null);
+      setScrollEnabled(true);
+    }, 0);
+  }, []);
+
+  const handleSaveEditing = useCallback(async () => {
+    if (!editingState || isSaving) {
+      return;
+    }
+
+    setIsSaving(true);
+
+    try {
+      const {
+        appointmentId,
+        pendingStart,
+        pendingEnd,
+        pendingStaffId,
+        originalStaffId,
+        originalStart,
+        originalEnd,
+      } = editingState;
+
+      const hasTimeChange =
+        pendingStart.getTime() !== originalStart.getTime() ||
+        pendingEnd.getTime() !== originalEnd.getTime();
+      const hasStaffChange = pendingStaffId !== originalStaffId;
+
+      if (hasTimeChange || hasStaffChange) {
+        await updateAppointmentTime(
+          appointmentId,
+          pendingStart,
+          pendingEnd,
+          hasStaffChange ? pendingStaffId : undefined
+        );
+      }
+    } catch (error) {
+      console.error("[CalanderScreen] Failed to save appointment changes:", error);
+    } finally {
+      setIsSaving(false);
+      setScrollEnabled(true);
+      setEditingState(null);
+    }
+  }, [editingState, isSaving, updateAppointmentTime]);
 
   // Bottom sheet setup
   const bottomSheetRef = useRef<BottomSheet>(null);
@@ -338,7 +479,7 @@ const CalanderScreen = () => {
             onPress={handleFilterPress}
             style={CalanderScreenStyles.headerButton}
           >
-            <SlidersHorizontal size={24} color={colors.text} />
+            <SlidersHorizontal size={22} color={colors.black} />
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -364,6 +505,7 @@ const CalanderScreen = () => {
         ref={scrollViewRef}
         bounces={false}
         horizontal
+        scrollEnabled={scrollEnabled}
         //scrollEnabled={false}
         pagingEnabled={true}
         showsHorizontalScrollIndicator={false}
@@ -379,7 +521,7 @@ const CalanderScreen = () => {
               horizontal={true}
               bounces={false}
               showsHorizontalScrollIndicator={false}
-              //  showsVerticalScrollIndicator={false}
+                showsVerticalScrollIndicator={false}
               contentContainerStyle={{
                 height: "100%",
                 alignItems: "center",
@@ -401,11 +543,11 @@ const CalanderScreen = () => {
                   alignItems: "center",
                 }}
               >
-                <Clock size={getWidthEquivalent(24)} color={colors.primary} />
+                {/* <Clock size={getWidthEquivalent(24)} color={colors.primary} /> */}
               </View>
 
               {/* Vertical line before first staff member */}
-              {calanderData.length > 0 && (
+              {/* {calanderData.length > 0 && (
                 <View
                   style={{
                     width: 1,
@@ -414,7 +556,7 @@ const CalanderScreen = () => {
                     alignSelf: "center",
                   }}
                 />
-              )}
+              )} */}
 
               {calanderData.map((staff, index) => (
                 <Fragment key={index}>
@@ -437,7 +579,7 @@ const CalanderScreen = () => {
                         style={{
                           color: colors.white,
                           fontWeight: "bold",
-                          fontSize: fontEq(18),
+                          fontSize: fontEq(12),
                         }}
                       >
                         {staff?.staffName?.charAt(0).toUpperCase() || "S"}
@@ -447,7 +589,7 @@ const CalanderScreen = () => {
                       {staff?.staffName || "Staff"}
                     </Text>
                   </View>
-                  {index < calanderData.length - 1 && (
+                  {/* {index < calanderData.length - 1 && (
                     <View
                       style={{
                         width: 1,
@@ -456,7 +598,7 @@ const CalanderScreen = () => {
                         alignSelf: "center",
                       }}
                     />
-                  )}
+                  )} */}
                 </Fragment>
               ))}
             </ScrollView>
@@ -561,13 +703,16 @@ const CalanderScreen = () => {
                       minHour={8}
                       maxHour={23}
                       onScrollEnable={setScrollEnabled}
+                      editingState={editingState}
+                      onStartEditing={handleStartEditing}
+                      onAppointmentPreview={handleAppointmentPreview}
                     />
                     {index < calanderData.length - 1 && (
                       <View
                         style={{
                           width: 1,
                           height: "100%",
-                          backgroundColor: "rgba(0, 0, 0, 0.1)", // Semi-transparent vertical line
+                          backgroundColor: "rgba(0, 0, 0, 0.2)", // Semi-transparent vertical line
                           position: "relative",
                           zIndex: 1,
                         }}
@@ -580,6 +725,54 @@ const CalanderScreen = () => {
           )}
         </View>
       </ScrollView>
+
+      {editingState && (
+        <View style={CalanderScreenStyles.editingFooter}>
+          <TouchableOpacity
+            style={[
+              CalanderScreenStyles.editingButton,
+              CalanderScreenStyles.editingCancelButton,
+            ]}
+            onPress={handleCancelEditing}
+            disabled={isSaving}
+            activeOpacity={0.8}
+          >
+            <Text
+              style={[
+                CalanderScreenStyles.editingButtonText,
+                CalanderScreenStyles.editingCancelText,
+              ]}
+            >
+              Cancel
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[
+              CalanderScreenStyles.editingButton,
+              CalanderScreenStyles.editingSaveButton,
+              (isSaving || !hasPendingChanges) &&
+                CalanderScreenStyles.editingSaveButtonDisabled,
+            ]}
+            onPress={handleSaveEditing}
+            disabled={isSaving || !hasPendingChanges}
+            activeOpacity={0.8}
+          >
+            {isSaving ? (
+              <ActivityIndicator size="small" color={colors.white} />
+            ) : (
+              <Text
+                style={[
+                  CalanderScreenStyles.editingButtonText,
+                  CalanderScreenStyles.editingSaveText,
+                ]}
+              >
+                Save
+              </Text>
+            )}
+          </TouchableOpacity>
+        </View>
+      )}
+
       <CustomToast
         message={toast.message}
         visible={toast.visible}
