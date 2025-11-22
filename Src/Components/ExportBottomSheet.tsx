@@ -99,7 +99,7 @@ const ExportBottomSheet: React.FC<ExportBottomSheetProps> = ({
                   key={index}
                   style={[styles.option, { borderBottomColor: paint.border }]}
                   onPress={() => {
-                    option.onPress();
+                     option.onPress();
                     onClose();
                   }}
                 >

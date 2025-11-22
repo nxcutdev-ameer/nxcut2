@@ -61,6 +61,7 @@ interface DraggableCalendarColumnProps {
     newEndTime: Date,
     targetStaffId: string
   ) => void;
+  totalStaffColumns: number;
 }
 
 const DraggableCalendarColumn: React.FC<DraggableCalendarColumnProps> = ({
@@ -79,6 +80,7 @@ const DraggableCalendarColumn: React.FC<DraggableCalendarColumnProps> = ({
   editingState,
   onStartEditing,
   onAppointmentPreview,
+  totalStaffColumns,
 }) => {
   const navigation = useNavigation<any>();
   const [selectedSlot, setSelectedSlot] = useState<{
@@ -441,7 +443,7 @@ const DraggableCalendarColumn: React.FC<DraggableCalendarColumnProps> = ({
 
           return (
             <DraggableAppointment
-              key={`${appointment.data.id}-${appointment.index}`}
+              key={appointment.data.id}
               event={appointment}
               onDragEnd={(newStart, newEnd, columnsMoved) =>
                 handleAppointmentDragEnd(newStart, newEnd, columnsMoved)
@@ -452,6 +454,9 @@ const DraggableCalendarColumn: React.FC<DraggableCalendarColumnProps> = ({
               hourHeight={hourHeight}
               columnWidth={appointmentWidth}
               leftOffset={leftOffset}
+              dragColumnWidth={availableWidth}
+              columnIndex={columnIndex}
+              totalStaffColumns={totalStaffColumns}
               minHour={minHour}
               maxHour={maxHour}
               staffIndex={appointment.index}

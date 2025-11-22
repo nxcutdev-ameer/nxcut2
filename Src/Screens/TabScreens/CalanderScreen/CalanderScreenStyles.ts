@@ -150,7 +150,7 @@ export const CalanderScreenStyles = StyleSheet.create({
     position: "absolute",
     left: 0,
     right: 0,
-    bottom: 0,
+    bottom: getHeightEquivalent(110),
     paddingHorizontal: getWidthEquivalent(16),
     paddingVertical: getHeightEquivalent(12),
     backgroundColor: paint.white,
@@ -176,10 +176,7 @@ export const CalanderScreenStyles = StyleSheet.create({
     borderColor: paint.gray[300],
   },
   editingSaveButton: {
-    backgroundColor: paint.primary,
-  },
-  editingSaveButtonDisabled: {
-    backgroundColor: paint.gray[300],
+    backgroundColor: paint.black,
   },
   editingButtonText: {
     fontSize: fontEq(16),

@@ -11,6 +11,7 @@ import {
   FileText,
   DollarSign,
   X,
+  SlidersVertical,
 } from "lucide-react-native";
 import SelectPeriodModal from "../../../Components/SelectPeriodModal";
 import LottieView from "lottie-react-native";
@@ -116,8 +117,8 @@ const FinanceSummaryScreen = () => {
         <Text style={[getAmountTextStyle(), styles.totalColumn]}>
           AED{" "}
           {amount.toLocaleString("en-US", {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
+            minimumFractionDigits: 1,
+            maximumFractionDigits: 1,
           })}
         </Text>
       </View>
@@ -424,8 +425,8 @@ const FinanceSummaryScreen = () => {
                               field.key as keyof typeof salesSection
                             ] as number) || 0
                           ).toLocaleString("en-US", {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2,
+                            minimumFractionDigits: 1,
+                            maximumFractionDigits: 1,
                           })}
                         </Text>
                       </View>
@@ -452,8 +453,8 @@ const FinanceSummaryScreen = () => {
                                 field.key as keyof (typeof dailyBreakdown)[string]
                               ] as number) || 0
                             ).toLocaleString("en-US", {
-                              minimumFractionDigits: 2,
-                              maximumFractionDigits: 2,
+                              minimumFractionDigits: 1,
+                              maximumFractionDigits: 1,
                             })}
                           </Text>
                         </View>
@@ -520,6 +521,7 @@ const FinanceSummaryScreen = () => {
               isDateRangeSelectionDisabled() && { opacity: 0.5 },
             ]}
           >
+            <SlidersVertical size={18} color={colors.text} />
             <Text
               style={[
                 styles.buttonText,
@@ -528,6 +530,7 @@ const FinanceSummaryScreen = () => {
                 },
               ]}
             >
+              {" "}
               {getDateRangeText()}
             </Text>
           </TouchableOpacity>

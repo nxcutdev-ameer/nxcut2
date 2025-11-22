@@ -45,6 +45,7 @@ import BottomSheet, {
   BottomSheetBackdrop,
 } from "@gorhom/bottom-sheet";
 import { CalendarList } from "react-native-calendars";
+import { AppointmentCalanderBO } from "../../../Repository/appointmentsRepository";
 
 type EditingState = {
   appointmentId: string;
@@ -55,15 +56,14 @@ type EditingState = {
   pendingStart: Date;
   pendingEnd: Date;
   resetKey: number;
+  appointmentSnapshot: CalendarAppointment;
 };
 
 type CalendarAppointment = {
   title: string;
   start: Date;
   end: Date;
-  data: {
-    id: string;
-  };
+  data: AppointmentCalanderBO;
 };
 
 // Filter Panel Modal Component
@@ -244,6 +244,7 @@ const CalanderScreen = () => {
           pendingStart: appointment.start,
           pendingEnd: appointment.end,
           resetKey: Date.now(),
+          appointmentSnapshot: appointment,
         };
       });
     },
@@ -449,6 +450,31 @@ const CalanderScreen = () => {
       },
     };
   };
+
+  const timeColumnWidth = useMemo(() => getWidthEquivalent(60), []);
+
+  const getColumnWidth = useCallback(
+    (index: number) =>
+      index === 0
+        ? getWidthEquivalent(168)
+        : index === 1 || index === 2
+        ? getWidthEquivalent(108)
+        : getWidthEquivalent(125),
+    []
+  );
+
+  const columnConfigs = useMemo(() => {
+    return calanderData.map((item, index) => ({
+      item,
+      index,
+      columnWidth: getColumnWidth(index),
+    }));
+  }, [calanderData, getColumnWidth]);
+
+  const allStaffIds = useMemo(
+    () => calanderData.map((staff) => staff.staffId),
+    [calanderData]
+  );
 
   return (
     <SafeAreaView style={CalanderScreenStyles.mainContainer}>
@@ -656,70 +682,113 @@ const CalanderScreen = () => {
                   flexDirection: "row",
                 }}
               >
-                {calanderData.map((item, index) => (
-                  <Fragment key={index}>
-                    <DraggableCalendarColumn
-                      staffName={item.staffName}
-                      staffId={item.staffId}
-                      columnIndex={index}
-                      allStaffIds={calanderData.map((staff) => staff.staffId)}
-                      appointments={item.staffAppointments}
-                      onAppointmentUpdate={(
-                        appointmentServiceId,
-                        newStartTime,
-                        newEndTime,
-                        newStaffId
-                      ) => {
-                        // Fire and forget - UI is already updated optimistically
-                        // Backend sync happens in background
-                        updateAppointmentTime(
+                {columnConfigs.map(({ item, index, columnWidth }) => {
+                  let columnAppointments = item.staffAppointments;
+
+                  if (editingState) {
+                    const {
+                      appointmentId,
+                      originalStaffId,
+                      pendingStaffId,
+                      pendingStart,
+                      pendingEnd,
+                      appointmentSnapshot,
+                    } = editingState;
+
+                    const isRelevantColumn =
+                      item.staffId === originalStaffId ||
+                      item.staffId === pendingStaffId;
+
+                    if (isRelevantColumn) {
+                      const baseList = columnAppointments.filter(
+                        (appt) => appt.data.id !== appointmentId
+                      );
+
+                      if (item.staffId === pendingStaffId) {
+                        const existing = columnAppointments.find(
+                          (appt) => appt.data.id === appointmentId
+                        );
+
+                        const sourceAppointment = existing ?? appointmentSnapshot;
+
+                        const updatedAppointment = {
+                          ...sourceAppointment,
+                          start: new Date(pendingStart),
+                          end: new Date(pendingEnd),
+                          data: {
+                            ...sourceAppointment.data,
+                            staff_id: item.staffId,
+                            staff: sourceAppointment.data.staff
+                              ? {
+                                  ...sourceAppointment.data.staff,
+                                  id: item.staffId,
+                                }
+                              : sourceAppointment.data.staff,
+                          },
+                        };
+
+                        columnAppointments = [...baseList, updatedAppointment].sort(
+                          (a, b) => a.start.getTime() - b.start.getTime()
+                        );
+                      } else {
+                        columnAppointments = baseList;
+                      }
+                    }
+                  }
+
+                  return (
+                    <Fragment key={index}>
+                      <DraggableCalendarColumn
+                        staffName={item.staffName}
+                        staffId={item.staffId}
+                        columnIndex={index}
+                        allStaffIds={allStaffIds}
+                        appointments={columnAppointments}
+                        onAppointmentUpdate={(
                           appointmentServiceId,
                           newStartTime,
                           newEndTime,
                           newStaffId
-                        ).then((success) => {
-                          if (success) {
-                            console.log(
-                              "Appointment synced with backend successfully"
-                            );
-                          } else {
-                            console.error(
-                              "Failed to sync appointment with backend"
-                            );
-                          }
-                        });
-                        // Return immediately to not block UI
-                        return Promise.resolve();
-                      }}
-                      showHours={index === 0}
-                      columnWidth={
-                        index === 0
-                          ? getWidthEquivalent(168)
-                          : index === 1 || index === 2
-                          ? getWidthEquivalent(108)
-                          : getWidthEquivalent(125)
-                      }
-                      hourHeight={getHeightEquivalent(80)}
-                      minHour={8}
-                      maxHour={23}
-                      onScrollEnable={setScrollEnabled}
-                      editingState={editingState}
-                      onStartEditing={handleStartEditing}
-                      onAppointmentPreview={handleAppointmentPreview}
-                    />
-                    {index < calanderData.length - 1 && (
-                      <View
-                        style={{
-                          width: 1,
-                          height: "100%",
-                          backgroundColor: "rgba(0, 0, 0, 0.2)", // Semi-transparent vertical line
-                          position: "relative",
-                          zIndex: 1,
+                        ) => {
+                          updateAppointmentTime(
+                            appointmentServiceId,
+                            newStartTime,
+                            newEndTime,
+                            newStaffId
+                          ).then((success) => {
+                            if (success) {
+                              console.log("Appointment synced with backend successfully");
+                            } else {
+                              console.error("Failed to sync appointment with backend");
+                            }
+                          });
+                          return Promise.resolve();
                         }}
+                        showHours={index === 0}
+                        columnWidth={columnWidth}
+                        hourHeight={getHeightEquivalent(80)}
+                        minHour={8}
+                        maxHour={23}
+                        onScrollEnable={setScrollEnabled}
+                        editingState={editingState}
+                        onStartEditing={handleStartEditing}
+                        onAppointmentPreview={handleAppointmentPreview}
+                        totalStaffColumns={calanderData.length}
                       />
-                    )}
-                  </Fragment>
-                ))}
+                      {index < columnConfigs.length - 1 && (
+                        <View
+                          style={{
+                            width: 1,
+                            height: "100%",
+                            backgroundColor: "rgba(0, 0, 0, 0.2)",
+                            position: "relative",
+                            zIndex: 1,
+                          }}
+                        />
+                      )}
+                    </Fragment>
+                  );
+                })}
               </ScrollView>
             </ScrollView>
           )}
@@ -750,11 +819,9 @@ const CalanderScreen = () => {
             style={[
               CalanderScreenStyles.editingButton,
               CalanderScreenStyles.editingSaveButton,
-              (isSaving || !hasPendingChanges) &&
-                CalanderScreenStyles.editingSaveButtonDisabled,
             ]}
             onPress={handleSaveEditing}
-            disabled={isSaving || !hasPendingChanges}
+            disabled={isSaving}
             activeOpacity={0.8}
           >
             {isSaving ? (

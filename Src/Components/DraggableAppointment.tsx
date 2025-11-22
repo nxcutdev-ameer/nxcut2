@@ -1,12 +1,8 @@
 import React, { useRef, useState, useEffect } from "react";
-import { View, Text, StyleSheet, Animated, PanResponder } from "react-native";
+import { View, Text, StyleSheet, Animated, PanResponder, GestureResponderEvent, PanResponderGestureState } from "react-native";
 import * as Haptics from "expo-haptics";
 import { colors } from "../Constants/colors";
-import {
-  fontEq,
-  getHeightEquivalent,
-  getWidthEquivalent,
-} from "../Utils/helpers";
+import { fontEq, getHeightEquivalent, getWidthEquivalent } from "../Utils/helpers";
 import { AppointmentCalanderBO } from "../Repository/appointmentsRepository";
 
 interface DraggableAppointmentProps {
@@ -35,6 +31,10 @@ interface DraggableAppointmentProps {
   canDrag?: boolean;
   isEditing?: boolean;
   resetTrigger?: number;
+  dragColumnWidth?: number;
+  columnStart?: number;
+  columnIndex?: number;
+  totalStaffColumns?: number;
 }
 
 const DraggableAppointment: React.FC<DraggableAppointmentProps> = ({
@@ -54,17 +54,22 @@ const DraggableAppointment: React.FC<DraggableAppointmentProps> = ({
   canDrag = false,
   isEditing = false,
   resetTrigger,
+  dragColumnWidth,
+  columnStart = 0,
+  columnIndex = 0,
+  totalStaffColumns = 1,
 }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [lastSnappedSlot, setLastSnappedSlot] = useState<number | null>(null);
   const [committedPosition, setCommittedPosition] = useState({ x: 0, y: 0 });
-  const [showPlaceholder, setShowPlaceholder] = useState(false);
   const lastEventTimeRef = useRef<number>(event.start.getTime());
-  const touchStartTime = useRef<number>(0);
+  const touchStartTime = useRef<number | null>(null);
   const hasMoved = useRef(false);
   const longPressTriggeredRef = useRef(false);
+  const suppressTapRef = useRef(false);
   const longPressTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const dragEnabledRef = useRef<boolean>(canDrag);
+  const lastSnappedColumnRef = useRef<number>(0);
 
   const pan = useRef(new Animated.ValueXY()).current;
   const resetTriggerRef = useRef<number | undefined>(resetTrigger);
@@ -73,7 +78,6 @@ const DraggableAppointment: React.FC<DraggableAppointmentProps> = ({
     dragEnabledRef.current = canDrag;
     if (!canDrag) {
       setIsDragging(false);
-      setShowPlaceholder(false);
     }
   }, [canDrag]);
 
@@ -98,7 +102,6 @@ const DraggableAppointment: React.FC<DraggableAppointmentProps> = ({
 
     resetTriggerRef.current = resetTrigger;
     setIsDragging(false);
-    setShowPlaceholder(false);
     setCommittedPosition({ x: 0, y: 0 });
     pan.setValue({ x: 0, y: 0 });
   }, [pan, resetTrigger]);
@@ -135,9 +138,18 @@ const DraggableAppointment: React.FC<DraggableAppointmentProps> = ({
     const currentEventTime = event.start.getTime();
     const lastEventTime = lastEventTimeRef.current;
 
-    // Only reset if the time changed AND we're not currently dragging
-    // This prevents reset during our own optimistic update
-    if (currentEventTime !== lastEventTime && !isDragging) {
+    if (currentEventTime === lastEventTime) {
+      return;
+    }
+
+    if (isEditing) {
+      setCommittedPosition({ x: 0, y: 0 });
+      pan.setValue({ x: 0, y: 0 });
+      lastEventTimeRef.current = currentEventTime;
+      return;
+    }
+
+    if (!isDragging) {
       console.log(
         "[DraggableAppointment] Event time changed from backend, resetting position"
       );
@@ -145,7 +157,7 @@ const DraggableAppointment: React.FC<DraggableAppointmentProps> = ({
       pan.setValue({ x: 0, y: 0 });
       lastEventTimeRef.current = currentEventTime;
     }
-  }, [event.start.getTime(), isDragging]);
+  }, [event.start.getTime(), isDragging, isEditing, pan]);
 
   // Snap to 15-minute intervals
   const snapToTimeSlot = (yPosition: number) => {
@@ -164,8 +176,9 @@ const DraggableAppointment: React.FC<DraggableAppointmentProps> = ({
   const yPositionToTime = (yPos: number) => {
     const minutesFromMinHour = (yPos / hourHeight) * 60;
     const totalMinutes = minHour * 60 + minutesFromMinHour;
-    const hours = Math.floor(totalMinutes / 60);
-    const minutes = Math.round(totalMinutes % 60);
+    const snappedMinutes = Math.round(totalMinutes / 15) * 15;
+    const hours = Math.floor(snappedMinutes / 60);
+    const minutes = snappedMinutes % 60;
     const newDate = new Date(event.start);
     newDate.setHours(hours, minutes, 0, 0);
     return newDate;
@@ -180,11 +193,12 @@ const DraggableAppointment: React.FC<DraggableAppointmentProps> = ({
       onMoveShouldSetPanResponderCapture: () => true,
       onPanResponderTerminationRequest: () => false,
       onShouldBlockNativeResponder: () => true,
-      onPanResponderGrant: (evt) => {
+      onPanResponderGrant: (evt: GestureResponderEvent) => {
         evt.stopPropagation();
         touchStartTime.current = Date.now();
         hasMoved.current = false;
         longPressTriggeredRef.current = false;
+        lastSnappedColumnRef.current = 0;
 
         onScrollEnable?.(false);
 
@@ -197,6 +211,7 @@ const DraggableAppointment: React.FC<DraggableAppointmentProps> = ({
           longPressTimeoutRef.current = setTimeout(() => {
             longPressTriggeredRef.current = true;
             dragEnabledRef.current = true;
+            suppressTapRef.current = true;
             onLongPress(event.data.id, staffId);
           }, 400);
         }
@@ -205,7 +220,7 @@ const DraggableAppointment: React.FC<DraggableAppointmentProps> = ({
         const currentY = initialTop + committedPosition.y;
         setLastSnappedSlot(getTimeSlotIndex(currentY));
       },
-      onPanResponderMove: (event, gestureState) => {
+      onPanResponderMove: (_evt: GestureResponderEvent, gestureState: PanResponderGestureState) => {
         const distanceMoved = Math.max(
           Math.abs(gestureState.dx),
           Math.abs(gestureState.dy)
@@ -230,7 +245,6 @@ const DraggableAppointment: React.FC<DraggableAppointmentProps> = ({
             hasMoved.current = true;
             // Now start dragging
             setIsDragging(true);
-            setShowPlaceholder(true);
             onScrollEnable?.(false);
           }
         }
@@ -243,6 +257,27 @@ const DraggableAppointment: React.FC<DraggableAppointmentProps> = ({
         const clampedY = clamp(desiredY, 0, maxStartY);
         const translateY = clampedY - baseY;
 
+        const effectiveColumnWidth = dragColumnWidth ?? columnWidth;
+        if (effectiveColumnWidth <= 0) {
+          return;
+        }
+
+        const currentColumnOffset = committedPosition.x / effectiveColumnWidth;
+        const minOffsetX = -(columnIndex + currentColumnOffset) * effectiveColumnWidth;
+        const maxOffsetX =
+          (totalStaffColumns - (columnIndex + currentColumnOffset) - 1) *
+          effectiveColumnWidth;
+
+        const proposedOffsetX = committedPosition.x + gestureState.dx;
+        const clampedOffsetX = clamp(proposedOffsetX, minOffsetX, maxOffsetX);
+        const snappedColumn = Math.round(clampedOffsetX / effectiveColumnWidth);
+        const translateX = snappedColumn * effectiveColumnWidth;
+
+        if (snappedColumn !== lastSnappedColumnRef.current) {
+          lastSnappedColumnRef.current = snappedColumn;
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+        }
+
         // Trigger haptic feedback when entering a new time slot
         const currentY = baseY + translateY;
         const currentSlot = getTimeSlotIndex(currentY);
@@ -254,9 +289,9 @@ const DraggableAppointment: React.FC<DraggableAppointmentProps> = ({
         }
 
         // Update animated values
-        pan.setValue({ x: gestureState.dx, y: translateY });
+        pan.setValue({ x: translateX, y: translateY });
       },
-      onPanResponderRelease: (_, gesture) => {
+      onPanResponderRelease: (_evt: GestureResponderEvent, gesture: PanResponderGestureState) => {
         if (longPressTimeoutRef.current) {
           clearTimeout(longPressTimeoutRef.current);
           longPressTimeoutRef.current = null;
@@ -264,17 +299,25 @@ const DraggableAppointment: React.FC<DraggableAppointmentProps> = ({
 
         const longPressTriggered = longPressTriggeredRef.current;
         longPressTriggeredRef.current = false;
+        const suppressTap = suppressTapRef.current;
+        suppressTapRef.current = false;
 
         if (!dragEnabledRef.current) {
           onScrollEnable?.(true);
-          if (!hasMoved.current && !longPressTriggered && onPress) {
+          if (!hasMoved.current && !longPressTriggered && !suppressTap && onPress) {
             onPress();
           }
           return;
         }
 
+        if (longPressTriggered && !hasMoved.current) {
+          onScrollEnable?.(true);
+          pan.setValue({ x: 0, y: 0 });
+          return;
+        }
+
         // If it was a quick tap and didn't move much, treat as tap
-        if (!hasMoved.current && onPress && !isEditing) {
+        if (!hasMoved.current && onPress && !isEditing && !suppressTap) {
           onScrollEnable?.(true);
           pan.setValue({ x: 0, y: 0 });
           onPress();
@@ -288,7 +331,6 @@ const DraggableAppointment: React.FC<DraggableAppointmentProps> = ({
         }
 
         setIsDragging(false);
-        setShowPlaceholder(false);
         onScrollEnable?.(true);
 
         const baseY = initialTop + committedPosition.y;
@@ -298,50 +340,54 @@ const DraggableAppointment: React.FC<DraggableAppointmentProps> = ({
         const finalOffsetY = snappedY - initialTop;
         const targetTranslateY = snappedY - baseY;
 
-        // Calculate which staff column based on X movement
-        const horizontalMovement = gesture.dx;
-        let columnsMoved = 0;
-
-        // Only move columns if dragged more than 40% of column width
-        if (Math.abs(horizontalMovement) > columnWidth * 0.4) {
-          columnsMoved = Math.round(horizontalMovement / columnWidth);
+        const effectiveColumnWidth = dragColumnWidth ?? columnWidth;
+        if (effectiveColumnWidth <= 0) {
+          return;
         }
 
+        const currentColumnOffset = committedPosition.x / effectiveColumnWidth;
+        const minOffsetX = -(columnIndex + currentColumnOffset) * effectiveColumnWidth;
+        const maxOffsetX =
+          (totalStaffColumns - (columnIndex + currentColumnOffset) - 1) *
+          effectiveColumnWidth;
+
+        const proposedOffsetX = committedPosition.x + gesture.dx;
+        const clampedOffsetX = clamp(proposedOffsetX, minOffsetX, maxOffsetX);
+        const columnsMoved = Math.round(clampedOffsetX / effectiveColumnWidth);
+        const finalOffsetX = columnsMoved * effectiveColumnWidth;
+
         const newStartTime = yPositionToTime(snappedY);
-        const durationMs = event.end.getTime() - event.start.getTime();
-        const newEndTime = new Date(newStartTime.getTime() + durationMs);
+        const durationMs = event.end?.getTime() - event.start?.getTime();
+        let newEndTime = new Date(newStartTime);
+        if (durationMs && !Number.isNaN(durationMs)) {
+          newEndTime = new Date(newStartTime.getTime() + durationMs);
+        }
 
         // Medium haptic feedback on drop
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
-        // Update the last event time to the new time we're setting
-        lastEventTimeRef.current = newStartTime.getTime();
+        const finalEndTime = new Date(newEndTime);
 
         // Animate to snapped position
         Animated.spring(pan, {
-          toValue: { x: 0, y: targetTranslateY },
+          toValue: { x: finalOffsetX, y: targetTranslateY },
           useNativeDriver: false,
           friction: 8,
         }).start(() => {
           // Commit the final position so it stays there
-          setCommittedPosition({ x: 0, y: finalOffsetY });
+          setCommittedPosition({ x: finalOffsetX, y: finalOffsetY });
           pan.setValue({ x: 0, y: 0 });
 
           // Call onDragEnd after animation completes
           // Backend update will happen here, but UI is already updated
-          onDragEnd(newStartTime, newEndTime, columnsMoved);
+          onDragEnd(newStartTime, finalEndTime, columnsMoved);
+          lastSnappedColumnRef.current = 0;
         });
       },
       onPanResponderTerminate: () => {
-        if (longPressTimeoutRef.current) {
-          clearTimeout(longPressTimeoutRef.current);
-          longPressTimeoutRef.current = null;
-        }
-        setIsDragging(false);
-        setShowPlaceholder(false);
+        dragEnabledRef.current = canDrag;
         onScrollEnable?.(true);
         pan.setValue({ x: 0, y: 0 });
-        hasMoved.current = false;
       },
     })
   ).current;
@@ -351,116 +397,81 @@ const DraggableAppointment: React.FC<DraggableAppointmentProps> = ({
   };
 
   return (
-    <>
-      {/* Placeholder/Ghost - Shows original position while dragging */}
-      {showPlaceholder && (
-        <View
+    <Animated.View
+      {...panResponder.panHandlers}
+      pointerEvents={isDragging ? "box-only" : "auto"}
+      style={[
+        styles.appointmentContainer,
+        {
+          top: initialTop + committedPosition.y,
+          left: leftOffset + committedPosition.x,
+          height: initialHeight,
+          width: columnWidth - getWidthEquivalent(4),
+          backgroundColor:
+            event.data.appointment.status === "scheduled"
+              ? colors.gray[200]
+              : event.data.staff.calendar_color || colors.gray[100],
+          opacity: isDragging ? 0.75 : 1,
+          elevation: isDragging ? 8 : 2,
+          shadowOpacity: isDragging ? 0.3 : 0.1,
+          zIndex: isDragging ? 1000 : 1,
+          borderWidth: isEditing ? 2 : 0,
+          borderColor: isEditing ? colors.primary : "transparent",
+        },
+        animatedStyle,
+      ]}
+    >
+      <View style={styles.contentContainer}>
+        <Text
           style={[
-            styles.appointmentContainer,
-            styles.placeholderContainer,
-            {
-              top: initialTop + committedPosition.y,
-              left: leftOffset,
-              height: initialHeight,
-              width: columnWidth - getWidthEquivalent(4),
-              backgroundColor:
-                event.data.appointment.status === 'scheduled'
-                  ? colors.gray[200]
-                  : event.data.staff.calendar_color || colors.gray[100],
+            styles.clientName,
+            event.data.appointment.status === "scheduled" && {
+              color: colors.gray[600],
+            },
+          ]}
+          numberOfLines={1}
+        >
+          {event.data.appointment.client.first_name} {event.data.appointment.client.last_name}
+        </Text>
+        <Text
+          style={[
+            styles.serviceName,
+            event.data.appointment.status === "scheduled" && {
+              color: colors.gray[500],
+            },
+          ]}
+          numberOfLines={1}
+        >
+          {event.data.service.name}
+        </Text>
+        <Text
+          style={[
+            styles.timeText,
+            event.data.appointment.status === "scheduled" && {
+              color: colors.gray[500],
             },
           ]}
         >
-          <View style={styles.placeholderContent}>
-            <Text
-              style={[styles.clientName, styles.placeholderText]}
-              numberOfLines={1}
-            >
-              {event.data.appointment.client.first_name}{" "}
-              {event.data.appointment.client.last_name}
-            </Text>
-            <Text
-              style={[styles.serviceName, styles.placeholderText]}
-              numberOfLines={1}
-            >
-              {event.data.service.name}
-            </Text>
-          </View>
+          {event.start.toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          })}
+          {" "}-{" "}
+          {event.end.toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          })}
+        </Text>
+      </View>
+
+      {isDragging && (
+        <View style={styles.dragIndicator}>
+          <View style={styles.dragLine} />
+          <View style={styles.dragLine} />
+          <View style={styles.dragLine} />
         </View>
       )}
-
-      {/* Actual Draggable Appointment */}
-      <Animated.View
-        {...panResponder.panHandlers}
-        pointerEvents={isDragging ? "box-only" : "auto"}
-        style={[
-          styles.appointmentContainer,
-          {
-            top: initialTop,
-            left: leftOffset,
-            height: initialHeight,
-            width: columnWidth - getWidthEquivalent(4),
-            backgroundColor:
-              event.data.appointment.status === 'scheduled'
-                ? colors.gray[200]
-                : event.data.staff.calendar_color || colors.gray[100],
-            opacity: isDragging ? 0.9 : 1,
-            elevation: isDragging ? 8 : 2,
-            shadowOpacity: isDragging ? 0.3 : 0.1,
-            zIndex: isDragging ? 1000 : 1,
-            borderWidth: isEditing ? 2 : 0,
-            borderColor: isEditing ? colors.primary : "transparent",
-          },
-          animatedStyle,
-        ]}
-      >
-        <View style={styles.contentContainer}>
-          <Text 
-            style={[
-              styles.clientName,
-              event.data.appointment.status === 'scheduled' && { color: colors.gray[600] }
-            ]} 
-            numberOfLines={1}
-          >
-            {event.data.appointment.client.first_name}{" "}
-            {event.data.appointment.client.last_name}
-          </Text>
-          <Text 
-            style={[
-              styles.serviceName,
-              event.data.appointment.status === 'scheduled' && { color: colors.gray[500] }
-            ]} 
-            numberOfLines={1}
-          >
-            {event.data.service.name}
-          </Text>
-          <Text 
-            style={[
-              styles.timeText,
-              event.data.appointment.status === 'scheduled' && { color: colors.gray[500] }
-            ]}
-          >
-            {event.start.toLocaleTimeString([], {
-              hour: "2-digit",
-              minute: "2-digit",
-            })}{" "}
-            -{" "}
-            {event.end.toLocaleTimeString([], {
-              hour: "2-digit",
-              minute: "2-digit",
-            })}
-          </Text>
-        </View>
-
-        {/* Drag Indicator */}
-        {isDragging && (
-          <View style={styles.dragIndicator}>
-            <View style={styles.dragLine} />
-            <View style={styles.dragLine} />
-            <View style={styles.dragLine} />
-          </View>
-        )}
-      </Animated.View>
-    </>
+    </Animated.View>
   );
 };
 
@@ -498,21 +509,6 @@ const styles = StyleSheet.create({
     fontSize: fontEq(9),
     fontWeight: "500",
     color: colors.textSecondary,
-  },
-  placeholderContainer: {
-    opacity: 0.3,
-    borderStyle: "dashed",
-    borderWidth: 2,
-    borderColor: colors.gray[400],
-    borderLeftWidth: 4,
-    backgroundColor: "transparent",
-  },
-  placeholderContent: {
-    flex: 1,
-    opacity: 0.5,
-  },
-  placeholderText: {
-    opacity: 0.6,
   },
   dragIndicator: {
     position: "absolute",

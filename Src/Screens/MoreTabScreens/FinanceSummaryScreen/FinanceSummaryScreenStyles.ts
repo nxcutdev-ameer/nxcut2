@@ -55,7 +55,7 @@ export const styles = StyleSheet.create({
   },
   button: {
     backgroundColor: colors.backgroundSecondary,
-    borderRadius: getWidthEquivalent(8),
+    borderRadius: getWidthEquivalent(50),
     paddingHorizontal: getWidthEquivalent(16),
     paddingVertical: getHeightEquivalent(12),
     flexDirection: "row",
@@ -63,7 +63,7 @@ export const styles = StyleSheet.create({
     justifyContent: "center",
     borderWidth: 1,
     borderColor: colors.border,
-    width: getWidthEquivalent(220),
+    width: "100%",
   },
   buttonText: {
     fontSize: fontEq(14),
@@ -125,7 +125,7 @@ export const styles = StyleSheet.create({
     //borderBottomRightRadius: getWidthEquivalent(12),
   },
   tableCellText: {
-    fontSize: fontEq(14),
+    fontSize: fontEq(13),
     fontWeight: "500",
     color: colors.text,
   },
@@ -134,7 +134,7 @@ export const styles = StyleSheet.create({
     backgroundColor: colors.primaryLight,
   },
   tableCellTextHighlighted: {
-    fontSize: fontEq(14),
+    fontSize: fontEq(13),
     fontWeight: "700",
     color: "#000000",
   },
@@ -293,7 +293,7 @@ export const styles = StyleSheet.create({
   },
   dailyAmountText: {
     textAlign: "center",
-    fontSize: fontEq(14),
+    fontSize: fontEq(13),
   },
   // Sticky table styles
   stickyTableContainer: {
