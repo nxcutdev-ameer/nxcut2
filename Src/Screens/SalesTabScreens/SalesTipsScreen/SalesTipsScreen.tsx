@@ -60,7 +60,7 @@ const SalesTipsScreen = () => {
           onPress={() => navigation.goBack()}
           style={SalesTipsScreenStyles.backArrow}
         >
-          <ArrowLeft size={28} color={colors.colors.text} />
+          <ArrowLeft size={20} color={colors.colors.text} />
         </TouchableOpacity>
         <TouchableOpacity
           onPress={openExportBottomSheet}
@@ -99,9 +99,9 @@ const SalesTipsScreen = () => {
           onPress={() => setShowDateFilter(true)}
           style={SalesTipsScreenStyles.dateRangeButton}
         >
-          <Calendar size={18} color={colors.colors.primary} />
+          <Calendar size={18} color={colors.colors.black} />
           <Text style={SalesTipsScreenStyles.dateRangeText}>
-            {getDateRangeText()}
+           {" "} {getDateRangeText()}
           </Text>
         </TouchableOpacity>
       </View>

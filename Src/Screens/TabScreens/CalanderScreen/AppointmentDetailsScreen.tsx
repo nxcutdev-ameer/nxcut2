@@ -37,12 +37,12 @@ const AppointmentDetailsScreen = () => {
   const { appointment } = route.params as AppointmentDetailsRouteParams;
   const { allLocations } = useAuthStore();
   const { colors: paint } = colors;
-  
+
   // Find the location name using location_id
   const location = allLocations.find(
     (loc) => loc.id === appointment.appointment.location_id
   );
-  const locationName = location?.name || 'Location not found';
+  const locationName = location?.name || "Location not found";
 
   const formatCurrency = (amount: number) => {
     return `AED ${amount.toFixed(2)}`;
@@ -161,14 +161,14 @@ const AppointmentDetailsScreen = () => {
                 <Text
                   style={[styles.clientContact, { color: paint.textSecondary }]}
                 >
-                    {appointment.appointment.client.phone}
+                  {appointment.appointment.client.phone}
                 </Text>
               )}
               {appointment.appointment.client.email && (
                 <Text
                   style={[styles.clientContact, { color: paint.textSecondary }]}
                 >
-                   {appointment.appointment.client.email}
+                  {appointment.appointment.client.email}
                 </Text>
               )}
             </View>
@@ -321,7 +321,7 @@ const AppointmentDetailsScreen = () => {
                 <Text
                   style={[styles.staffContact, { color: paint.textSecondary }]}
                 >
-                   {appointment.staff.phone_number}
+                  {appointment.staff.phone_number}
                 </Text>
               )}
             </View>

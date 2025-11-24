@@ -43,9 +43,9 @@ export const TeamMemberDetailsScreenStyles = StyleSheet.create({
     width: getWidthEquivalent(80),
   },
   backArrowText: {
-    fontSize: fontEq(18),
+    fontSize: fontEq(16),
     fontWeight: "600",
-    color: colors.colors.text,
+    color: colors.colors.black,
     marginLeft: getWidthEquivalent(8),
   },
   headerRightContainer: {

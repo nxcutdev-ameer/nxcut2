@@ -254,10 +254,10 @@ const DraggableCalendarColumn: React.FC<DraggableCalendarColumnProps> = ({
                     {hour === 0
                       ? "12:00\nam"
                       : hour < 12
-                      ? `${hour}:00\nam`
+                      ? `${hour}:00\n    am`
                       : hour === 12
-                      ? "12:00\npm"
-                      : `${hour - 12}:00\npm`}
+                      ? "12:00\n    pm"
+                      : `${hour - 12}:00\n  pm`}
                   </Text>
                 </View>
               )}
@@ -404,15 +404,20 @@ const DraggableCalendarColumn: React.FC<DraggableCalendarColumnProps> = ({
           const appointmentWidth = availableWidth / appointment.totalColumns;
           const leftOffset = appointmentWidth * appointment.column;
 
+          const interactionsDisabled = Boolean(
+            editingState && editingState.appointmentId !== appointment.data.id
+          );
+
           const handleAppointmentLongPress = () => {
             if (!onStartEditing) {
               return;
             }
 
-            // Prevent starting a new edit while another appointment is active
-            if (editingState && !isEditing) {
+            if (interactionsDisabled) {
               return;
             }
+
+            void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
             onStartEditing(appointment, staffId);
           };
@@ -465,15 +470,19 @@ const DraggableCalendarColumn: React.FC<DraggableCalendarColumnProps> = ({
               staffIndex={appointment.index}
               staffId={staffId}
               onScrollEnable={onScrollEnable}
-              onLongPress={handleAppointmentLongPress}
+              onLongPress={interactionsDisabled ? undefined : handleAppointmentLongPress}
               canDrag={canDrag}
               dimmed={anotherAppointmentEditing}
               isEditing={isEditing}
               resetTrigger={resetTrigger}
-              onPress={() =>
-                navigation.navigate("AppointmentDetailsScreen", {
-                  appointment: appointment.data,
-                })
+              disableInteractions={interactionsDisabled}
+              onPress={
+                interactionsDisabled
+                  ? undefined
+                  : () =>
+                      navigation.navigate("AppointmentDetailsScreen", {
+                        appointment: appointment.data,
+                      })
               }
             />
           );
@@ -569,15 +578,18 @@ const styles = StyleSheet.create({
     width: getWidthEquivalent(55),
     height: getHeightEquivalent(24),
     borderRadius: getWidthEquivalent(12),
-    backgroundColor: "#FF4444",
+    borderWidth: 2,
+    borderColor: "#FF4444",
+    //backgroundColor: "#FF4444",
+    backgroundColor: colors.white,
     alignItems: "center",
     justifyContent: "center",
     zIndex: 1001,
   },
   currentTimeText: {
     fontSize: fontEq(10),
-    fontWeight: "600",
-    color: colors.white,
+    fontWeight: "700",
+    color: "#FF4444",
   },
   timeSeparatorContainer: {
     position: "absolute",

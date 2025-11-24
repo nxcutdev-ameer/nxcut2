@@ -193,7 +193,7 @@ const DailySalesScreen = () => {
           onPress={() => navigation.goBack()}
           style={DailySalesScreenStyles.backArrow}
         >
-          <ArrowLeft size={28} color={colors.colors.text} />
+          <ArrowLeft size={20} color={colors.colors.text} />
         </TouchableOpacity>
         <TouchableOpacity
           style={DailySalesScreenStyles.elipseBox}

@@ -195,7 +195,7 @@ const TeamMemberDetailsScreen = () => {
           onPress={() => navigation.goBack()}
           style={TeamMemberDetailsScreenStyles.backArrow}
         >
-          <ArrowLeft size={24} color={colors.colors.text} />
+          <ArrowLeft size={20} color={colors.colors.black} />
           <Text style={TeamMemberDetailsScreenStyles.backArrowText}>Back</Text>
         </TouchableOpacity>
         <TouchableOpacity

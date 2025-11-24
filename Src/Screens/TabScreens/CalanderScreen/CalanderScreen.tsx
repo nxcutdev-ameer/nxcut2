@@ -263,11 +263,38 @@ const CalanderScreen = () => {
           return current;
         }
 
+        const staffChanged = current.pendingStaffId !== targetStaffId;
+        const timeChanged =
+          current.pendingStart.getTime() !== newStartTime.getTime() ||
+          current.pendingEnd.getTime() !== newEndTime.getTime();
+
+        let updatedSnapshot = current.appointmentSnapshot;
+
+        if (staffChanged || timeChanged) {
+          updatedSnapshot = {
+            ...current.appointmentSnapshot,
+            start: new Date(newStartTime),
+            end: new Date(newEndTime),
+            data: {
+              ...current.appointmentSnapshot.data,
+              staff_id: targetStaffId,
+              staff: current.appointmentSnapshot.data.staff
+                ? {
+                    ...current.appointmentSnapshot.data.staff,
+                    id: targetStaffId,
+                  }
+                : current.appointmentSnapshot.data.staff,
+            },
+          };
+        }
+
         return {
           ...current,
           pendingStart: newStartTime,
           pendingEnd: newEndTime,
           pendingStaffId: targetStaffId,
+          appointmentSnapshot: updatedSnapshot,
+          resetKey: staffChanged || timeChanged ? Date.now() : current.resetKey,
         };
       });
     },
@@ -804,7 +831,7 @@ const CalanderScreen = () => {
             ]}
             onPress={handleCancelEditing}
             disabled={isSaving}
-            activeOpacity={0.8}
+            activeOpacity={0.4}
           >
             <Text
               style={[
@@ -822,7 +849,7 @@ const CalanderScreen = () => {
             ]}
             onPress={handleSaveEditing}
             disabled={isSaving}
-            activeOpacity={0.8}
+            activeOpacity={0.4}
           >
             {isSaving ? (
               <ActivityIndicator size="small" color={colors.white} />

@@ -585,7 +585,7 @@ export const PaymentTransactionsScreen = () => {
           hitSlop={20}
           style={styles.back}
         >
-          <ChevronLeft size={25} />
+          <ChevronLeft size={24} />
         </TouchableOpacity>
 
         <View style={styles.titleContainer}>

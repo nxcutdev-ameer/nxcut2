@@ -25,13 +25,14 @@ export const PaymentSummaryScreenStyles = StyleSheet.create({
     flexDirection: "row",
     //padding: getWidthEquivalent(8),
     alignItems: "center",
-    justifyContent: "space-between",
+    //justifyContent: "space-between",
     width: getWidthEquivalent(80),
   },
   backArrowText: {
-    fontSize: fontEq(22),
-    fontWeight: "600",
-    color: colors.colors.text,
+    fontSize: fontEq(16),
+    fontWeight: "500",
+    color: colors.colors.black,
+    marginLeft: getHeightEquivalent(5),
   },
   elipseBox: {
     width: getWidthEquivalent(40),

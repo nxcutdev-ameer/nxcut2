@@ -11,6 +11,7 @@ import {
   SlidersVertical,
   EllipsisVertical,
   Plus,
+  ChevronLeft,
 } from "lucide-react-native";
 import colors from "../../../Constants/colors";
 import React, { useMemo, useState } from "react";
@@ -58,8 +59,9 @@ const PaymentSummaryScreen = () => {
           onPress={() => navigation.goBack()}
           style={PaymentSummaryScreenStyles.backArrow}
         >
-          <ArrowLeft size={28} color={colors.colors.text} />
-          <Text style={PaymentSummaryScreenStyles.backArrowText}>Back</Text>
+          <ChevronLeft size={24} />
+          {/* <ArrowLeft size={20} color={colors.colors.black} />
+          <Text style={PaymentSummaryScreenStyles.backArrowText}>Back</Text> */}
         </TouchableOpacity>
         <TouchableOpacity
           style={PaymentSummaryScreenStyles.elipseBox}
@@ -160,7 +162,9 @@ const PaymentSummaryScreen = () => {
         }}
         expandedFilter={expandedFilter}
         toggleFilterAccordion={(filterType: string) => {
-          setExpandedFilter((prev) => (prev === filterType ? null : filterType));
+          setExpandedFilter((prev) =>
+            prev === filterType ? null : filterType
+          );
         }}
         allLocations={allLocations}
         allTeamMembers={allTeamMembers}

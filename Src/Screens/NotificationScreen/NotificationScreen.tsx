@@ -55,7 +55,7 @@ const NotificationScreen = () => {
           onPress={() => navigation.goBack()}
           style={styles.backButton}
         >
-          <ArrowLeft size={24} color={colors.colors.text} />
+          <ArrowLeft size={20} color={colors.colors.text} />
         </TouchableOpacity>
 
         <View style={styles.headerCenter}>

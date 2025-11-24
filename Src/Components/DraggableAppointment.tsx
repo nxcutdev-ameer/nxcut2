@@ -36,6 +36,7 @@ interface DraggableAppointmentProps {
   columnIndex?: number;
   totalStaffColumns?: number;
   dimmed?: boolean;
+  disableInteractions?: boolean;
 }
 
 const DraggableAppointment: React.FC<DraggableAppointmentProps> = ({
@@ -60,6 +61,7 @@ const DraggableAppointment: React.FC<DraggableAppointmentProps> = ({
   columnIndex = 0,
   totalStaffColumns = 1,
   dimmed = false,
+  disableInteractions = false,
 }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [committedPosition, setCommittedPosition] = useState({ x: 0, y: 0 });
@@ -78,16 +80,33 @@ const DraggableAppointment: React.FC<DraggableAppointmentProps> = ({
   const dragEnabledRef = useRef<boolean>(canDrag);
   const lastSnappedColumnRef = useRef<number>(0);
   const lastSnappedSlotRef = useRef<number | null>(null);
+  const disableInteractionsRef = useRef(disableInteractions);
+  const wasEditingRef = useRef(isEditing);
 
   const pan = useRef(new Animated.ValueXY()).current;
   const resetTriggerRef = useRef<number | undefined>(resetTrigger);
 
+  dragEnabledRef.current = canDrag;
+  disableInteractionsRef.current = disableInteractions;
+  wasEditingRef.current = isEditing;
+
   useEffect(() => {
-    dragEnabledRef.current = canDrag;
     if (!canDrag) {
       setIsDragging(false);
     }
   }, [canDrag]);
+
+  useEffect(() => {
+    if (wasEditingRef.current && !isEditing) {
+      setCommittedPosition({ x: 0, y: 0 });
+      committedPositionRef.current = { x: 0, y: 0 };
+      pan.setValue({ x: 0, y: 0 });
+      setDisplayStart(new Date(event.start));
+      setDisplayEnd(new Date(event.end));
+    }
+
+    wasEditingRef.current = isEditing;
+  }, [event.end, event.start, isEditing, pan]);
 
   useEffect(() => {
     return () => {
@@ -109,10 +128,13 @@ const DraggableAppointment: React.FC<DraggableAppointmentProps> = ({
     }
 
     resetTriggerRef.current = resetTrigger;
+
     setIsDragging(false);
     setCommittedPosition({ x: 0, y: 0 });
     pan.setValue({ x: 0, y: 0 });
-  }, [pan, resetTrigger]);
+    setDisplayStart(new Date(event.start));
+    setDisplayEnd(new Date(event.end));
+  }, [canDrag, isEditing, pan, resetTrigger]);
 
   useEffect(() => {
     const startMs = event.start.getTime();
@@ -142,7 +164,9 @@ const DraggableAppointment: React.FC<DraggableAppointmentProps> = ({
         return prev;
       }
 
-      return { ...prev, y: 0 };
+      const updated = { x: prev.x, y: 0 };
+      committedPositionRef.current = updated;
+      return updated;
     });
   }, [displayStart, displayEnd, isDragging]);
 
@@ -166,6 +190,31 @@ const DraggableAppointment: React.FC<DraggableAppointmentProps> = ({
     setCommittedPosition({ x: 0, y: 0 });
     pan.setValue({ x: 0, y: 0 });
   }, [columnWidth, leftOffset, pan, isDragging]);
+
+  const prevStaffRef = useRef({ staffId, columnIndex });
+
+  useEffect(() => {
+    const previous = prevStaffRef.current;
+    const staffChanged = previous.staffId !== staffId;
+    const columnChanged = previous.columnIndex !== columnIndex;
+
+    prevStaffRef.current = { staffId, columnIndex };
+
+    if ((!staffChanged && !columnChanged) || isDragging) {
+      return;
+    }
+
+    setCommittedPosition((prev) => {
+      if (prev.x === 0) {
+        return prev;
+      }
+
+      const updated = { x: 0, y: prev.y };
+      committedPositionRef.current = updated;
+      return updated;
+    });
+    pan.setValue({ x: 0, y: 0 });
+  }, [columnIndex, isDragging, pan, staffId]);
 
   // Calculate initial position and height
   const getInitialTop = () => {
@@ -277,14 +326,25 @@ const DraggableAppointment: React.FC<DraggableAppointmentProps> = ({
   // Main appointment tap/drag handler
   const panResponder = useRef(
     PanResponder.create({
-      onStartShouldSetPanResponder: () => true,
-      onStartShouldSetPanResponderCapture: () => true,
-      onMoveShouldSetPanResponder: () => true,
-      onMoveShouldSetPanResponderCapture: () => true,
+      onStartShouldSetPanResponder: () =>
+        isEditing || !disableInteractionsRef.current,
+      onStartShouldSetPanResponderCapture: () =>
+        isEditing || !disableInteractionsRef.current,
+      onMoveShouldSetPanResponder: () =>
+        isEditing || !disableInteractionsRef.current,
+      onMoveShouldSetPanResponderCapture: () =>
+        isEditing || !disableInteractionsRef.current,
       onPanResponderTerminationRequest: () => false,
       onShouldBlockNativeResponder: () => true,
       onPanResponderGrant: (evt: GestureResponderEvent) => {
         evt.stopPropagation();
+
+        if (disableInteractionsRef.current && !isEditing) {
+          suppressTapRef.current = true;
+          onScrollEnable?.(true);
+          return;
+        }
+
         touchStartTime.current = Date.now();
         hasMoved.current = false;
         longPressTriggeredRef.current = false;
@@ -312,6 +372,10 @@ const DraggableAppointment: React.FC<DraggableAppointmentProps> = ({
         lastSnappedSlotRef.current = getTimeSlotIndex(currentY);
       },
       onPanResponderMove: (_evt: GestureResponderEvent, gestureState: PanResponderGestureState) => {
+        if (disableInteractionsRef.current && !isEditing) {
+          return;
+        }
+
         const distanceMoved = Math.max(
           Math.abs(gestureState.dx),
           Math.abs(gestureState.dy)
@@ -322,6 +386,11 @@ const DraggableAppointment: React.FC<DraggableAppointmentProps> = ({
             clearTimeout(longPressTimeoutRef.current);
             longPressTimeoutRef.current = null;
           }
+          return;
+        }
+
+        if (disableInteractionsRef.current && !isEditing) {
+          onScrollEnable?.(true);
           return;
         }
 
@@ -359,12 +428,9 @@ const DraggableAppointment: React.FC<DraggableAppointmentProps> = ({
 
         const columnIndexValue = columnIndexRef.current;
         const totalStaffColumnsValue = totalStaffColumnsRef.current;
-        const currentColumnOffset = currentCommitted.x / effectiveColumnWidth;
-        const minOffsetX =
-          -(columnIndexValue + currentColumnOffset) * effectiveColumnWidth;
+        const minOffsetX = -columnIndexValue * effectiveColumnWidth;
         const maxOffsetX =
-          (totalStaffColumnsValue - (columnIndexValue + currentColumnOffset) - 1) *
-          effectiveColumnWidth;
+          (totalStaffColumnsValue - columnIndexValue - 1) * effectiveColumnWidth;
 
         const proposedOffsetX = currentCommitted.x + gestureState.dx;
         const clampedOffsetX = clamp(proposedOffsetX, minOffsetX, maxOffsetX);
@@ -393,6 +459,13 @@ const DraggableAppointment: React.FC<DraggableAppointmentProps> = ({
         pan.setValue({ x: translateX, y: translateY });
       },
       onPanResponderRelease: (_evt: GestureResponderEvent, gesture: PanResponderGestureState) => {
+        if (disableInteractionsRef.current && !isEditing) {
+          onScrollEnable?.(true);
+          suppressTapRef.current = false;
+          pan.setValue({ x: 0, y: 0 });
+          return;
+        }
+
         if (longPressTimeoutRef.current) {
           clearTimeout(longPressTimeoutRef.current);
           longPressTimeoutRef.current = null;
@@ -405,7 +478,13 @@ const DraggableAppointment: React.FC<DraggableAppointmentProps> = ({
 
         if (!dragEnabledRef.current) {
           onScrollEnable?.(true);
-          if (!hasMoved.current && !longPressTriggered && !suppressTap && onPress) {
+          if (
+            !hasMoved.current &&
+            !longPressTriggered &&
+            !suppressTap &&
+            onPress &&
+            !disableInteractions
+          ) {
             onPress();
           }
           return;
@@ -418,7 +497,13 @@ const DraggableAppointment: React.FC<DraggableAppointmentProps> = ({
         }
 
         // If it was a quick tap and didn't move much, treat as tap
-        if (!hasMoved.current && onPress && !isEditing && !suppressTap) {
+        if (
+          !hasMoved.current &&
+          onPress &&
+          !isEditing &&
+          !suppressTap &&
+          !disableInteractions
+        ) {
           onScrollEnable?.(true);
           pan.setValue({ x: 0, y: 0 });
           onPress();
@@ -451,12 +536,9 @@ const DraggableAppointment: React.FC<DraggableAppointmentProps> = ({
 
         const columnIndexValue = columnIndexRef.current;
         const totalStaffColumnsValue = totalStaffColumnsRef.current;
-        const currentColumnOffset = currentCommitted.x / effectiveColumnWidth;
-        const minOffsetX =
-          -(columnIndexValue + currentColumnOffset) * effectiveColumnWidth;
+        const minOffsetX = -columnIndexValue * effectiveColumnWidth;
         const maxOffsetX =
-          (totalStaffColumnsValue - (columnIndexValue + currentColumnOffset) - 1) *
-          effectiveColumnWidth;
+          (totalStaffColumnsValue - columnIndexValue - 1) * effectiveColumnWidth;
 
         const proposedOffsetX = currentCommitted.x + gesture.dx;
         const clampedOffsetX = clamp(proposedOffsetX, minOffsetX, maxOffsetX);
@@ -476,30 +558,22 @@ const DraggableAppointment: React.FC<DraggableAppointmentProps> = ({
 
         const finalEndTime = new Date(newEndTime);
 
-        // Animate to snapped position
-        Animated.spring(pan, {
-          toValue: { x: targetTranslateX, y: targetTranslateY },
-          useNativeDriver: false,
-          friction: 8,
-        }).start(() => {
-          setCommittedPosition({ x: finalOffsetX, y: 0 });
-          pan.setValue({ x: 0, y: 0 });
+        // Notify parent immediately so layout (including widths) recalculates while animating
+        onDragEnd(newStartTime, finalEndTime, columnsMoved);
 
-          setDisplayStart(newStartTime);
-          setDisplayEnd(finalEndTime);
+        // Commit snapped position instantly to avoid any drift
+        setCommittedPosition({ x: finalOffsetX, y: 0 });
+        committedPositionRef.current = { x: finalOffsetX, y: 0 };
+        pan.setValue({ x: 0, y: 0 });
 
-          const landedSlot = getTimeSlotIndex(snapToTimeSlot(initialTop + finalOffsetY));
-          lastSnappedSlotRef.current = landedSlot;
+        setDisplayStart(newStartTime);
+        setDisplayEnd(finalEndTime);
 
-          // Update the underlying event reference so subsequent drags use the latest times
-          event.start = new Date(newStartTime);
-          event.end = new Date(finalEndTime);
+        const landedSlot = getTimeSlotIndex(snapToTimeSlot(initialTopRef.current + finalOffsetY));
+        lastSnappedSlotRef.current = landedSlot;
+        lastSnappedColumnRef.current = 0;
 
-          // Call onDragEnd after animation completes
-          // Backend update will happen here, but UI is already updated
-          onDragEnd(newStartTime, finalEndTime, columnsMoved);
-          lastSnappedColumnRef.current = 0;
-        });
+        // Backend update will happen here, but UI is already updated
       },
       onPanResponderTerminate: () => {
         dragEnabledRef.current = canDrag;
@@ -593,7 +667,9 @@ const DraggableAppointment: React.FC<DraggableAppointmentProps> = ({
         </View>
       )}
       <Animated.View
-        {...panResponder.panHandlers}
+        {...(disableInteractions && !isEditing
+          ? {}
+          : panResponder.panHandlers)}
         pointerEvents={isDragging ? "box-only" : "auto"}
         style={[
           styles.appointmentContainer,

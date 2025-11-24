@@ -57,10 +57,10 @@ const PerfromanceDashboardScreen = () => {
           onPress={() => goBack()}
           style={PerformanceDashboardScreenStyles.backButton}
         >
-          <ChevronLeft size={32} />
-          <Text style={PerformanceDashboardScreenStyles.backButtonText}>
+          <ChevronLeft size={24} />
+          {/* <Text style={PerformanceDashboardScreenStyles.backButtonText}>
             Back
-          </Text>
+          </Text> */}
         </TouchableOpacity>
 
         {/* <TouchableOpacity
