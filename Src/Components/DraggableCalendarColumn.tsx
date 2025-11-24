@@ -392,6 +392,9 @@ const DraggableCalendarColumn: React.FC<DraggableCalendarColumnProps> = ({
         {appointmentsWithLayout.map((appointment) => {
           const isEditing =
             editingState?.appointmentId === appointment.data.id;
+          const anotherAppointmentEditing = Boolean(
+            editingState && editingState.appointmentId !== appointment.data.id
+          );
           const canDrag = Boolean(isEditing);
           const resetTrigger = isEditing ? editingState?.resetKey : undefined;
 
@@ -464,6 +467,7 @@ const DraggableCalendarColumn: React.FC<DraggableCalendarColumnProps> = ({
               onScrollEnable={onScrollEnable}
               onLongPress={handleAppointmentLongPress}
               canDrag={canDrag}
+              dimmed={anotherAppointmentEditing}
               isEditing={isEditing}
               resetTrigger={resetTrigger}
               onPress={() =>
