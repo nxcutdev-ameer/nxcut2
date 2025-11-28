@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -8,7 +8,7 @@ import {
   Alert,
   ActivityIndicator,
 } from "react-native";
-import { useNavigation, useRoute } from "@react-navigation/native";
+import { useNavigation, useRoute, useFocusEffect } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
 import { RootStackParamList } from "../../../Navigations/RootStackNavigator";
 import { useAuthStore } from "../../../Store/useAuthStore";
@@ -31,6 +31,7 @@ import {
   getWidthEquivalent,
 } from "../../../Utils/helpers";
 import { AppointmentCalanderBO, appointmentsRepository } from "../../../Repository/appointmentsRepository";
+import { supabase } from "../../../Utils/supabase";
 
 interface AppointmentDetailsRouteParams {
   appointment: AppointmentCalanderBO;
@@ -40,10 +41,144 @@ const AppointmentDetailsScreen = () => {
   type NavigationProp = StackNavigationProp<RootStackParamList>;
   const navigation = useNavigation<NavigationProp>();
   const route = useRoute();
-  const { appointment } = route.params as AppointmentDetailsRouteParams;
+  const { appointment: initialAppointment } = route.params as AppointmentDetailsRouteParams;
   const { allLocations } = useAuthStore();
   const { colors: paint } = colors;
   const [isCanceling, setIsCanceling] = useState(false);
+  const [appointment, setAppointment] = useState<AppointmentCalanderBO>(initialAppointment);
+  const [isLoading, setIsLoading] = useState(false);
+  
+  // Store the appointment service ID separately to avoid closure issues
+  const appointmentServiceId = React.useRef(initialAppointment.id);
+
+  // Fetch fresh appointment data from the database
+  const fetchAppointmentDetails = React.useCallback(async () => {
+    try {
+      setIsLoading(true);
+      console.log("[AppointmentDetails] Fetching fresh data for appointment service ID:", appointmentServiceId.current);
+      
+      // Use a timestamp to bypass any potential caching
+      const timestamp = Date.now();
+      console.log("[AppointmentDetails] Query timestamp:", timestamp);
+      
+      const { data, error } = await supabase
+        .from("appointment_services")
+        .select(`
+          id,
+          appointment_id,
+          service_id,
+          staff_id,
+          price,
+          start_time,
+          end_time,
+          voucher_discount,
+          created_at,
+          original_staff_id,
+          services (
+            id,
+            name,
+            description,
+            duration_minutes,
+            price,
+            category
+          ),
+          staff:team_members!appointment_services_staff_id_fkey (
+            id,
+            first_name,
+            last_name,
+            phone_number,
+            calendar_color
+          ),
+          appointments!appointment_services_appointment_id_fkey (
+            id,
+            client_id,
+            appointment_date,
+            status,
+            notes,
+            location_id,
+            clients (
+              id,
+              first_name,
+              last_name,
+              email,
+              phone
+            )
+          )
+        `)
+        .eq("id", appointmentServiceId.current)
+        .maybeSingle(); // Use maybeSingle to avoid caching issues
+
+      if (error) {
+        console.error("[AppointmentDetails] Error fetching appointment:", error);
+        console.error("[AppointmentDetails] Error details:", JSON.stringify(error));
+        return;
+      }
+
+      if (!data) {
+        console.error("[AppointmentDetails] No data returned for appointment service ID:", appointmentServiceId.current);
+        return;
+      }
+
+      console.log("[AppointmentDetails] Fresh data received:", data);
+      
+      // Handle the nested appointments and clients data properly
+      const appointmentData = data.appointments as any;
+      const serviceData = data.services as any;
+      const staffData = data.staff as any;
+      
+      console.log("[AppointmentDetails] Appointment main ID:", appointmentData?.id);
+      console.log("[AppointmentDetails] Client ID from appointments:", appointmentData?.client_id);
+      console.log("[AppointmentDetails] Client data:", appointmentData?.clients);
+      
+      // Transform the data to match AppointmentCalanderBO structure
+      const freshAppointment: AppointmentCalanderBO = {
+        id: data.id,
+        appointment_id: data.appointment_id,
+        service_id: data.service_id,
+        staff_id: data.staff_id,
+        created_at: data.created_at,
+        original_staff: null,
+        original_staff_id: data.original_staff_id,
+        appointment: {
+          id: appointmentData.id,
+          client_id: appointmentData.client_id,
+          appointment_date: appointmentData.appointment_date,
+          status: appointmentData.status,
+          notes: appointmentData.notes,
+          location_id: appointmentData.location_id,
+          client: appointmentData.clients,
+        } as any,
+        service: serviceData as any,
+        staff: staffData as any,
+        price: data.price,
+        start_time: data.start_time,
+        end_time: data.end_time,
+        voucher_discount: data.voucher_discount,
+      };
+      
+      console.log("[AppointmentDetails] Transformed appointment:");
+      console.log("  - Client ID:", freshAppointment.appointment.client_id);
+      console.log("  - Client Name:", `${freshAppointment.appointment.client.first_name} ${freshAppointment.appointment.client.last_name}`);
+      console.log("  - Client Phone:", freshAppointment.appointment.client.phone);
+      console.log("  - Staff:", `${freshAppointment.staff.first_name} ${freshAppointment.staff.last_name}`);
+      console.log("  - Location:", freshAppointment.appointment.location_id);
+      
+      setAppointment(freshAppointment);
+      console.log("[AppointmentDetails] State updated successfully");
+    } catch (error) {
+      console.error("[AppointmentDetails] Error in fetchAppointmentDetails:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  // Refetch appointment data when screen comes into focus
+  useFocusEffect(
+    React.useCallback(() => {
+      console.log("[AppointmentDetails] Screen focused, refetching data");
+      fetchAppointmentDetails();
+    }, [fetchAppointmentDetails])
+  );
 
   // Find the location name using location_id
   const location = allLocations.find(
@@ -202,10 +337,18 @@ const AppointmentDetailsScreen = () => {
         </TouchableOpacity>
       </View>
 
-      <ScrollView
-        style={styles.scrollView}
-        showsVerticalScrollIndicator={false}
-      >
+      {isLoading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={paint.primary} />
+          <Text style={[styles.loadingText, { color: paint.textSecondary }]}>
+            Loading appointment details...
+          </Text>
+        </View>
+      ) : (
+        <ScrollView
+          style={styles.scrollView}
+          showsVerticalScrollIndicator={false}
+        >
         {/* Client Information Card */}
         <View style={[styles.card, { backgroundColor: paint.white }]}>
           <View style={styles.clientInfo}>
@@ -518,6 +661,7 @@ const AppointmentDetailsScreen = () => {
           </View>
         </View>
       </ScrollView>
+      )}
     </View>
   );
 };
@@ -772,6 +916,16 @@ const styles = StyleSheet.create({
     fontSize: fontEq(16),
     fontWeight: "700",
     letterSpacing: 1,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingVertical: getHeightEquivalent(40),
+  },
+  loadingText: {
+    marginTop: getHeightEquivalent(16),
+    fontSize: fontEq(14),
   },
 });
 

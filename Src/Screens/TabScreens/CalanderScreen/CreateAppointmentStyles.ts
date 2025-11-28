@@ -786,7 +786,6 @@ export const CreateAppointmentStyles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.gray[300],
     gap: getWidthEquivalent(12),
-    marginTop: getHeightEquivalent(12),
   },
   clientCardAvatar: {
     width: getWidthEquivalent(50),

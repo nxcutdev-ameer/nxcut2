@@ -27,7 +27,7 @@ import {
   UserRoundPlus,
 } from "lucide-react-native";
 import Modal from "react-native-modal";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
 import { RootStackParamList } from "../../../Navigations/RootStackNavigator";
 import { CreateAppointmentStyles } from "./CreateAppointmentStyles";
@@ -133,8 +133,8 @@ const CreateAppointmentScreen = ({ route }: any) => {
           selectedLocation,
         ]);
         setAvailableStaff(staff);
-        // Auto-select first staff member if available
-        if (staff.length > 0 && !selectedStaff) {
+        // Auto-select first staff member ONLY in create mode
+        if (staff.length > 0 && !selectedStaff && mode === "create") {
           setSelectedStaff(staff[0].id);
         }
       } catch (error) {
@@ -206,55 +206,115 @@ const CreateAppointmentScreen = ({ route }: any) => {
     }
   }, [route.params]);
 
-  // Populate form when in edit mode
-  useEffect(() => {
-    const loadAppointmentData = async () => {
-      if (mode === "edit" && appointmentData) {
-        console.log("[CreateAppointment] Edit mode - loading appointment data:", appointmentData);
+  // Fetch fresh appointment data from database
+  const loadFreshAppointmentData = React.useCallback(async () => {
+    if (mode === "edit" && appointmentData?.appointment?.id) {
+      console.log("[CreateAppointment] Fetching FRESH data from database");
+      console.log("[CreateAppointment] Appointment ID:", appointmentData.appointment.id);
+      
+      try {
+        // Fetch fresh appointment data directly from database
+        const { data: freshAppointment, error } = await supabase
+          .from("appointments")
+          .select(`
+            id,
+            client_id,
+            appointment_date,
+            location_id,
+            notes,
+            status,
+            clients!appointments_client_id_fkey (
+              id,
+              first_name,
+              last_name,
+              email,
+              phone
+            )
+          `)
+          .eq("id", appointmentData.appointment.id)
+          .single();
+
+        if (error) {
+          console.error("[CreateAppointment] Error fetching fresh appointment:", error);
+          return;
+        }
+
+        if (!freshAppointment) {
+          console.error("[CreateAppointment] No appointment data returned");
+          return;
+        }
+
+        console.log("[CreateAppointment] Fresh appointment from DB:", freshAppointment);
+        console.log("[CreateAppointment] Fresh client:", freshAppointment.clients);
         
-        // Set date and time from appointment
-        if (appointmentData.appointment?.appointment_date) {
-          setCurrentDate(new Date(appointmentData.appointment.appointment_date));
+        // Set date and time
+        if (freshAppointment.appointment_date) {
+          setCurrentDate(new Date(freshAppointment.appointment_date));
         }
         
-        // Use first service's start time or appointment start time
+        // Use first service's start time from route params (time doesn't change in edit)
         if (appointmentData.services && appointmentData.services.length > 0 && appointmentData.services[0].start_time) {
-          setCurrentTime(appointmentData.services[0].start_time.substring(0, 5)); // "HH:MM:SS" -> "HH:MM"
-        } else if (appointmentData.appointment?.start_time) {
-          setCurrentTime(appointmentData.appointment.start_time.substring(0, 5));
+          setCurrentTime(appointmentData.services[0].start_time.substring(0, 5));
+        } else if (appointmentData.start_time) {
+          setCurrentTime(appointmentData.start_time.substring(0, 5));
         }
         
-        // Set client
-        console.log("[CreateAppointment] Setting client from appointment data:", appointmentData.appointment?.client);
-        if (appointmentData.appointment?.client) {
+        // Set client from FRESH database data
+        // Supabase returns the related client as a single object when using foreign key
+        console.log("[CreateAppointment] Setting FRESH client:", freshAppointment.clients);
+        const clientData = freshAppointment.clients as any;
+        if (clientData) {
           setSelectedClient({
-            id: appointmentData.appointment.client.id,
-            first_name: appointmentData.appointment.client.first_name,
-            last_name: appointmentData.appointment.client.last_name,
-            email: appointmentData.appointment.client.email || "",
-            phone: appointmentData.appointment.client.phone || "",
+            id: clientData.id,
+            first_name: clientData.first_name,
+            last_name: clientData.last_name,
+            email: clientData.email || "",
+            phone: clientData.phone || "",
           });
         }
         
-        // Set location
-        if (appointmentData.appointment?.location_id) {
-          setSelectedLocation(appointmentData.appointment.location_id);
+        // Set location from FRESH database data
+        if (freshAppointment.location_id) {
+          setSelectedLocation(freshAppointment.location_id);
         }
         
-        // Set staff (from first service)
-        if (appointmentData.services && appointmentData.services.length > 0 && appointmentData.services[0].staff_id) {
-          setSelectedStaff(appointmentData.services[0].staff_id);
+        // Fetch services and get staff from the first service
+        await fetchAllAppointmentServices(appointmentData.appointment.id);
+        
+        // Now set the staff from the appointment services (after fetching services)
+        // This will override any auto-selection from the location change
+        const { data: servicesData } = await supabase
+          .from("appointment_services")
+          .select("staff_id")
+          .eq("appointment_id", appointmentData.appointment.id)
+          .limit(1)
+          .maybeSingle();
+        
+        if (servicesData?.staff_id) {
+          console.log("[CreateAppointment] Setting staff from appointment services:", servicesData.staff_id);
+          setSelectedStaff(servicesData.staff_id);
         }
         
-        // Fetch all services using the separate function to get full details
-        if (appointmentData.appointment?.id) {
-          await fetchAllAppointmentServices(appointmentData.appointment.id);
-        }
+      } catch (error) {
+        console.error("[CreateAppointment] Error loading fresh appointment data:", error);
       }
-    };
+    }
+  }, [mode, appointmentData?.appointment?.id]);
 
-    loadAppointmentData();
-  }, [mode, route.params]);
+  // Populate form when in edit mode - fetch fresh data from DB
+  useEffect(() => {
+    loadFreshAppointmentData();
+  }, [loadFreshAppointmentData]);
+
+  // Refetch data when screen comes into focus (after navigating back from other screens)
+  useFocusEffect(
+    React.useCallback(() => {
+      if (mode === "edit") {
+        console.log("[CreateAppointment] Screen focused - refetching appointment data");
+        loadFreshAppointmentData();
+      }
+    }, [mode, loadFreshAppointmentData])
+  );
 
   // Function to fetch all services for an appointment
   const fetchAllAppointmentServices = async (appointmentId: string) => {
@@ -1027,27 +1087,30 @@ const CreateAppointmentScreen = ({ route }: any) => {
                       nestedScrollEnabled={true}
                       showsVerticalScrollIndicator={false}
                     >
-                      {selectedServices.map((service) => (
-                        <View
-                          key={service.appointment_service_id || service.id}
-                          style={CreateAppointmentStyles.selectedServiceItem}
-                        >
-                          <View style={CreateAppointmentStyles.serviceInfo}>
-                            <Text style={CreateAppointmentStyles.serviceName}>
-                              {service.name}
-                            </Text>
-                          </View>
-                          <Text style={CreateAppointmentStyles.servicePrice}>
-                            AED {service.price}
-                          </Text>
-                          <TouchableOpacity
-                            onPress={() => handleRemoveService(service.id)}
-                            style={CreateAppointmentStyles.removeButton}
+                      {selectedServices.map((service, index) => {
+                        const serviceKey = service.appointment_service_id || `${service.id}-${index}`;
+                        return (
+                          <View
+                            key={serviceKey}
+                            style={CreateAppointmentStyles.selectedServiceItem}
                           >
-                            <X size={18} color={colors.danger} />
-                          </TouchableOpacity>
-                        </View>
-                      ))}
+                            <View style={CreateAppointmentStyles.serviceInfo}>
+                              <Text style={CreateAppointmentStyles.serviceName}>
+                                {service.name}
+                              </Text>
+                            </View>
+                            <Text style={CreateAppointmentStyles.servicePrice}>
+                              AED {service.price}
+                            </Text>
+                            <TouchableOpacity
+                              onPress={() => handleRemoveService(service.id)}
+                              style={CreateAppointmentStyles.removeButton}
+                            >
+                              <X size={18} color={colors.danger} />
+                            </TouchableOpacity>
+                          </View>
+                        );
+                      })}
                     </ScrollView>
                   </>
                 ) : (
