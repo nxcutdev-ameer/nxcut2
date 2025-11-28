@@ -616,51 +616,65 @@ const DraggableAppointment: React.FC<DraggableAppointmentProps> = ({
     borderColor: isEditing ? "#3C096C" : "transparent",
   };
 
-  const renderAppointmentContent = () => (
-    <View style={styles.contentContainer}>
-      <Text
-        style={[
-          styles.clientName,
-          event.data.appointment.status === "scheduled" && {
-            color: colors.gray[600],
-          },
-        ]}
-        numberOfLines={1}
-      >
-        {event.data.appointment.client.first_name} {" "}
-        {event.data.appointment.client.last_name}
-      </Text>
-      <Text
-        style={[
-          styles.serviceName,
-          event.data.appointment.status === "scheduled" && {
-            color: colors.gray[500],
-          },
-        ]}
-        numberOfLines={1}
-      >
-        {event.data.service.name}
-      </Text>
-      <Text
-        style={[
-          styles.timeText,
-          event.data.appointment.status === "scheduled" && {
-            color: colors.gray[500],
-          },
-        ]}
-      >
-        {displayStart.toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-        })}
-        {" "}-{" "}
-        {displayEnd.toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-        })}
-      </Text>
-    </View>
-  );
+  const renderAppointmentContent = () => {
+    // Calculate if appointment is small (less than 45 minutes)
+    const durationMs = displayEnd.getTime() - displayStart.getTime();
+    const durationMinutes = durationMs / (1000 * 60);
+    const isSmall = durationMinutes < 45;
+
+    return (
+      <View style={styles.contentContainer}>
+        <Text
+          style={[
+            styles.clientName,
+            event.data.appointment.status === "scheduled" && {
+              color: colors.gray[600],
+            },
+            isSmall && { fontSize: fontEq(11) },
+          ]}
+          numberOfLines={1}
+          ellipsizeMode="tail"
+        >
+          {event.data.appointment.client.first_name} {" "}
+          {event.data.appointment.client.last_name}
+        </Text>
+        <Text
+          style={[
+            styles.serviceName,
+            event.data.appointment.status === "scheduled" && {
+              color: colors.gray[500],
+            },
+            isSmall && { fontSize: fontEq(9), marginBottom: 0 },
+          ]}
+          numberOfLines={1}
+          ellipsizeMode="tail"
+        >
+          {event.data.service.name}
+        </Text>
+        <Text
+          style={[
+            styles.timeText,
+            event.data.appointment.status === "scheduled" && {
+              color: colors.gray[500],
+            },
+            isSmall && { fontSize: fontEq(8) },
+          ]}
+          numberOfLines={1}
+          ellipsizeMode="tail"
+        >
+          {displayStart.toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          })}
+          {" "}-{" "}
+          {displayEnd.toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          })}
+        </Text>
+      </View>
+    );
+  };
 
   return (
     <>
@@ -705,7 +719,7 @@ const styles = StyleSheet.create({
     borderLeftColor: colors.primary,
     paddingHorizontal: getWidthEquivalent(6),
     paddingTop: getHeightEquivalent(4),
-    paddingBottom: getHeightEquivalent(20),
+    paddingBottom: getHeightEquivalent(4),
     marginHorizontal: getWidthEquivalent(2),
     shadowColor: colors.black,
     shadowOffset: { width: 0, height: 2 },
@@ -720,17 +734,20 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: colors.text,
     marginBottom: getHeightEquivalent(2),
+    includeFontPadding: false,
   },
   serviceName: {
     fontSize: fontEq(10),
     fontWeight: "500",
     color: colors.textSecondary,
     marginBottom: getHeightEquivalent(2),
+    includeFontPadding: false,
   },
   timeText: {
     fontSize: fontEq(9),
     fontWeight: "500",
     color: colors.textSecondary,
+    includeFontPadding: false,
   },
   dragIndicator: {
     position: "absolute",
