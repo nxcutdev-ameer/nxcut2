@@ -1011,42 +1011,44 @@ const CreateAppointmentScreen = ({ route }: any) => {
                 </TouchableOpacity>
               )}
 
-              {/* Checkout Button */}
-              <TouchableOpacity
-                style={[
-                  CreateAppointmentStyles.saveButton,
-                  { flex: 1, backgroundColor: colors.white },
-                  (!selectedClient ||
-                    selectedServices.length === 0 ||
-                    !selectedLocation ||
-                    !selectedStaff) &&
-                    CreateAppointmentStyles.disabledSaveButton,
-                ]}
-                onPress={() => {
-                  navigation.navigate("CheckoutScreen", {
-                    total: calculateTotal(),
-                  });
-                }}
-                disabled={
-                  !selectedClient ||
-                  selectedServices.length === 0 ||
-                  !selectedLocation ||
-                  !selectedStaff
-                }
-              >
-                <Text
+              {/* Checkout Button - Only show in edit mode */}
+              {mode === "edit" && (
+                <TouchableOpacity
                   style={[
-                    CreateAppointmentStyles.saveButtonText,
-                    { color: colors.black },
+                    CreateAppointmentStyles.saveButton,
+                    { flex: 1, backgroundColor: colors.white },
                     (!selectedClient ||
                       selectedServices.length === 0 ||
                       !selectedLocation ||
-                      !selectedStaff) && { color: colors.gray[500] },
+                      !selectedStaff) &&
+                      CreateAppointmentStyles.disabledSaveButton,
                   ]}
+                  onPress={() => {
+                    navigation.navigate("CheckoutScreen", {
+                      total: calculateTotal(),
+                    });
+                  }}
+                  disabled={
+                    !selectedClient ||
+                    selectedServices.length === 0 ||
+                    !selectedLocation ||
+                    !selectedStaff
+                  }
                 >
-                  Checkout
-                </Text>
-              </TouchableOpacity>
+                  <Text
+                    style={[
+                      CreateAppointmentStyles.saveButtonText,
+                      { color: colors.black },
+                      (!selectedClient ||
+                        selectedServices.length === 0 ||
+                        !selectedLocation ||
+                        !selectedStaff) && { color: colors.gray[500] },
+                    ]}
+                  >
+                    Checkout
+                  </Text>
+                </TouchableOpacity>
+              )}
               {/* Save Button */}
               <TouchableOpacity
                 style={[
