@@ -246,7 +246,6 @@ const CalanderScreen = () => {
   const isScrollingVerticalFromCalendar = useRef(false);
   const [scrollEnabled, setScrollEnabled] = useState(true);
   const savedHorizontalScrollPosition = useRef(0);
-  const verticalScrollTimeout = useRef<NodeJS.Timeout | null>(null);
   const lastVerticalScrollY = useRef(0);
   const lastHorizontalScrollX = useRef(0);
   const [editingState, setEditingState] = useState<EditingState | null>(null);
@@ -839,7 +838,6 @@ const CalanderScreen = () => {
                           <View
                             style={{
                               position: "absolute",
-                              // left: getWidthEquivalent(1),
                               top:
                                 currentTimePosition - getHeightEquivalent(10),
                               width: getWidthEquivalent(40),
@@ -900,6 +898,8 @@ const CalanderScreen = () => {
                       maxHour={23}
                       hourHeight={getHeightEquivalent(80)}
                     />
+                    {/* Extra padding for smooth scrolling */}
+                    <View style={{ height: getHeightEquivalent(200) }} />
                   </View>
                 </ScrollView>
               </View>
