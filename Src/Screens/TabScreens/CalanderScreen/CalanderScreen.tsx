@@ -898,8 +898,8 @@ const CalanderScreen = () => {
                       maxHour={23}
                       hourHeight={getHeightEquivalent(80)}
                     />
-                    {/* Extra padding for smooth scrolling */}
-                    <View style={{ height: getHeightEquivalent(200) }} />
+                    {/* Small bottom padding for better scrolling */}
+                    <View style={{ height: getHeightEquivalent(40) }} />
                   </View>
                 </ScrollView>
               </View>
