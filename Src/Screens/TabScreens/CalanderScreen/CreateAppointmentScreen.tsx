@@ -38,6 +38,7 @@ import {
   Service as ServiceBO,
 } from "../../../Repository/serviceRepository";
 import { appointmentsRepository } from "../../../Repository/appointmentsRepository";
+import { supabase } from "../../../Utils/supabase";
 import useClientScreenVM from "../ClientScreen/ClientScreenVM";
 import { ClientBO } from "../../../Repository/clientRepository";
 import DateModal from "../../../Components/DateModal";
@@ -71,6 +72,7 @@ interface Client {
 interface SelectedService extends Service {
   quantity: number;
   isSelected?: boolean;
+  appointment_service_id?: string;
 }
 
 const CreateAppointmentScreen = ({ route }: any) => {
@@ -206,52 +208,106 @@ const CreateAppointmentScreen = ({ route }: any) => {
 
   // Populate form when in edit mode
   useEffect(() => {
-    if (mode === "edit" && appointmentData) {
-      console.log("[CreateAppointment] Edit mode - loading appointment data:", appointmentData);
-      
-      // Set date and time from appointment
-      if (appointmentData.appointment?.appointment_date) {
-        setCurrentDate(new Date(appointmentData.appointment.appointment_date));
+    const loadAppointmentData = async () => {
+      if (mode === "edit" && appointmentData) {
+        console.log("[CreateAppointment] Edit mode - loading appointment data:", appointmentData);
+        
+        // Set date and time from appointment
+        if (appointmentData.appointment?.appointment_date) {
+          setCurrentDate(new Date(appointmentData.appointment.appointment_date));
+        }
+        
+        // Use first service's start time or appointment start time
+        if (appointmentData.services && appointmentData.services.length > 0 && appointmentData.services[0].start_time) {
+          setCurrentTime(appointmentData.services[0].start_time.substring(0, 5)); // "HH:MM:SS" -> "HH:MM"
+        } else if (appointmentData.appointment?.start_time) {
+          setCurrentTime(appointmentData.appointment.start_time.substring(0, 5));
+        }
+        
+        // Set client
+        console.log("[CreateAppointment] Setting client from appointment data:", appointmentData.appointment?.client);
+        if (appointmentData.appointment?.client) {
+          setSelectedClient({
+            id: appointmentData.appointment.client.id,
+            first_name: appointmentData.appointment.client.first_name,
+            last_name: appointmentData.appointment.client.last_name,
+            email: appointmentData.appointment.client.email || "",
+            phone: appointmentData.appointment.client.phone || "",
+          });
+        }
+        
+        // Set location
+        if (appointmentData.appointment?.location_id) {
+          setSelectedLocation(appointmentData.appointment.location_id);
+        }
+        
+        // Set staff (from first service)
+        if (appointmentData.services && appointmentData.services.length > 0 && appointmentData.services[0].staff_id) {
+          setSelectedStaff(appointmentData.services[0].staff_id);
+        }
+        
+        // Fetch all services using the separate function to get full details
+        if (appointmentData.appointment?.id) {
+          await fetchAllAppointmentServices(appointmentData.appointment.id);
+        }
       }
-      if (appointmentData.start_time) {
-        setCurrentTime(appointmentData.start_time.substring(0, 5)); // "HH:MM:SS" -> "HH:MM"
-      }
+    };
+
+    loadAppointmentData();
+  }, [mode, route.params]);
+
+  // Function to fetch all services for an appointment
+  const fetchAllAppointmentServices = async (appointmentId: string) => {
+    try {
+      console.log("[CreateAppointment] Fetching all services for appointment:", appointmentId);
       
-      // Set client
-      if (appointmentData.appointment?.client) {
-        setSelectedClient({
-          id: appointmentData.appointment.client.id,
-          first_name: appointmentData.appointment.client.first_name,
-          last_name: appointmentData.appointment.client.last_name,
-          email: appointmentData.appointment.client.email,
-          phone: appointmentData.appointment.client.phone,
-        });
+      const { data, error } = await supabase
+        .from("appointment_services")
+        .select(`
+          id,
+          service_id,
+          price,
+          start_time,
+          end_time,
+          staff_id,
+          services (
+            id,
+            name,
+            duration_minutes,
+            price
+          )
+        `)
+        .eq("appointment_id", appointmentId);
+
+      if (error) {
+        console.error("[CreateAppointment] Error fetching appointment services:", error);
+        return;
       }
+
+      console.log("[CreateAppointment] Raw appointment_services data from DB:", data);
       
-      // Set location
-      if (appointmentData.appointment?.location_id) {
-        setSelectedLocation(appointmentData.appointment.location_id);
-      }
-      
-      // Set staff
-      if (appointmentData.staff_id) {
-        setSelectedStaff(appointmentData.staff_id);
-      }
-      
-      // Set service
-      if (appointmentData.service) {
-        const service: SelectedService = {
-          id: appointmentData.service.id,
-          name: appointmentData.service.name,
-          price: appointmentData.price || appointmentData.service.price,
-          duration: appointmentData.service.duration_minutes || 60,
-          duration_minutes: appointmentData.service.duration_minutes,
+      if (data && data.length > 0) {
+        const services: SelectedService[] = data.map((apptService: any) => ({
+          id: apptService.services.id,
+          name: apptService.services.name,
+          price: apptService.price || apptService.services.price,
+          duration: apptService.services.duration_minutes || 60,
+          duration_minutes: apptService.services.duration_minutes,
+          appointment_service_id: apptService.id, // Store for deletion
           quantity: 1,
-        };
-        setSelectedServices([service]);
+        }));
+        
+        console.log("[CreateAppointment] Loaded services:", services);
+        setSelectedServices(services);
+      } else {
+        // No services left - clear the selected services array
+        console.log("[CreateAppointment] No services found - clearing services list");
+        setSelectedServices([]);
       }
+    } catch (error) {
+      console.error("[CreateAppointment] Error fetching appointment services:", error);
     }
-  }, [mode, appointmentData]);
+  };
 
   // Slide in animation for screen entrance
   useEffect(() => {
@@ -282,11 +338,29 @@ const CreateAppointmentScreen = ({ route }: any) => {
   // Get current page of services for display
   const currentPageServices = filteredServices.slice(0, servicesPage * 20);
 
-  const handleToggleService = (service: ServiceBO) => {
+  const handleToggleService = async (service: ServiceBO) => {
+    console.log("[CreateAppointment] handleToggleService called");
+    console.log("[CreateAppointment] Mode:", mode);
+    console.log("[CreateAppointment] Service:", service.name, service.id);
+    console.log("[CreateAppointment] appointmentData:", appointmentData);
+    console.log("[CreateAppointment] appointmentData?.appointment?.id:", appointmentData?.appointment?.id);
+    console.log("[CreateAppointment] selectedStaff:", selectedStaff);
+    console.log("[CreateAppointment] currentTime:", currentTime);
+    
     const exists = selectedServices.find((s) => s.id === service.id);
+    console.log("[CreateAppointment] Service exists in list:", exists ? "YES" : "NO");
+    
     if (exists) {
-      setSelectedServices((prev) => prev.filter((s) => s.id !== service.id));
+      // Remove service
+      if (exists.appointment_service_id && mode === "edit") {
+        // In edit mode, remove from backend
+        await handleRemoveService(exists.id);
+      } else {
+        // In create mode, just remove from local state
+        setSelectedServices((prev) => prev.filter((s) => s.id !== service.id));
+      }
     } else {
+      // Add service
       const serviceToAdd: SelectedService = {
         id: service.id,
         name: service.name,
@@ -298,14 +372,134 @@ const CreateAppointmentScreen = ({ route }: any) => {
         quantity: 1,
         isSelected: true,
       };
-      setSelectedServices((prev) => [...prev, serviceToAdd]);
+      
+      // In edit mode, add to backend immediately
+      if (mode === "edit" && appointmentData?.appointment?.id) {
+        try {
+          console.log("[CreateAppointment] Adding service in edit mode:", service.id);
+          
+          // Get existing services to calculate the new start time
+          let startTime = currentTime + ":00";
+          
+          // Find the last service's end time
+          const { data: lastServiceData } = await supabase
+            .from("appointment_services")
+            .select("end_time")
+            .eq("appointment_id", appointmentData.appointment.id)
+            .order("end_time", { ascending: false })
+            .limit(1)
+            .maybeSingle();
+          
+          if (lastServiceData?.end_time) {
+            startTime = lastServiceData.end_time;
+            console.log("[CreateAppointment] Starting new service after:", startTime);
+          }
+          
+          // Calculate end time
+          const [hours, minutes] = startTime.split(':').map(Number);
+          const startDate = new Date();
+          startDate.setHours(hours, minutes, 0, 0);
+          const endDate = new Date(startDate.getTime() + ((service as any).duration_minutes || 30) * 60000);
+          const endTime = `${endDate.getHours().toString().padStart(2, '0')}:${endDate.getMinutes().toString().padStart(2, '0')}:00`;
+          
+          console.log("[CreateAppointment] Inserting service:", {
+            appointment_id: appointmentData.appointment.id,
+            service_id: service.id,
+            staff_id: selectedStaff || appointmentData.staff_id,
+            start_time: startTime,
+            end_time: endTime,
+            price: service.price,
+          });
+          
+          const { data, error } = await supabase
+            .from("appointment_services")
+            .insert({
+              appointment_id: appointmentData.appointment.id,
+              service_id: service.id,
+              staff_id: selectedStaff || appointmentData.staff_id,
+              price: service.price,
+              start_time: startTime,
+              end_time: endTime,
+            })
+            .select()
+            .single();
+
+          if (error) {
+            console.error("[CreateAppointment] Error adding service:", error);
+            setToastMessage("Failed to add service");
+            setToastType("error");
+            setShowToast(true);
+            return;
+          }
+          
+          console.log("[CreateAppointment] Service added to DB:", data);
+          serviceToAdd.appointment_service_id = data.id;
+          
+          setToastMessage("Service added successfully");
+          setToastType("success");
+          setShowToast(true);
+          
+          // Refresh services list
+          await fetchAllAppointmentServices(appointmentData.appointment.id);
+        } catch (error) {
+          console.error("[CreateAppointment] Error in handleToggleService:", error);
+          setToastMessage("Failed to add service");
+          setToastType("error");
+          setShowToast(true);
+          return;
+        }
+      } else {
+        // In create mode, just add to local state
+        setSelectedServices((prev) => [...prev, serviceToAdd]);
+      }
     }
   };
 
-  const handleRemoveService = (serviceId: string) => {
-    setSelectedServices((prev) =>
-      prev.filter((service) => service.id !== serviceId)
-    );
+  const handleRemoveService = async (serviceId: string) => {
+    const serviceToRemove = selectedServices.find(s => s.id === serviceId);
+    
+    // In edit mode, delete from backend if it's an existing service
+    if (mode === "edit" && serviceToRemove?.appointment_service_id) {
+      try {
+        console.log("[CreateAppointment] Deleting appointment_service:", serviceToRemove.appointment_service_id);
+        
+        const { error } = await supabase
+          .from("appointment_services")
+          .delete()
+          .eq("id", serviceToRemove.appointment_service_id);
+
+        if (error) {
+          console.error("[CreateAppointment] Error deleting service:", error);
+          setToastMessage("Failed to remove service");
+          setToastType("error");
+          setShowToast(true);
+          return;
+        }
+        
+        console.log("[CreateAppointment] Service deleted successfully");
+        console.log("[CreateAppointment] Deleted appointment_service_id:", serviceToRemove.appointment_service_id);
+        
+        setToastMessage("Service removed successfully");
+        setToastType("success");
+        setShowToast(true);
+        
+        // Refresh the services list
+        if (appointmentData?.appointment?.id) {
+          await fetchAllAppointmentServices(appointmentData.appointment.id);
+        }
+      } catch (error) {
+        console.error("[CreateAppointment] Error deleting service:", error);
+        setToastMessage("Failed to remove service");
+        setToastType("error");
+        setShowToast(true);
+        return;
+      }
+    } else {
+      // In create mode, just remove from local state
+      setSelectedServices((prev) =>
+        prev.filter((service) => service.id !== serviceId)
+      );
+    }
   };
 
   const calculateTotal = () => {
@@ -427,7 +621,6 @@ const CreateAppointmentScreen = ({ route }: any) => {
         console.log("[CreateAppointment] Updating appointments table with:", updateData);
 
         // Update appointment in appointments table
-        const { supabase } = await import("../../../Utils/supabase");
         const { error: appointmentError } = await supabase
           .from("appointments")
           .update(updateData)
@@ -442,41 +635,41 @@ const CreateAppointmentScreen = ({ route }: any) => {
         }
 
         console.log("[CreateAppointment] Appointments table updated successfully");
-
-        // Update appointment_services (assuming single service for now)
-        const serviceUpdateData = {
-          service_id: selectedServices[0].id,
-          staff_id: selectedStaff,
-          start_time: startTimeFormatted,
-          end_time: endTime,
-          price: selectedServices[0].price,
-        };
-
-        console.log("[CreateAppointment] Updating appointment_services table with:", serviceUpdateData);
-        console.log("[CreateAppointment] Updating appointment_service ID:", appointmentData.id);
-
-        const { data: updatedService, error: serviceError } = await supabase
+        
+        // Update staff for all appointment services if staff changed
+        console.log("[CreateAppointment] Updating staff for all services to:", selectedStaff);
+        const { error: servicesUpdateError } = await supabase
           .from("appointment_services")
-          .update(serviceUpdateData)
-          .eq("id", appointmentData.id)
-          .select();
+          .update({ staff_id: selectedStaff })
+          .eq("appointment_id", appointmentData.appointment.id);
 
-        if (serviceError) {
-          console.error("Error updating appointment service:", serviceError);
-          setToastMessage("Failed to update appointment service. Please try again.");
+        if (servicesUpdateError) {
+          console.error("[CreateAppointment] Error updating staff for services:", servicesUpdateError);
+          setToastMessage("Failed to update staff. Please try again.");
           setToastType("error");
           setShowToast(true);
           return;
         }
 
-        console.log("[CreateAppointment] Appointment_services table updated successfully");
-        console.log("[CreateAppointment] Updated service data from DB:", updatedService);
+        console.log("[CreateAppointment] Staff updated successfully for all services");
+        
+        // Verify the update by fetching the appointment back
+        const { data: verifyData, error: verifyError } = await supabase
+          .from("appointments")
+          .select("id, client_id, appointment_date, location_id, notes")
+          .eq("id", appointmentData.appointment.id)
+          .single();
+        
+        if (verifyData) {
+          console.log("[CreateAppointment] Verified appointment data from DB after update:", verifyData);
+          console.log("[CreateAppointment] Client changed from:", appointmentData.appointment.client_id, "to:", verifyData.client_id);
+        }
         console.log("[CreateAppointment] Appointment updated successfully");
         setToastMessage("Appointment updated successfully!");
         setToastType("success");
         setShowToast(true);
 
-        // Navigate back after a short delay
+        // Navigate back and refresh calendar
         setTimeout(() => {
           navigation.goBack();
         }, 1500);
@@ -513,7 +706,7 @@ const CreateAppointmentScreen = ({ route }: any) => {
           setToastType("success");
           setShowToast(true);
 
-          // Navigate back after a short delay
+          // Navigate back and refresh calendar
           setTimeout(() => {
             navigation.goBack();
           }, 1500);
@@ -836,7 +1029,7 @@ const CreateAppointmentScreen = ({ route }: any) => {
                     >
                       {selectedServices.map((service) => (
                         <View
-                          key={service.id}
+                          key={service.appointment_service_id || service.id}
                           style={CreateAppointmentStyles.selectedServiceItem}
                         >
                           <View style={CreateAppointmentStyles.serviceInfo}>

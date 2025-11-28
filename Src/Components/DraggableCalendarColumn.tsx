@@ -506,9 +506,11 @@ const DraggableCalendarColumn: React.FC<DraggableCalendarColumnProps> = ({
                       // Navigate to CreateAppointment in edit mode for scheduled appointments
                       if (appointment.data.appointment.status === "scheduled") {
                         console.log("  -> Navigating to edit mode");
+                        console.log("  -> Appointment ID:", appointment.data.appointment.id);
                         navigation.navigate("CreateAppointment", {
                           mode: "edit",
-                          appointmentData: appointment.data,
+                          appointmentId: appointment.data.appointment.id, // Pass only ID, not full data
+                          appointmentData: appointment.data, // Keep for backward compatibility
                         });
                       } else {
                         console.log("  -> Navigating to details screen (status:", appointment.data.appointment.status, ")");
