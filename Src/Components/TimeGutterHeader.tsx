@@ -19,7 +19,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
     // borderRightWidth: 1,
     // borderRightColor: '#E0E0E0',
-     borderBottomWidth: 1,
+     borderBottomWidth: 3,
      borderBottomColor: colors.border,
     shadowColor: '#000',
     shadowOffset: {
