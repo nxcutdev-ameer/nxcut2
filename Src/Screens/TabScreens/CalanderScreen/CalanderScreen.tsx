@@ -238,6 +238,9 @@ const CalanderScreen = () => {
   const scrollViewRef = useRef<ScrollView>(null);
   const verticalScrollRef = useRef<ScrollView>(null);
   const horizontalScrollRef = useRef<ScrollView>(null);
+  const staffHeaderScrollRef = useRef<ScrollView>(null);
+  const isScrollingFromStaffHeader = useRef(false);
+  const isScrollingFromCalendar = useRef(false);
   const [scrollEnabled, setScrollEnabled] = useState(true);
   const [editingState, setEditingState] = useState<EditingState | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -534,6 +537,14 @@ const CalanderScreen = () => {
     []
   );
 
+  // Calculate the width for 3 columns (including separators)
+  const threeColumnWidth = useMemo(() => {
+    const columnWidth = getColumnWidth(0);
+    const separatorWidth = 2;
+    // 3 columns + 2 separators between them
+    return (columnWidth * 3) + (separatorWidth * 2);
+  }, [getColumnWidth]);
+
   const columnConfigs = useMemo(() => {
     return calanderData.map((item, index) => ({
       item,
@@ -638,11 +649,32 @@ const CalanderScreen = () => {
             {/* Bottom: Staff Header */}
             {calanderData.length > 0 && (
               <ScrollView
-                scrollEnabled={false}
+                ref={staffHeaderScrollRef}
+                scrollEnabled={true}
                 horizontal={true}
                 bounces={false}
                 showsHorizontalScrollIndicator={false}
                 showsVerticalScrollIndicator={false}
+                scrollEventThrottle={16}
+                snapToInterval={threeColumnWidth}
+                snapToAlignment="start"
+                decelerationRate="fast"
+                onScroll={(event) => {
+                  // Sync calendar columns when staff header is scrolled
+                  if (isScrollingFromCalendar.current) {
+                    isScrollingFromCalendar.current = false;
+                    return;
+                  }
+                  const offsetX = event.nativeEvent.contentOffset.x;
+                  if (horizontalScrollRef.current) {
+                    isScrollingFromStaffHeader.current = true;
+                    horizontalScrollRef.current.scrollTo({
+                      x: offsetX,
+                      y: 0,
+                      animated: false,
+                    });
+                  }
+                }}
                 style={{
                   height: 55,
                 }}
@@ -705,17 +737,7 @@ const CalanderScreen = () => {
           </View>
         </View>
 
-      <ScrollView
-        ref={scrollViewRef}
-        bounces={false}
-        horizontal
-        scrollEnabled={scrollEnabled}
-        //scrollEnabled={false}
-        pagingEnabled={true}
-        showsHorizontalScrollIndicator={false}
-        onMomentumScrollEnd={handleScrollEnd}
-        style={CalanderScreenStyles.bodyContainer}
-      >
+      <View style={CalanderScreenStyles.bodyContainer}>
         <View style={{ flex: 1, flexDirection: "column" }}>
             <View style={{ flexDirection: "row", flex: 1 }}>
               {/* Fixed Time Gutter Column with Red Line */}
@@ -869,6 +891,25 @@ const CalanderScreen = () => {
                   scrollEnabled={scrollEnabled}
                   scrollEventThrottle={16}
                   directionalLockEnabled={true}
+                  snapToInterval={threeColumnWidth}
+                  snapToAlignment="start"
+                  decelerationRate="fast"
+                  onScroll={(event) => {
+                    // Sync staff header horizontal scroll
+                    if (isScrollingFromStaffHeader.current) {
+                      isScrollingFromStaffHeader.current = false;
+                      return;
+                    }
+                    const offsetX = event.nativeEvent.contentOffset.x;
+                    if (staffHeaderScrollRef.current) {
+                      isScrollingFromCalendar.current = true;
+                      staffHeaderScrollRef.current.scrollTo({
+                        x: offsetX,
+                        y: 0,
+                        animated: false,
+                      });
+                    }
+                  }}
                   contentContainerStyle={{
                     flexDirection: "row",
                   }}
@@ -984,7 +1025,7 @@ const CalanderScreen = () => {
               </ScrollView>
             </View>
         </View>
-      </ScrollView>
+      </View>
 
       {editingState && (
           <View style={CalanderScreenStyles.editingFooter}>
