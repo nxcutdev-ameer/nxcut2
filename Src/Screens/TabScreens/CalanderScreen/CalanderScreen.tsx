@@ -237,11 +237,15 @@ const CalanderScreen = () => {
   const [currentStaffIndex, setCurrentStaffIndex] = useState(0);
   const scrollViewRef = useRef<ScrollView>(null);
   const verticalScrollRef = useRef<ScrollView>(null);
+  const calendarVerticalScrollRef = useRef<ScrollView>(null);
   const horizontalScrollRef = useRef<ScrollView>(null);
   const staffHeaderScrollRef = useRef<ScrollView>(null);
   const isScrollingFromStaffHeader = useRef(false);
   const isScrollingFromCalendar = useRef(false);
+  const isScrollingVerticalFromTimeGutter = useRef(false);
+  const isScrollingVerticalFromCalendar = useRef(false);
   const [scrollEnabled, setScrollEnabled] = useState(true);
+  const savedHorizontalScrollPosition = useRef(0);
   const [editingState, setEditingState] = useState<EditingState | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const overlayOpacity = useRef(new Animated.Value(0)).current;
@@ -575,6 +579,29 @@ const CalanderScreen = () => {
     }
   }, [isSaving, overlayOpacity]);
 
+  // Restore horizontal scroll position when scrollEnabled changes (during drag)
+  useEffect(() => {
+    if (scrollEnabled && savedHorizontalScrollPosition.current > 0) {
+      // Small delay to ensure ScrollView is ready
+      setTimeout(() => {
+        if (horizontalScrollRef.current) {
+          horizontalScrollRef.current.scrollTo({
+            x: savedHorizontalScrollPosition.current,
+            y: 0,
+            animated: false,
+          });
+        }
+        if (staffHeaderScrollRef.current) {
+          staffHeaderScrollRef.current.scrollTo({
+            x: savedHorizontalScrollPosition.current,
+            y: 0,
+            animated: false,
+          });
+        }
+      }, 50);
+    }
+  }, [scrollEnabled]);
+
   // Refresh calendar when returning from other screens (create/cancel appointment)
   useFocusEffect(
     useCallback(() => {
@@ -666,6 +693,7 @@ const CalanderScreen = () => {
                     return;
                   }
                   const offsetX = event.nativeEvent.contentOffset.x;
+                  savedHorizontalScrollPosition.current = offsetX;
                   if (horizontalScrollRef.current) {
                     isScrollingFromStaffHeader.current = true;
                     horizontalScrollRef.current.scrollTo({
@@ -750,8 +778,13 @@ const CalanderScreen = () => {
                   scrollEventThrottle={16}
                   onScroll={(event) => {
                     // Sync calendar vertical scroll
-                    if (horizontalScrollRef.current && horizontalScrollRef.current.scrollTo) {
-                      horizontalScrollRef.current.scrollTo({
+                    if (isScrollingVerticalFromCalendar.current) {
+                      isScrollingVerticalFromCalendar.current = false;
+                      return;
+                    }
+                    if (calendarVerticalScrollRef.current) {
+                      isScrollingVerticalFromTimeGutter.current = true;
+                      calendarVerticalScrollRef.current.scrollTo({
                         y: event.nativeEvent.contentOffset.y,
                         animated: false,
                       });
@@ -833,6 +866,7 @@ const CalanderScreen = () => {
 
               {/* Scrollable Appointment Columns */}
               <ScrollView
+                ref={calendarVerticalScrollRef}
                 bounces={false}
                 showsVerticalScrollIndicator={false}
                 scrollEnabled={scrollEnabled}
@@ -840,7 +874,12 @@ const CalanderScreen = () => {
                 scrollEventThrottle={16}
                 onScroll={(event) => {
                   // Sync TimeGutter vertical scroll
+                  if (isScrollingVerticalFromTimeGutter.current) {
+                    isScrollingVerticalFromTimeGutter.current = false;
+                    return;
+                  }
                   if (verticalScrollRef.current) {
+                    isScrollingVerticalFromCalendar.current = true;
                     verticalScrollRef.current.scrollTo({
                       y: event.nativeEvent.contentOffset.y,
                       animated: false,
@@ -901,6 +940,7 @@ const CalanderScreen = () => {
                       return;
                     }
                     const offsetX = event.nativeEvent.contentOffset.x;
+                    savedHorizontalScrollPosition.current = offsetX;
                     if (staffHeaderScrollRef.current) {
                       isScrollingFromCalendar.current = true;
                       staffHeaderScrollRef.current.scrollTo({
