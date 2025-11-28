@@ -1,23 +1,28 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
+  Alert,
+  ActivityIndicator,
 } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
+import { StackNavigationProp } from "@react-navigation/stack";
+import { RootStackParamList } from "../../../Navigations/RootStackNavigator";
 import { useAuthStore } from "../../../Store/useAuthStore";
 import {
   ArrowLeft,
   Calendar,
   Clock,
-  User,
+  UserRound,
   Scissors,
   MapPin,
   FileText,
   Users,
   Tag,
+  X,
 } from "lucide-react-native";
 import colors from "../../../Constants/colors";
 import {
@@ -25,24 +30,74 @@ import {
   getHeightEquivalent,
   getWidthEquivalent,
 } from "../../../Utils/helpers";
-import { AppointmentCalanderBO } from "../../../Repository/appointmentsRepository";
+import { AppointmentCalanderBO, appointmentsRepository } from "../../../Repository/appointmentsRepository";
 
 interface AppointmentDetailsRouteParams {
   appointment: AppointmentCalanderBO;
 }
 
 const AppointmentDetailsScreen = () => {
-  const navigation = useNavigation();
+  type NavigationProp = StackNavigationProp<RootStackParamList>;
+  const navigation = useNavigation<NavigationProp>();
   const route = useRoute();
   const { appointment } = route.params as AppointmentDetailsRouteParams;
   const { allLocations } = useAuthStore();
   const { colors: paint } = colors;
+  const [isCanceling, setIsCanceling] = useState(false);
 
   // Find the location name using location_id
   const location = allLocations.find(
     (loc) => loc.id === appointment.appointment.location_id
   );
   const locationName = location?.name || "Location not found";
+
+  const handleCancelAppointment = () => {
+    Alert.alert(
+      "Void Sale",
+      "Are you sure you want to void this sale? This action cannot be undone",
+      [
+        {
+          text: "Cancel ",
+          style: "cancel",
+        },
+        {
+          text: "Void Sale",
+          style: "destructive",
+          onPress: async () => {
+            setIsCanceling(true);
+            try {
+              const success = await appointmentsRepository.cancelAppointment(
+                appointment.appointment.id
+              );
+
+              if (success) {
+                Alert.alert(
+                  "Success",
+                  "Appointment has been canceled successfully.",
+                  [
+                    {
+                      text: "OK",
+                      onPress: () => navigation.goBack(),
+                    },
+                  ]
+                );
+              } else {
+                Alert.alert(
+                  "Error",
+                  "Failed to cancel the appointment. Please try again."
+                );
+              }
+            } catch (error) {
+              console.error("Error canceling appointment:", error);
+              Alert.alert("Error", "Something went wrong. Please try again.");
+            } finally {
+              setIsCanceling(false);
+            }
+          },
+        },
+      ]
+    );
+  };
 
   const formatCurrency = (amount: number) => {
     return `AED ${amount.toFixed(2)}`;
@@ -65,6 +120,10 @@ const AppointmentDetailsScreen = () => {
     const ampm = hour >= 12 ? "PM" : "AM";
     const displayHour = hour % 12 || 12;
     return `${displayHour}:${minutes} ${ampm}`;
+  };
+
+  const navigateToClientDetail = (client: any) => {
+    navigation.navigate("ClientDetail", { item: client });
   };
 
   const calculateDuration = () => {
@@ -115,21 +174,32 @@ const AppointmentDetailsScreen = () => {
         style={[
           styles.header,
           {
-            backgroundColor:
-              appointment.appointment.status === "scheduled"
-                ? paint.gray[400] // light gray for scheduled appointments
-                : appointment?.staff?.calendar_color || paint.primary,
+            backgroundColor: colors.colors.white,
           },
         ]}
       >
+        <View style={styles.headerLeft}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}
+          >
+            <ArrowLeft size={20} color={paint.black} />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Appointment Details</Text>
+        </View>
         <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
+          style={styles.cancelButton}
+          onPress={handleCancelAppointment}
+          disabled={isCanceling}
         >
-          <ArrowLeft size={24} color={paint.white} />
+          {isCanceling ? (
+            <ActivityIndicator size="small" color={paint.white} />
+          ) : (
+            <View style={styles.cancelButtonContent}>
+              <Text style={styles.cancelButtonText}>Void Sale</Text>
+            </View>
+          )}
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Appointment Details</Text>
-        <View style={styles.headerRight} />
       </View>
 
       <ScrollView
@@ -138,13 +208,6 @@ const AppointmentDetailsScreen = () => {
       >
         {/* Client Information Card */}
         <View style={[styles.card, { backgroundColor: paint.white }]}>
-          {/* <View style={styles.cardHeader}>
-            <User size={24} color={paint.primary} />
-            <Text style={[styles.cardTitle, { color: paint.text }]}>
-              Client Information
-            </Text>
-          </View> */}
-
           <View style={styles.clientInfo}>
             <View style={styles.clientAvatar}>
               <Text style={styles.clientInitials}>
@@ -173,20 +236,35 @@ const AppointmentDetailsScreen = () => {
               )}
             </View>
           </View>
+
+          {/* View Client Details Button */}
+          <TouchableOpacity
+            style={styles.viewClientButton}
+            onPress={() => {
+              if (appointment.appointment.client) {
+                navigateToClientDetail(appointment.appointment.client);
+              }
+            }}
+          >
+            <UserRound size={16} color={paint.black} />
+            <Text style={[styles.viewClientButtonText, { color: paint.black }]}>
+              View Client Details
+            </Text>
+          </TouchableOpacity>
         </View>
 
         {/* Appointment Time Card */}
         <View style={[styles.card, { backgroundColor: paint.white }]}>
-          <View style={styles.cardHeader}>
+          {/* <View style={styles.cardHeader}>
             <Clock size={18} color={paint.black} />
             <Text style={[styles.cardTitle, { color: paint.text }]}>
               Appointment Time
             </Text>
-          </View>
+          </View> */}
 
           <View style={styles.infoRow}>
             <View style={styles.infoIcon}>
-              <Calendar size={18} color={paint.primary} />
+              <Calendar size={18} color={paint.black} />
             </View>
             <View style={styles.infoContent}>
               <Text style={[styles.infoLabel, { color: paint.textSecondary }]}>
@@ -200,7 +278,7 @@ const AppointmentDetailsScreen = () => {
 
           <View style={styles.infoRow}>
             <View style={styles.infoIcon}>
-              <Clock size={18} color={paint.primary} />
+              <Clock size={18} color={paint.black} />
             </View>
             <View style={styles.infoContent}>
               <Text style={[styles.infoLabel, { color: paint.textSecondary }]}>
@@ -215,7 +293,7 @@ const AppointmentDetailsScreen = () => {
 
           <View style={styles.infoRow}>
             <View style={styles.infoIcon}>
-              <Clock size={18} color={paint.primary} />
+              <Clock size={18} color={paint.black} />
             </View>
             <View style={styles.infoContent}>
               <Text style={[styles.infoLabel, { color: paint.textSecondary }]}>
@@ -364,7 +442,7 @@ const AppointmentDetailsScreen = () => {
             <Text style={[styles.totalLabel, { color: paint.text }]}>
               Total Amount
             </Text>
-            <Text style={[styles.totalValue, { color: paint.primary }]}>
+            <Text style={[styles.totalValue, { color: paint.black }]}>
               {formatCurrency(
                 appointment.price - (appointment.voucher_discount || 0)
               )}
@@ -383,7 +461,7 @@ const AppointmentDetailsScreen = () => {
 
           <View style={styles.infoRow}>
             <View style={styles.infoIcon}>
-              <MapPin size={20} color={paint.primary} />
+              <MapPin size={20} color={paint.black} />
             </View>
             <View style={styles.infoContent}>
               <Text style={[styles.infoLabel, { color: paint.textSecondary }]}>
@@ -430,10 +508,7 @@ const AppointmentDetailsScreen = () => {
                 style={[
                   styles.statusText,
                   {
-                    color:
-                      appointment.appointment.status === "scheduled"
-                        ? paint.gray[400] // light gray for scheduled appointments
-                        : appointment?.staff?.calendar_color || paint.primary,
+                    color: paint.black,
                   },
                 ]}
               >
@@ -464,23 +539,47 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
   },
+  headerLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    flex: 1,
+  },
   backButton: {
     padding: getWidthEquivalent(8),
+    marginRight: getWidthEquivalent(8),
   },
   headerTitle: {
-    fontSize: fontEq(20),
+    fontSize: fontEq(16),
     fontWeight: "700",
-    color: "white",
+    color: "black",
   },
-  headerRight: {
-    width: getWidthEquivalent(40),
+  cancelButton: {
+    paddingVertical: getHeightEquivalent(8),
+    paddingHorizontal: getWidthEquivalent(12),
+    borderRadius: getWidthEquivalent(8),
+    backgroundColor: "white",
+    minWidth: getWidthEquivalent(80),
+    alignItems: "center",
+    justifyContent: "center",
+    borderColor: "#C22D28",
+    borderWidth: 1,
+  },
+  cancelButtonContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: getWidthEquivalent(4),
+  },
+  cancelButtonText: {
+    color: "#C22D28",
+    fontSize: fontEq(14),
+    fontWeight: "600",
   },
   scrollView: {
     flex: 1,
   },
   card: {
     marginHorizontal: getWidthEquivalent(16),
-    marginTop: getHeightEquivalent(16),
+    marginTop: getHeightEquivalent(20),
     padding: getWidthEquivalent(20),
     borderRadius: 16,
     elevation: 2,
@@ -503,18 +602,18 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: getWidthEquivalent(16),
+    marginBottom: getHeightEquivalent(12),
   },
   clientAvatar: {
     width: getWidthEquivalent(50),
     height: getWidthEquivalent(50),
     borderRadius: getWidthEquivalent(30),
-    //backgroundColor: "#E3F2FD",
     backgroundColor: "#f5e7fd",
     alignItems: "center",
     justifyContent: "center",
   },
   clientInitials: {
-    fontSize: fontEq(24),
+    fontSize: fontEq(18),
     fontWeight: "700",
     color: "#3C096C",
   },
@@ -530,6 +629,22 @@ const styles = StyleSheet.create({
     fontSize: fontEq(14),
     marginTop: getHeightEquivalent(2),
   },
+  viewClientButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: getHeightEquivalent(10),
+    paddingHorizontal: getWidthEquivalent(16),
+    borderRadius: getWidthEquivalent(8),
+    borderWidth: 1,
+    borderColor: colors.colors.gray[300],
+    backgroundColor: "transparent",
+    gap: getWidthEquivalent(8),
+  },
+  viewClientButtonText: {
+    fontSize: fontEq(14),
+    fontWeight: "600",
+  },
   infoRow: {
     flexDirection: "row",
     alignItems: "flex-start",
@@ -539,7 +654,7 @@ const styles = StyleSheet.create({
     width: getWidthEquivalent(40),
     height: getWidthEquivalent(40),
     borderRadius: getWidthEquivalent(20),
-    backgroundColor: "#F5F5F5",
+    // backgroundColor: "#F5F5F5",
     alignItems: "center",
     justifyContent: "center",
     marginRight: getWidthEquivalent(12),

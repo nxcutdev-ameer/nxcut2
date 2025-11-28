@@ -685,20 +685,21 @@ export const appointmentsRepository = {
         updateData.staff_id = newStaffId;
       }
 
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from("appointment_services")
         .update(updateData)
-        .eq("id", appointmentServiceId);
+        .eq("id", appointmentServiceId)
+        .select();
 
       if (error) {
-        console.error("Error updating appointment service time:", error);
+        console.error("[appointmentsRepository] Error updating appointment service time:", error);
         return false;
       }
 
       console.log(`[appointmentsRepository] Updated appointment service ${appointmentServiceId} to ${startTime} - ${endTime}${newStaffId ? ` (staff: ${newStaffId})` : ''}`);
       return true;
     } catch (error) {
-      console.error("Error updating appointment service time:", error);
+      console.error("[appointmentsRepository] Error updating appointment service time:", error);
       return false;
     }
   },
@@ -774,6 +775,28 @@ export const appointmentsRepository = {
     } catch (error) {
       console.error("[appointmentsRepository] Error creating appointment:", error);
       return null;
+    }
+  },
+
+  async cancelAppointment(appointmentId: string): Promise<boolean> {
+    try {
+      console.log('[appointmentsRepository] Canceling appointment:', appointmentId);
+      
+      const { error } = await supabase
+        .from('appointments')
+        .delete()
+        .eq('id', appointmentId);
+
+      if (error) {
+        console.error('[appointmentsRepository] Error canceling appointment:', error);
+        return false;
+      }
+
+      console.log('[appointmentsRepository] Appointment canceled successfully');
+      return true;
+    } catch (error) {
+      console.error("[appointmentsRepository] Error canceling appointment:", error);
+      return false;
     }
   },
 };

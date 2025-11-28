@@ -21,7 +21,6 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { CalanderScreenStyles } from "./CalanderScreenStyles";
 import DraggableCalendarColumn from "../../../Components/DraggableCalendarColumn";
 import TimeGutter from "../../../Components/TimeGutter";
-import TimeGutterHeader from "../../../Components/TimeGutterHeader";
 import {
   Menu,
   ChevronDown,
@@ -405,15 +404,6 @@ const CalanderScreen = () => {
   const bottomSheetRef = useRef<BottomSheet>(null);
   const snapPoints = useMemo(() => ["50%", "80%"], []);
   const [isBottomSheetOpen, setIsBottomSheetOpen] = useState(false);
-  const [currentTime, setCurrentTime] = useState(new Date());
-
-  // Update current time every minute
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentTime(new Date());
-    }, 60000);
-    return () => clearInterval(timer);
-  }, []);
 
   // Handle scroll end to update current index
   const handleScrollEnd = (event: any) => {
@@ -585,126 +575,56 @@ const CalanderScreen = () => {
 
   return (
     <>
-      <SafeAreaView edges={['top', 'bottom']} style={CalanderScreenStyles.mainContainer}>
-        {/* Header Section: TimeGutterHeader (LEFT) spanning both rows + Date & Staff Headers (RIGHT) stacked */}
-        <View style={{ flexDirection: 'row', width: '100%' }}>
-          {/* LEFT: Time Gutter Header - Spans both Date and Staff header */}
-          <TimeGutterHeader headerHeight={getHeightEquivalent(135)} />
+      <SafeAreaView style={CalanderScreenStyles.mainContainer}>
+        {/* New Header Design */}
+        <View style={CalanderScreenStyles.newHeaderContainer}>
+        {/* Left Side - Menu */}
+        {/* <TouchableOpacity
+          onPress={handleMenuPress}
+          style={CalanderScreenStyles.headerButton}
+        >
+          <Menu size={24} color={colors.text} />
+        </TouchableOpacity> */}
 
-          {/* RIGHT: Stacked Headers Container */}
-          <View style={{ flex: 1, flexDirection: 'column' }}>
-            {/* Top: Date Header */}
-            <View style={CalanderScreenStyles.newHeaderContainer}>
-              {/* Center - Date */}
-              <TouchableOpacity
-                onPress={handleDatePress}
-                style={CalanderScreenStyles.dateContainer}
-              >
-                <Text style={CalanderScreenStyles.dateText}>
-                  {formatDate(currentDate)}
-                </Text>
-                <ChevronDown size={20} color={colors.text} />
-              </TouchableOpacity>
+        {/* Center - Date */}
+        <TouchableOpacity
+          onPress={handleDatePress}
+          style={CalanderScreenStyles.dateContainer}
+        >
+          <Text style={CalanderScreenStyles.dateText}>
+            {formatDate(currentDate)}
+          </Text>
+          <ChevronDown size={20} color={colors.text} />
+        </TouchableOpacity>
 
-              {/* Right Side - Filter, Notification, Profile */}
-              <View style={CalanderScreenStyles.rightHeaderContainer}>
-                <TouchableOpacity
-                  onPress={handleFilterPress}
-                  style={CalanderScreenStyles.headerButton}
-                >
-                  <SlidersHorizontal size={20} color={colors.black} />
-                </TouchableOpacity>
+        {/* Right Side - Filter, Notification, Profile */}
+        <View style={CalanderScreenStyles.rightHeaderContainer}>
+          <TouchableOpacity
+            onPress={handleFilterPress}
+            style={CalanderScreenStyles.headerButton}
+          >
+            <SlidersHorizontal size={22} color={colors.black} />
+          </TouchableOpacity>
 
-                <TouchableOpacity
-                  onPress={handleNotificationPress}
-                  style={CalanderScreenStyles.headerButton}
-                >
-                  <Bell size={20} color={colors.text} />
-                  {/* Notification badge */}
-                  <View style={CalanderScreenStyles.notificationBadge} />
-                </TouchableOpacity>
+          <TouchableOpacity
+            onPress={handleNotificationPress}
+            style={CalanderScreenStyles.headerButton}
+          >
+            <Bell size={24} color={colors.text} />
+            {/* Notification badge */}
+            <View style={CalanderScreenStyles.notificationBadge} />
+          </TouchableOpacity>
 
-                <TouchableOpacity
-                  onPress={handleProfilePress}
-                  style={CalanderScreenStyles.profileButton}
-                >
-                  <Text style={CalanderScreenStyles.profileInitials}>
-                    {getUserInitials()}
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-
-            {/* Bottom: Staff Header */}
-            {calanderData.length > 0 && (
-              <ScrollView
-                scrollEnabled={false}
-                horizontal={true}
-                bounces={false}
-                showsHorizontalScrollIndicator={false}
-                showsVerticalScrollIndicator={false}
-                style={{
-                  height: 55,
-                }}
-                contentContainerStyle={{
-                  flexDirection: "row",
-                  borderBottomWidth: 1,
-                  borderBottomColor: colors.border,
-                  shadowColor: '#000',
-                  shadowOffset: {
-                    width: 0,
-                    height: 3,
-                  },
-                  shadowOpacity: 0.15,
-                  shadowRadius: 4,
-                  elevation: 5,
-                  backgroundColor: colors.white,
-                }}
-              >
-                {/* Staff headers - all have equal width */}
-                {calanderData.map((staff, index) => (
-                  <Fragment key={index}>
-                    {/* Add separator width for columns after the first one */}
-                    {index > 0 && (
-                      <View
-                        style={{
-                          width: 1,
-                          height: "100%",
-                          backgroundColor: "transparent",
-                        }}
-                      />
-                    )}
-                    <View
-                      style={{
-                        width: getColumnWidth(index),
-                        height: "100%",
-                        backgroundColor: colors.white,
-                        justifyContent: "center",
-                        alignItems: "center",
-                      }}
-                    >
-                      <View style={CalanderScreenStyles.staffImageContainer}>
-                        <Text
-                          style={{
-                            color: colors.white,
-                            fontWeight: "bold",
-                            fontSize: fontEq(10),
-                          }}
-                        >
-                          {staff?.staffName?.charAt(0).toUpperCase() || "S"}
-                        </Text>
-                      </View>
-                      <Text style={CalanderScreenStyles.staffName}>
-                        {staff?.staffName || "Staff"}
-                      </Text>
-                    </View>
-                  </Fragment>
-                ))}
-              </ScrollView>
-            )}
-          </View>
+          <TouchableOpacity
+            onPress={handleProfilePress}
+            style={CalanderScreenStyles.profileButton}
+          >
+            <Text style={CalanderScreenStyles.profileInitials}>
+              {getUserInitials()}
+            </Text>
+          </TouchableOpacity>
         </View>
-
+      </View>
       <ScrollView
         ref={scrollViewRef}
         bounces={false}
@@ -717,150 +637,131 @@ const CalanderScreen = () => {
         style={CalanderScreenStyles.bodyContainer}
       >
         <View style={{ flex: 1, flexDirection: "column" }}>
-            <View style={{ flexDirection: "row", flex: 1 }}>
-              {/* Fixed Time Gutter Column with Red Line */}
-              <View style={{ width: getWidthEquivalent(40) }}>
-                <ScrollView
-                  ref={verticalScrollRef}
-                  bounces={false}
-                  showsVerticalScrollIndicator={false}
-                  scrollEnabled={scrollEnabled}
-                  scrollEventThrottle={16}
-                  onScroll={(event) => {
-                    // Sync calendar vertical scroll
-                    if (horizontalScrollRef.current && horizontalScrollRef.current.scrollTo) {
-                      horizontalScrollRef.current.scrollTo({
-                        y: event.nativeEvent.contentOffset.y,
-                        animated: false,
-                      });
-                    }
-                  }}
-                >
-                  <View style={{ position: 'relative' }}>
-                    {/* Current Time Indicator - Ellipse and Line */}
-                    {(() => {
-                      const currentHour = currentTime.getHours();
-                      const currentMinute = currentTime.getMinutes();
-                      const minHour = 8;
-                      const maxHour = 23;
-                      const hourHeight = getHeightEquivalent(80);
-                      
-                      if (currentHour < minHour || currentHour > maxHour) {
-                        return null;
-                      }
-                      
-                      const minutesFromMinHour = (currentHour - minHour) * 60 + currentMinute;
-                      const currentTimePosition = (minutesFromMinHour / 60) * hourHeight;
-                      
-                      return (
-                        <>
-                          {/* Ellipse with time */}
-                          <View
-                            style={{
-                              position: 'absolute',
-                             // left: getWidthEquivalent(1),
-                              top: currentTimePosition - getHeightEquivalent(10),
-                              width: getWidthEquivalent(38),
-                              height: getHeightEquivalent(20),
-                              borderRadius: getWidthEquivalent(10),
-                              borderWidth: 1.5,
-                              borderColor: '#D32F2F',
-                              backgroundColor: colors.white,
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              zIndex: 3000,
-                              elevation: 20,
-                              pointerEvents: 'none',
-                              shadowColor: '#000',
-                              shadowOffset: { width: 0, height: 2 },
-                              shadowOpacity: 0.25,
-                              shadowRadius: 3.84,
-                            }}
-                          >
-                            <Text style={{ fontSize: fontEq(8), fontWeight: '700', color: '#D32F2F' }}>
-                              {currentTime.getHours().toString().padStart(2, '0')}:
-                              {currentTime.getMinutes().toString().padStart(2, '0')}
-                            </Text>
-                          </View>
-                          {/* Red line in TimeGutter */}
-                          <View
-                            style={{
-                              position: 'absolute',
-                              left: 0,
-                              right: 0,
-                              top: currentTimePosition,
-                              height: 2,
-                              backgroundColor: '#D32F2F',
-                              zIndex: 2500,
-                              pointerEvents: 'none',
-                              elevation: 10,
-                            }}
-                          />
-                        </>
-                      );
-                    })()}
+          {/* Staff Navigation Header */}
 
-                    <TimeGutter
-                      minHour={8}
-                      maxHour={23}
-                      hourHeight={getHeightEquivalent(80)}
-                    />
-                  </View>
-                </ScrollView>
+          {calanderData.length > 0 && (
+            <ScrollView
+              scrollEnabled={false}
+              horizontal={true}
+              bounces={false}
+              showsHorizontalScrollIndicator={false}
+                showsVerticalScrollIndicator={false}
+              contentContainerStyle={{
+                height: "100%",
+                alignItems: "center",
+                justifyContent: "center",
+                //marginBottom: getHeightEquivalent(200),
+              }}
+              style={[
+                CalanderScreenStyles.staffNavigationBar,
+                { overflow: "visible" },
+              ]}
+            >
+              {/* Time column spacing - fixed width for time labels */}
+              <View
+                style={{
+                  width: timeColumnWidth,
+                  height: "100%",
+                  backgroundColor: colors.white,
+                  justifyContent: "center",
+                  alignItems: "center",
+                }}
+              >
+                <Clock size={getWidthEquivalent(20)} color={colors.primary} />
               </View>
+
+              {/* Staff headers - all have equal width now */}
+              {calanderData.map((staff, index) => (
+                <Fragment key={index}>
+                  {/* Add separator width for columns after the first one */}
+                  {index > 0 && (
+                    <View
+                      style={{
+                        width: 1,
+                        height: "100%",
+                        backgroundColor: "transparent",
+                      }}
+                    />
+                  )}
+                  <View
+                    style={{
+                      width: getColumnWidth(index),
+                      height: "100%",
+                      backgroundColor: colors.black,
+                      justifyContent: "center",
+                      alignItems: "center",
+                    }}
+                  >
+                    <View style={CalanderScreenStyles.staffImageContainer}>
+                      <Text
+                        style={{
+                          color: colors.white,
+                          fontWeight: "bold",
+                          fontSize: fontEq(12),
+                        }}
+                      >
+                        {staff?.staffName?.charAt(0).toUpperCase() || "S"}
+                      </Text>
+                    </View>
+                    <Text style={CalanderScreenStyles.staffName}>
+                      {staff?.staffName || "Staff"}
+                    </Text>
+                  </View>
+                </Fragment>
+              ))}
+            </ScrollView>
+          )}
+
+          {calanderData.length === 0 ||
+          calanderData.every(
+            (staff) => staff.staffAppointments.length === 0
+          ) ? (
+            // Empty State
+            <View style={CalanderScreenStyles.emptyStateContainer}>
+              <Calendar size={80} color={colors.gray[300]} strokeWidth={1.5} />
+              <Text style={CalanderScreenStyles.emptyStateTitle}>
+                No Appointments Today
+              </Text>
+              <Text style={CalanderScreenStyles.emptyStateSubtitle}>
+                {currentDate.toLocaleDateString("en-US", {
+                  weekday: "long",
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                })}
+              </Text>
+              <Text style={CalanderScreenStyles.emptyStateDescription}>
+                There are no scheduled appointments for this date.
+              </Text>
+              <TouchableOpacity
+                style={CalanderScreenStyles.emptyStateButton}
+                onPress={() => {
+                  navigation.navigate("CreateAppointment");
+                }}
+              >
+                <Plus size={20} color={colors.white} />
+                <Text style={CalanderScreenStyles.emptyStateButtonText}>
+                  Create Appointment
+                </Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <View style={{ flexDirection: "row", flex: 1 }}>
+              {/* Fixed Time Gutter Column */}
+              <TimeGutter
+                minHour={8}
+                maxHour={23}
+                hourHeight={getHeightEquivalent(80)}
+              />
 
               {/* Scrollable Appointment Columns */}
               <ScrollView
+                ref={verticalScrollRef}
                 bounces={false}
                 showsVerticalScrollIndicator={false}
                 scrollEnabled={scrollEnabled}
                 style={{ flex: 1 }}
-                scrollEventThrottle={16}
-                onScroll={(event) => {
-                  // Sync TimeGutter vertical scroll
-                  if (verticalScrollRef.current) {
-                    verticalScrollRef.current.scrollTo({
-                      y: event.nativeEvent.contentOffset.y,
-                      animated: false,
-                    });
-                  }
-                }}
               >
-                <View style={{ position: 'relative' }}>
-                  {/* Current Time Line - extends across calendar */}
-                  {(() => {
-                    const currentHour = currentTime.getHours();
-                    const currentMinute = currentTime.getMinutes();
-                    const minHour = 8;
-                    const maxHour = 23;
-                    const hourHeight = getHeightEquivalent(80);
-                    
-                    if (currentHour < minHour || currentHour > maxHour) {
-                      return null;
-                    }
-                    
-                    const minutesFromMinHour = (currentHour - minHour) * 60 + currentMinute;
-                    const currentTimePosition = (minutesFromMinHour / 60) * hourHeight;
-                    
-                    return (
-                      <View
-                        style={{
-                          position: 'absolute',
-                          left: 0,
-                          right: 0,
-                          top: currentTimePosition,
-                          height: 2,
-                          backgroundColor: '#D32F2F',
-                          zIndex: 2500,
-                          pointerEvents: 'none',
-                          elevation: 10,
-                        }}
-                      />
-                    );
-                  })()}
-
-                  </View>
-
                 <ScrollView
                   ref={horizontalScrollRef}
                   horizontal
@@ -983,10 +884,11 @@ const CalanderScreen = () => {
                 </ScrollView>
               </ScrollView>
             </View>
+          )}
         </View>
       </ScrollView>
 
-      {editingState && (
+        {editingState && (
           <View style={CalanderScreenStyles.editingFooter}>
             <TouchableOpacity
               style={[

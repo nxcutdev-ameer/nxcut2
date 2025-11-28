@@ -35,6 +35,7 @@ import CreateAppointmentScreen from "../Screens/TabScreens/CalanderScreen/Create
 import AddClientScreen from "../Screens/TabScreens/ClientScreen/AddClientScreen";
 import PaymentMethodsScreen from "../Screens/MoreTabScreens/PaymentMethodsScreen/PaymentMethodsScreen";
 import AddPaymentMethodScreen from "../Screens/MoreTabScreens/AddPaymentMethodScreen/AddPaymentMethodScreen";
+import CheckoutScreen from "../Screens/TabScreens/CalanderScreen/CheckoutScreen";
 
 export type RootStackParamList = {
   SplashScreen: undefined;
@@ -66,12 +67,17 @@ export type RootStackParamList = {
   WalletScreen: undefined;
   AddTeamMemberScreen: undefined;
   SupportScreen: undefined;
-  ClientDetail: undefined;
+  ClientDetail: {
+    item: any;
+  };
   AddClientScreen: undefined;
   AppointmentDetailsScreen: undefined;
   CreateAppointment: undefined;
   PaymentMethodsScreen: undefined;
   AddPaymentMethodScreen: undefined;
+  CheckoutScreen: {
+    total: number;
+  };
 };
 
 const RootStackNavigator = () => {
@@ -187,6 +193,10 @@ const RootStackNavigator = () => {
             // options={{
             //   animation: "slide_from_right",
             // }}
+          />
+          <Stack.Screen
+            name="CheckoutScreen"
+            component={CheckoutScreen}
           />
         </Stack.Navigator>
       </NavigationContainer>

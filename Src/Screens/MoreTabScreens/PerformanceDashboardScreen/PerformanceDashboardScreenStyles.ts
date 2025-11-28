@@ -328,7 +328,7 @@ const PerformanceDashboardScreenStyles = StyleSheet.create({
   filterApplyButtonText: {
     fontSize: fontEq(16),
     fontWeight: "600",
-    color: colors.colors.white,
+    color: colors.colors.black,
   },
   accordionContent: {
     height: getHeightEquivalent(25),

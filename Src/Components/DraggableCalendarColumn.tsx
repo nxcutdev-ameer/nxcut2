@@ -153,37 +153,79 @@ const DraggableCalendarColumn: React.FC<DraggableCalendarColumnProps> = ({
       totalColumns: 1,
     }));
 
-    // Sort by start time
-    appointmentsWithLayout.sort(
-      (a, b) => a.start.getTime() - b.start.getTime()
-    );
+    // Sort by start time, then by duration (longer first)
+    appointmentsWithLayout.sort((a, b) => {
+      const startDiff = a.start.getTime() - b.start.getTime();
+      if (startDiff !== 0) return startDiff;
+      // If start times are equal, longer appointments first
+      return (b.end.getTime() - b.start.getTime()) - (a.end.getTime() - a.start.getTime());
+    });
 
-    // Find overlapping groups
-    for (let i = 0; i < appointmentsWithLayout.length; i++) {
-      const current = appointmentsWithLayout[i];
-      const overlapping = [current];
-
-      // Find all appointments that overlap with current
-      for (let j = 0; j < appointmentsWithLayout.length; j++) {
-        if (i === j) continue;
-        const other = appointmentsWithLayout[j];
-
-        // Check if they overlap
-        if (
-          (other.start < current.end && other.end > current.start) ||
-          (current.start < other.end && current.end > other.start)
-        ) {
-          overlapping.push(other);
+    // Group overlapping appointments
+    const groups: Array<typeof appointmentsWithLayout> = [];
+    
+    for (const appt of appointmentsWithLayout) {
+      let addedToGroup = false;
+      
+      // Try to add to existing group
+      for (const group of groups) {
+        const overlapsWithGroup = group.some(other => 
+          appt.start < other.end && appt.end > other.start
+        );
+        
+        if (overlapsWithGroup) {
+          group.push(appt);
+          addedToGroup = true;
+          break;
         }
       }
+      
+      // Create new group if doesn't overlap with any existing group
+      if (!addedToGroup) {
+        groups.push([appt]);
+      }
+    }
 
-      // Assign columns to overlapping appointments
-      if (overlapping.length > 1) {
-        overlapping.sort((a, b) => a.start.getTime() - b.start.getTime());
-        overlapping.forEach((appt, idx) => {
-          appt.column = idx;
-          appt.totalColumns = overlapping.length;
-        });
+    // Assign columns within each group
+    for (const group of groups) {
+      if (group.length === 1) {
+        group[0].column = 0;
+        group[0].totalColumns = 1;
+        continue;
+      }
+
+      // Find maximum number of simultaneous appointments
+      const columns: Array<typeof appointmentsWithLayout> = [];
+      
+      for (const appt of group) {
+        // Find first available column
+        let columnIndex = 0;
+        while (columnIndex < columns.length) {
+          const column = columns[columnIndex];
+          const hasOverlap = column.some(other => 
+            appt.start < other.end && appt.end > other.start
+          );
+          
+          if (!hasOverlap) {
+            break;
+          }
+          columnIndex++;
+        }
+        
+        // Add to column (create if doesn't exist)
+        if (columnIndex >= columns.length) {
+          columns.push([]);
+        }
+        columns[columnIndex].push(appt);
+        
+        appt.column = columnIndex;
+        appt.totalColumns = columns.length;
+      }
+      
+      // Update totalColumns for all appointments in group
+      const maxColumns = columns.length;
+      for (const appt of group) {
+        appt.totalColumns = maxColumns;
       }
     }
 
@@ -191,35 +233,6 @@ const DraggableCalendarColumn: React.FC<DraggableCalendarColumnProps> = ({
   };
 
   const appointmentsWithLayout = calculateAppointmentLayout();
-
-  // Current time indicator
-  const [currentTime, setCurrentTime] = useState(new Date());
-
-  useEffect(() => {
-    // Update current time every minute
-    const interval = setInterval(() => {
-      setCurrentTime(new Date());
-    }, 60000); // Update every minute
-
-    return () => clearInterval(interval);
-  }, []);
-
-  // Calculate current time position
-  const getCurrentTimePosition = () => {
-    const now = currentTime;
-    const currentHour = now.getHours();
-    const currentMinute = now.getMinutes();
-
-    // Check if current time is within the calendar range
-    if (currentHour < minHour || currentHour > maxHour) {
-      return null;
-    }
-
-    const minutesFromMinHour = (currentHour - minHour) * 60 + currentMinute;
-    return (minutesFromMinHour / 60) * hourHeight;
-  };
-
-  const currentTimePosition = getCurrentTimePosition();
 
   return (
     <View style={[styles.columnContainer, { width: columnWidth }]}>
@@ -257,7 +270,7 @@ const DraggableCalendarColumn: React.FC<DraggableCalendarColumnProps> = ({
                       ? `${hour}:00\n    am`
                       : hour === 12
                       ? "12:00\n    pm"
-                      : `${hour - 12}:00\n  pm`}
+                      : `${hour - 12}:00\n   pm`}
                   </Text>
                 </View>
               )}
@@ -401,6 +414,7 @@ const DraggableCalendarColumn: React.FC<DraggableCalendarColumnProps> = ({
           const availableWidth = showHours
             ? columnWidth - getWidthEquivalent(60)
             : columnWidth;
+          // Calculate width based on overlapping appointments
           const appointmentWidth = availableWidth / appointment.totalColumns;
           const leftOffset = appointmentWidth * appointment.column;
 
@@ -414,6 +428,11 @@ const DraggableCalendarColumn: React.FC<DraggableCalendarColumnProps> = ({
             }
 
             if (interactionsDisabled) {
+              return;
+            }
+
+            // Disable edit mode for paid appointments
+            if (appointment.data.appointment.status === "paid") {
               return;
             }
 
@@ -479,44 +498,32 @@ const DraggableCalendarColumn: React.FC<DraggableCalendarColumnProps> = ({
               onPress={
                 interactionsDisabled
                   ? undefined
-                  : () =>
-                      navigation.navigate("AppointmentDetailsScreen", {
-                        appointment: appointment.data,
-                      })
+                  : () => {
+                      console.log("[DraggableCalendarColumn] Appointment tapped:");
+                      console.log("  Status:", appointment.data.appointment.status);
+                      console.log("  Appointment ID:", appointment.data.appointment.id);
+                      
+                      // Navigate to CreateAppointment in edit mode for scheduled appointments
+                      if (appointment.data.appointment.status === "scheduled") {
+                        console.log("  -> Navigating to edit mode");
+                        navigation.navigate("CreateAppointment", {
+                          mode: "edit",
+                          appointmentData: appointment.data,
+                        });
+                      } else {
+                        console.log("  -> Navigating to details screen (status:", appointment.data.appointment.status, ")");
+                        // Navigate to details screen for paid appointments (read-only)
+                        navigation.navigate("AppointmentDetailsScreen", {
+                          appointment: appointment.data,
+                        });
+                      }
+                    }
               }
             />
           );
         })}
       </View>
 
-      {/* Current Time Indicator */}
-      {currentTimePosition !== null && (
-        <View
-          style={[
-            styles.currentTimeIndicator,
-            {
-              top: currentTimePosition,
-              left: 0,
-              width: columnWidth,
-            },
-          ]}
-        >
-          {showHours && (
-            <View style={styles.currentTimeCircle}>
-              <Text style={styles.currentTimeText}>
-                {currentTime.getHours().toString().padStart(2, "0")}:
-                {currentTime.getMinutes().toString().padStart(2, "0")}
-              </Text>
-            </View>
-          )}
-          <View
-            style={[
-              styles.currentTimeLine,
-              showHours && { left: getWidthEquivalent(60) },
-            ]}
-          />
-        </View>
-      )}
     </View>
   );
 };
@@ -559,37 +566,6 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-  },
-  currentTimeIndicator: {
-    position: "absolute",
-    zIndex: 1000,
-    pointerEvents: "none",
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  currentTimeLine: {
-    flex: 1,
-    height: 2,
-    backgroundColor: "#FF4444",
-  },
-  currentTimeCircle: {
-    position: "absolute",
-    left: 0,
-    width: getWidthEquivalent(55),
-    height: getHeightEquivalent(24),
-    borderRadius: getWidthEquivalent(12),
-    borderWidth: 2,
-    borderColor: "#FF4444",
-    //backgroundColor: "#FF4444",
-    backgroundColor: colors.white,
-    alignItems: "center",
-    justifyContent: "center",
-    zIndex: 1001,
-  },
-  currentTimeText: {
-    fontSize: fontEq(10),
-    fontWeight: "700",
-    color: "#FF4444",
   },
   timeSeparatorContainer: {
     position: "absolute",

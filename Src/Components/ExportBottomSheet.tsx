@@ -1,5 +1,7 @@
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
+  AppState,
+  AppStateStatus,
   Modal,
   View,
   Text,
@@ -19,9 +21,9 @@ import {
 interface ExportBottomSheetProps {
   visible: boolean;
   onClose: () => void;
-  onExportCSV: () => void;
-  onExportPDF: () => void;
-  onExportExcel: () => void;
+  onExportCSV: () => Promise<void> | void;
+  onExportPDF: () => Promise<void> | void;
+  onExportExcel: () => Promise<void> | void;
 }
 
 const ExportBottomSheet: React.FC<ExportBottomSheetProps> = ({
@@ -33,6 +35,8 @@ const ExportBottomSheet: React.FC<ExportBottomSheetProps> = ({
 }) => {
   const { colors: paint } = colors;
   const screenHeight = Dimensions.get('window').height;
+  const [isExporting, setIsExporting] = useState(false);
+  const appState = useRef<AppStateStatus>(AppState.currentState);
 
   const onHandlerStateChange = (event: any) => {
     if (event.nativeEvent.state === State.END) {
@@ -41,6 +45,24 @@ const ExportBottomSheet: React.FC<ExportBottomSheetProps> = ({
       }
     }
   };
+
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (nextAppState) => {
+      if (
+        appState.current.match(/inactive|background/) &&
+        nextAppState === 'active' &&
+        isExporting
+      ) {
+        setIsExporting(false);
+        onClose();
+      }
+      appState.current = nextAppState;
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, [isExporting, onClose]);
 
   const exportOptions = [
     {
@@ -63,6 +85,19 @@ const ExportBottomSheet: React.FC<ExportBottomSheetProps> = ({
     },
   ];
 
+  const handleExport = async (cb: () => Promise<void> | void) => {
+    try {
+      setIsExporting(true);
+      await cb();
+      onClose();
+    } catch (error) {
+      // surface errors via console for now; keeps sheet open for retry
+      console.error('Export option failed:', error);
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   return (
     <Modal
       visible={visible}
@@ -74,7 +109,11 @@ const ExportBottomSheet: React.FC<ExportBottomSheetProps> = ({
         <TouchableOpacity
           style={styles.overlayTouchable}
           activeOpacity={1}
-          onPress={onClose}
+          onPress={() => {
+            if (!isExporting) {
+              onClose();
+            }
+          }}
         />
         <PanGestureHandler onHandlerStateChange={onHandlerStateChange}>
           <View style={[
@@ -98,10 +137,8 @@ const ExportBottomSheet: React.FC<ExportBottomSheetProps> = ({
                 <TouchableOpacity
                   key={index}
                   style={[styles.option, { borderBottomColor: paint.border }]}
-                  onPress={() => {
-                     option.onPress();
-                    onClose();
-                  }}
+                  disabled={isExporting}
+                  onPress={() => handleExport(option.onPress)}
                 >
                   <View style={styles.optionIcon}>
                     {option.icon}

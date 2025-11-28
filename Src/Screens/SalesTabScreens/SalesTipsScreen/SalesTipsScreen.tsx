@@ -24,7 +24,7 @@ import {
 } from "lucide-react-native";
 import colors from "../../../Constants/colors";
 import TipsTable from "../../../Components/TipsTable";
-import { SelectPeriodModal } from "../SalesVoucherScreen/SelectPeriodModal";
+import SelectPeriodModal from "../../../Components/SelectPeriodModal";
 import BottomSheet, { BottomSheetView } from "@gorhom/bottom-sheet";
 
 const SalesTipsScreen = () => {
@@ -140,18 +140,13 @@ const SalesTipsScreen = () => {
       </View>
 
       {/* Date Filter Modal */}
-      <Modal
+      <SelectPeriodModal
         visible={showDateFilter}
-        animationType="slide"
-        presentationStyle="pageSheet"
-      >
-        <SelectPeriodModal
-          onClose={() => setShowDateFilter(false)}
-          onApply={updateDateFilter}
-          currentFromDate={pageFilter.start_date}
-          currentToDate={pageFilter.end_date}
-        />
-      </Modal>
+        onClose={() => setShowDateFilter(false)}
+        onApply={updateDateFilter}
+        initialFromDate={pageFilter.start_date}
+        initialToDate={pageFilter.end_date}
+      />
 
       {/* Backdrop overlay when bottom sheet is open */}
       {isBottomSheetOpen && (

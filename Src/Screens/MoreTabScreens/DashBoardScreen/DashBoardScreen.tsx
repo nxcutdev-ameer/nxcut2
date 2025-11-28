@@ -8,6 +8,7 @@ import {
 import React, { useEffect, useMemo, useState } from "react";
 import { appointmentsRepository } from "../../../Repository/appointmentsRepository";
 import { DashBoardScreenStyles } from "./DashBoardScreenStyles";
+import { supabase } from "../../../Utils/supabase";
 import {
   ChevronLeft,
   Dot,
@@ -47,6 +48,8 @@ const DashBoardScreen = () => {
   const [showFilterScreen, setShowFilterScreen] = useState(false);
   const [selectedPeriod, setSelectedPeriod] = useState("Month to date");
   const [refreshing, setRefreshing] = useState(false);
+  const [upcomingAppointments, setUpcomingAppointments] = useState<{day_label: string, appointment_count: number}[]>([]);
+  const [upcomingAppointmentsLoading, setUpcomingAppointmentsLoading] = useState(true);
 
   const {
     navigation,
@@ -279,6 +282,57 @@ const DashBoardScreen = () => {
   const showPieChartSkeleton =
     salesByLocationLoading && pieChartData.length === 0;
 
+  // Prepare bar chart data for upcoming appointments
+  const upcomingAppointmentsBarData = useMemo(() => {
+    const barData = upcomingAppointments.map((item) => ({
+      value: item.appointment_count,
+      label: item.day_label,
+      frontColor: colors.colors.primary,
+      spacing: getWidthEquivalent(1),
+      labelWidth: getWidthEquivalent(150),
+      labelTextStyle: {
+        color: colors.colors.text,
+        fontSize: fontEq(8),
+        fontWeight: '500',
+        marginLeft: getWidthEquivalent(-60),
+        bottom: getHeightEquivalent(-30),
+      },
+    }));
+    
+    console.log('[DashBoardScreen] 📊 Bar chart data prepared:', barData);
+    console.log('[DashBoardScreen] 🏷️ Labels:', barData.map(d => d.label).join(', '));
+    console.log('[DashBoardScreen] 📈 Values:', barData.map(d => d.value).join(', '));
+    
+    return barData;
+  }, [upcomingAppointments]);
+
+  // Fetch upcoming appointments for next 7 days
+  const fetchUpcomingAppointments = async () => {
+    setUpcomingAppointmentsLoading(true);
+    try {
+      const { data, error } = await supabase.rpc('get_appointments_next_7_days');
+      
+      if (error) {
+        console.error('[DashBoardScreen] Error fetching upcoming appointments:', error);
+        setUpcomingAppointments([]);
+      } else {
+        console.log('[DashBoardScreen] ✅ Upcoming appointments data:', data);
+        console.log('[DashBoardScreen] 📊 Number of days:', data?.length);
+        if (data && Array.isArray(data)) {
+          data.forEach((item: {day_label: string; appointment_count: number}, index: number) => {
+            console.log(`  Day ${index + 1}: ${item.day_label} - ${item.appointment_count} appointments`);
+          });
+        }
+        setUpcomingAppointments(data || []);
+      }
+    } catch (error) {
+      console.error('[DashBoardScreen] Exception fetching upcoming appointments:', error);
+      setUpcomingAppointments([]);
+    } finally {
+      setUpcomingAppointmentsLoading(false);
+    }
+  };
+
   // Filter handlers
   const handleFilterApply = (start: Date, end: Date, period: string) => {
     setStartDate(start);
@@ -297,14 +351,22 @@ const DashBoardScreen = () => {
     };
 
     try {
-      await refetchAllDataWithDateRange({
-        startDate: toLocalISODate(startDate),
-        endDate: toLocalISODate(endDate),
-      });
+      await Promise.all([
+        refetchAllDataWithDateRange({
+          startDate: toLocalISODate(startDate),
+          endDate: toLocalISODate(endDate),
+        }),
+        fetchUpcomingAppointments(),
+      ]);
     } finally {
       setRefreshing(false);
     }
   };
+
+  // Fetch upcoming appointments on mount
+  useEffect(() => {
+    fetchUpcomingAppointments();
+  }, []);
 
   // Filter data based on date range
   useEffect(() => {
@@ -669,12 +731,6 @@ const DashBoardScreen = () => {
           <Text style={DashBoardScreenStyles.sectionTitle}>
             Upcoming Appointments
           </Text>
-          <TouchableOpacity
-            style={DashBoardScreenStyles.barGraphFilter}
-            onPress={() => openFilterModal("bar")}
-          >
-            <Ellipsis size={24} color={colors.colors.text} />
-          </TouchableOpacity>
           <Text
             style={[
               DashBoardScreenStyles.activityTitle,
@@ -684,85 +740,54 @@ const DashBoardScreen = () => {
               },
             ]}
           >
-            All Locations, Next {barGraphFilter} days
+            All Locations, Next 7 days
           </Text>
           <Text style={DashBoardScreenStyles.barGraphTitle}>
-            {barGraphData.length} booked
-          </Text>
-          <Text style={DashBoardScreenStyles.barGraphSubTitle}>
-            Confirmed appointments{" "}
-            {/* {
-              barGraphData.filter(
-                (item) => item.status.toLowerCase() === "paid"
-              ).length
-            } */}
-            {barGraphData.length}
-          </Text>
-          <Text style={DashBoardScreenStyles.barGraphSubTitle}>
-            Cancelled appointments{" "}
-            {
-              barGraphData.filter(
-                (item) => item.status.toLowerCase() === "canceled"
-              ).length
-            }
+            {upcomingAppointments.reduce((sum, item) => sum + item.appointment_count, 0)} booked
           </Text>
 
           <View style={DashBoardScreenStyles.barGraphContainer}>
-            {loadingStates.barGraph ? (
+            {upcomingAppointmentsLoading ? (
               <BarGraphSkeleton />
-            ) : (
-              <BarChart
-                key={`bar-${barGraphFilter}-${processedBarGraphData.length}`}
-                barStyle={{
-                  borderRadius: 6,
-                  borderWidth: 1,
-                  borderColor: colors.colors.primary,
-                  backgroundColor: colors.colors.primary,
-                }}
-                barWidth={22}
-                barBorderRadius={6}
-                frontColor={colors.colors.primary}
-                data={processedBarGraphData.map((item) => ({
-                  value: item.count,
-                  label: new Date(item.date).toLocaleDateString("en-US", {
-                    month: "short",
-                    day: "numeric",
-                  }), // e.g. "Sep 16"
-                  labelTextStyle: {
+            ) : upcomingAppointmentsBarData.length > 0 ? (
+              <View style={{ paddingBottom: getHeightEquivalent(30) }}>
+                <BarChart
+                  data={upcomingAppointmentsBarData as any}
+                  barWidth={getWidthEquivalent(35)}
+                  spacing={getWidthEquivalent(20)}
+                  barBorderTopLeftRadius={5}
+                  barBorderTopRightRadius={5}
+                  hideRules
+                  xAxisThickness={1}
+                  yAxisThickness={1}
+                  yAxisTextStyle={{
                     color: colors.colors.textSecondary,
-                    fontSize: fontEq(12),
-                  },
-                }))}
-                scrollRef={null}
-                hideYAxisText
-                hideRules
-                scrollAnimation
-                height={getHeightEquivalent(170)}
-                width={getWidthEquivalent(360)}
-                spacing={getWidthEquivalent(20)}
-                backgroundColor="white"
-                yAxisThickness={0}
-                xAxisThickness={0}
-                xAxisLabelTextStyle={{
-                  color: colors.colors.textSecondary,
-                }}
-                isAnimated={true}
-                animationDuration={1000}
-              />
+                    fontSize: fontEq(10),
+                  }}
+                  xAxisLabelTextStyle={{
+                    color: colors.colors.text,
+                    fontSize: fontEq(10),
+                    fontWeight: '500',
+                  }}
+                  rotateLabel
+                  xAxisLabelsVerticalShift={getHeightEquivalent(5)}
+                  labelsExtraHeight={getHeightEquivalent(20)}
+                  xAxisColor={colors.colors.gray[300]}
+                  yAxisColor={colors.colors.gray[300]}
+                  noOfSections={4}
+                  maxValue={Math.max(...upcomingAppointmentsBarData.map(d => d.value), 10)}
+                  isAnimated
+                  animationDuration={800}
+                  height={getHeightEquivalent(200)}
+                  showXAxisIndices={false}
+                  showYAxisIndices={false}
+                />
+              </View>
+            ) : (
+              <Text style={DashBoardScreenStyles.activityTitle}>
+                No upcoming appointments
+              </Text>
             )}
-          </View>
-          <View
-            style={{
-              flexDirection: "row",
-              alignItems: "center",
-              position: "absolute",
-              bottom: 0,
-            }}
-          >
-            <Dot size={60} color={colors.colors.primary} />
-            <Text>Confirmed</Text>
-            <Dot size={60} color={colors.colors.dangerDark} />
-            <Text>Cancelled</Text>
           </View>
         </View>
         {/* ///-----------------------------------ACTIVITY-SECTION------------------------------------------- */}

@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect } from "react";
+import React, { useRef, useState, useEffect, useMemo } from "react";
 import { View, Text, StyleSheet, Animated, PanResponder, GestureResponderEvent, PanResponderGestureState } from "react-native";
 import * as Haptics from "expo-haptics";
 import { colors } from "../Constants/colors";
@@ -324,16 +324,17 @@ const DraggableAppointment: React.FC<DraggableAppointmentProps> = ({
   }, [committedPosition.y, isDragging]);
 
   // Main appointment tap/drag handler
-  const panResponder = useRef(
-    PanResponder.create({
+  // Recreate PanResponder when isEditing changes to capture updated closure values
+  const panResponder = useMemo(
+    () => PanResponder.create({
       onStartShouldSetPanResponder: () =>
-        isEditing || !disableInteractionsRef.current,
+        wasEditingRef.current || !disableInteractionsRef.current,
       onStartShouldSetPanResponderCapture: () =>
-        isEditing || !disableInteractionsRef.current,
+        wasEditingRef.current || !disableInteractionsRef.current,
       onMoveShouldSetPanResponder: () =>
-        isEditing || !disableInteractionsRef.current,
+        wasEditingRef.current || !disableInteractionsRef.current,
       onMoveShouldSetPanResponderCapture: () =>
-        isEditing || !disableInteractionsRef.current,
+        wasEditingRef.current || !disableInteractionsRef.current,
       onPanResponderTerminationRequest: () => false,
       onShouldBlockNativeResponder: () => true,
       onPanResponderGrant: (evt: GestureResponderEvent) => {
@@ -428,6 +429,8 @@ const DraggableAppointment: React.FC<DraggableAppointmentProps> = ({
 
         const columnIndexValue = columnIndexRef.current;
         const totalStaffColumnsValue = totalStaffColumnsRef.current;
+        // Prevent dragging to the left of the first column (index 0)
+        // minOffsetX is 0 if already in first column, otherwise allows moving left to first column
         const minOffsetX = -columnIndexValue * effectiveColumnWidth;
         const maxOffsetX =
           (totalStaffColumnsValue - columnIndexValue - 1) * effectiveColumnWidth;
@@ -536,6 +539,8 @@ const DraggableAppointment: React.FC<DraggableAppointmentProps> = ({
 
         const columnIndexValue = columnIndexRef.current;
         const totalStaffColumnsValue = totalStaffColumnsRef.current;
+        // Prevent dragging to the left of the first column (index 0)
+        // minOffsetX is 0 if already in first column, otherwise allows moving left to first column
         const minOffsetX = -columnIndexValue * effectiveColumnWidth;
         const maxOffsetX =
           (totalStaffColumnsValue - columnIndexValue - 1) * effectiveColumnWidth;
@@ -580,8 +585,9 @@ const DraggableAppointment: React.FC<DraggableAppointmentProps> = ({
         onScrollEnable?.(true);
         pan.setValue({ x: 0, y: 0 });
       },
-    })
-  ).current;
+    }),
+    [isEditing] // Recreate when isEditing changes
+  );
 
   const animatedStyle = {
     transform: [{ translateX: pan.x }, { translateY: pan.y }],
@@ -591,13 +597,13 @@ const DraggableAppointment: React.FC<DraggableAppointmentProps> = ({
 
   const baseCardStyle = {
     top: initialTop + committedPosition.y,
-    left: leftOffset + committedPosition.x,
+    left: Math.max(0, leftOffset + committedPosition.x), // Prevent going negative (under TimeGutter)
     height: initialHeight,
     width: columnWidth - getWidthEquivalent(4),
     backgroundColor:
-      event.data.appointment.status === "scheduled"
-        ? colors.gray[200]
-        : event.data.staff.calendar_color || colors.gray[100],
+      event.data.appointment.status === "paid"
+        ? colors.gray[300]
+        : event.data.staff?.calendar_color || colors.primary,
   };
 
   const cardStyle = {

@@ -21,7 +21,7 @@ const useCalanderScreenVM = () => {
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
   const { calanderAppointmentsData, fetchCalanderAppointmentsData } =
     useAppointmentStore();
-  const { isFromLogin, setIsFromLogin, user, allLocations } = useAuthStore();
+  const { isFromLogin, setIsFromLogin, user, allLocations, allTeamMembers } = useAuthStore();
   const [hasInitialLoad, setHasInitialLoad] = useState(false);
   const { toast, showComingSoon, hideToast } = useToast();
 
@@ -68,14 +68,40 @@ const useCalanderScreenVM = () => {
   }, [pageFilter]);
 
   const calanderData = useMemo(() => {
-    return transformAppointmentsToCalendar(calanderAppointmentsData);
-  }, [calanderAppointmentsData]);
+    return transformAppointmentsToCalendar(
+      calanderAppointmentsData,
+      allTeamMembers,
+      pageFilter.location_ids
+    );
+  }, [calanderAppointmentsData, allTeamMembers, pageFilter.location_ids]);
 
   function transformAppointmentsToCalendar(
-    appointments: AppointmentCalanderBO[]
+    appointments: AppointmentCalanderBO[],
+    allStaff: any[],
+    filteredLocationIds: string[]
   ): StaffCalendar[] {
     const grouped: Record<string, StaffCalendar> = {};
 
+    // First, initialize all staff members from filtered locations with empty appointment arrays
+    const staffInFilteredLocations = allStaff.filter((staff) => {
+      // If no locations are filtered (all selected), show all staff
+      if (filteredLocationIds.length === 0) return true;
+      // Otherwise, check if staff belongs to any of the filtered locations
+      return filteredLocationIds.includes(staff.location_id);
+    });
+
+    staffInFilteredLocations.forEach((staff) => {
+      const staffName = staff.first_name || "Unknown Staff";
+      const staffId = staff.id;
+      
+      grouped[staffId] = {
+        staffName,
+        staffId,
+        staffAppointments: [],
+      };
+    });
+
+    // Then, add appointments to their respective staff
     appointments.forEach((appt) => {
       // Add null checks for staff and client
       if (!appt.staff || !appt.appointment || !appt.appointment.client) {
@@ -83,8 +109,13 @@ const useCalanderScreenVM = () => {
         return;
       }
 
-      const staffName = appt.staff.first_name || "Unknown Staff";
       const staffId = appt.staff.id;
+
+      // Only add appointment if the staff is in the filtered locations
+      if (!grouped[staffId]) {
+        // Staff not in filtered locations, skip this appointment
+        return;
+      }
 
       // Split date and time
       const [year, month, day] = appt.appointment.appointment_date
@@ -107,10 +138,6 @@ const useCalanderScreenVM = () => {
         data: appt,
         color: appt.staff.calendar_color || "#3B82F6",
       };
-
-      if (!grouped[staffId]) {
-        grouped[staffId] = { staffName, staffId, staffAppointments: [] };
-      }
 
       grouped[staffId].staffAppointments.push(appointmentEvent);
     });
@@ -265,6 +292,7 @@ const useCalanderScreenVM = () => {
     applyFilters,
     // Appointment update
     updateAppointmentTime,
+    fetchCalanderAppointmentsData,
   };
 };
 

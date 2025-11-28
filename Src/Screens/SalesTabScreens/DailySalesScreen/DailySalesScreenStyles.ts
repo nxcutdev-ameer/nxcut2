@@ -128,19 +128,24 @@ export const DailySalesScreenStyles = StyleSheet.create({
   },
   filterButton: {
     flexDirection: "row",
-    width: getWidthEquivalent(140),
+    width: "50%",
     paddingHorizontal: getWidthEquivalent(10),
     paddingVertical: getHeightEquivalent(8),
     borderWidth: 1,
     borderColor: paint.border,
-    borderRadius: 100,
+    borderRadius: 12,
     alignItems: "center",
     justifyContent: "center",
   },
+  disabledFilterButton: {
+    backgroundColor: colors.colors.gray[300],
+    opacity: 0.6,
+  },
+
   filterButtonText: {
     fontSize: fontEq(14),
     fontWeight: "500",
-    color: paint.text,
+    color: colors.colors.black,
     marginRight: getWidthEquivalent(10),
   },
   titleSection: {

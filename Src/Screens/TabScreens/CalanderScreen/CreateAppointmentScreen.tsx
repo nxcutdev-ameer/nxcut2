@@ -10,6 +10,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   Keyboard,
+  Alert,
 } from "react-native";
 import React, { useState, useRef, useEffect, Fragment, useMemo } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -20,11 +21,15 @@ import {
   Search,
   X,
   Check,
-  User,
+  UserRound,
   RefreshCw,
+  MoreVertical,
+  UserRoundPlus,
 } from "lucide-react-native";
 import Modal from "react-native-modal";
 import { useNavigation } from "@react-navigation/native";
+import { StackNavigationProp } from "@react-navigation/stack";
+import { RootStackParamList } from "../../../Navigations/RootStackNavigator";
 import { CreateAppointmentStyles } from "./CreateAppointmentStyles";
 import { colors } from "../../../Constants/colors";
 import { getHeightEquivalent } from "../../../Utils/helpers";
@@ -69,8 +74,14 @@ interface SelectedService extends Service {
 }
 
 const CreateAppointmentScreen = ({ route }: any) => {
-  const navigation = useNavigation();
+  type NavigationProp = StackNavigationProp<RootStackParamList>;
+  const navigation = useNavigation<NavigationProp>();
   const slideAnim = useRef(new Animated.Value(300)).current;
+  
+  // Determine mode: 'create' or 'edit'
+  const mode = route.params?.mode || "create";
+  const appointmentData = route.params?.appointmentData;
+  
   const [currentDate, setCurrentDate] = useState(new Date());
   const [currentTime, setCurrentTime] = useState("");
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
@@ -97,6 +108,8 @@ const CreateAppointmentScreen = ({ route }: any) => {
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
   const [toastType, setToastType] = useState<"success" | "error">("success");
+  const [showMenuModal, setShowMenuModal] = useState(false);
+  const [isCanceling, setIsCanceling] = useState(false);
 
   const { currentLocation, allLocations, allTeamMembers } = useAuthStore();
 
@@ -191,6 +204,55 @@ const CreateAppointmentScreen = ({ route }: any) => {
     }
   }, [route.params]);
 
+  // Populate form when in edit mode
+  useEffect(() => {
+    if (mode === "edit" && appointmentData) {
+      console.log("[CreateAppointment] Edit mode - loading appointment data:", appointmentData);
+      
+      // Set date and time from appointment
+      if (appointmentData.appointment?.appointment_date) {
+        setCurrentDate(new Date(appointmentData.appointment.appointment_date));
+      }
+      if (appointmentData.start_time) {
+        setCurrentTime(appointmentData.start_time.substring(0, 5)); // "HH:MM:SS" -> "HH:MM"
+      }
+      
+      // Set client
+      if (appointmentData.appointment?.client) {
+        setSelectedClient({
+          id: appointmentData.appointment.client.id,
+          first_name: appointmentData.appointment.client.first_name,
+          last_name: appointmentData.appointment.client.last_name,
+          email: appointmentData.appointment.client.email,
+          phone: appointmentData.appointment.client.phone,
+        });
+      }
+      
+      // Set location
+      if (appointmentData.appointment?.location_id) {
+        setSelectedLocation(appointmentData.appointment.location_id);
+      }
+      
+      // Set staff
+      if (appointmentData.staff_id) {
+        setSelectedStaff(appointmentData.staff_id);
+      }
+      
+      // Set service
+      if (appointmentData.service) {
+        const service: SelectedService = {
+          id: appointmentData.service.id,
+          name: appointmentData.service.name,
+          price: appointmentData.price || appointmentData.service.price,
+          duration: appointmentData.service.duration_minutes || 60,
+          duration_minutes: appointmentData.service.duration_minutes,
+          quantity: 1,
+        };
+        setSelectedServices([service]);
+      }
+    }
+  }, [mode, appointmentData]);
+
   // Slide in animation for screen entrance
   useEffect(() => {
     Animated.spring(slideAnim, {
@@ -273,6 +335,58 @@ const CreateAppointmentScreen = ({ route }: any) => {
       .padStart(2, "0")}:00`;
   };
 
+  const handleCancelAppointment = () => {
+    Alert.alert(
+      "Cancel Appointment",
+      "Are you sure you want to cancel this appointment? This action cannot be undone.",
+      [
+        {
+          text: "No",
+          style: "cancel",
+        },
+        {
+          text: "Yes, Cancel",
+          style: "destructive",
+          onPress: async () => {
+            setShowMenuModal(false);
+            setIsCanceling(true);
+            try {
+              const success = await appointmentsRepository.cancelAppointment(
+                appointmentData.appointment.id
+              );
+
+              if (success) {
+                Alert.alert(
+                  "Success",
+                  "Appointment has been canceled successfully.",
+                  [
+                    {
+                      text: "OK",
+                      onPress: () => navigation.goBack(),
+                    },
+                  ]
+                );
+              } else {
+                Alert.alert(
+                  "Error",
+                  "Failed to cancel the appointment. Please try again."
+                );
+              }
+            } catch (error) {
+              console.error("Error canceling appointment:", error);
+              Alert.alert(
+                "Error",
+                "Something went wrong. Please try again."
+              );
+            } finally {
+              setIsCanceling(false);
+            }
+          },
+        },
+      ]
+    );
+  };
+
   const handleSave = async () => {
     if (
       !selectedClient ||
@@ -292,33 +406,73 @@ const CreateAppointmentScreen = ({ route }: any) => {
       const startTimeFormatted = `${currentTime}:00`;
       const endTime = calculateEndTime(currentTime, totalDuration);
 
-      const appointmentData = {
-        client_id: selectedClient.id,
-        date: currentDate.toISOString().split("T")[0],
-        time: startTimeFormatted,
-        services: selectedServices.map((s) => ({
-          service_id: s.id,
-          quantity: s.quantity,
-          price: s.price,
-          duration: s.duration,
-        })),
-        total_amount: calculateTotal(),
-        status: "scheduled" as const,
-        notes: "",
-        location_id: selectedLocation,
-        staff_id: selectedStaff,
-        start_time: startTimeFormatted,
-        end_time: endTime,
-      };
+      if (mode === "edit" && appointmentData) {
+        // Edit mode: Update existing appointment
+        console.log("[CreateAppointment] Updating appointment:", appointmentData.appointment.id);
+        console.log("[CreateAppointment] Current state:");
+        console.log("  - Client:", selectedClient);
+        console.log("  - Services:", selectedServices);
+        console.log("  - Staff:", selectedStaff);
+        console.log("  - Location:", selectedLocation);
+        console.log("  - Date:", currentDate);
+        console.log("  - Time:", currentTime);
+        
+        const updateData = {
+          client_id: selectedClient.id,
+          appointment_date: currentDate.toISOString().split("T")[0],
+          location_id: selectedLocation,
+          notes: appointmentData.appointment.notes || "",
+        };
 
-      console.log("Creating appointment with data:", appointmentData);
+        console.log("[CreateAppointment] Updating appointments table with:", updateData);
 
-      const result = await appointmentsRepository.createAppointment(
-        appointmentData
-      );
+        // Update appointment in appointments table
+        const { supabase } = await import("../../../Utils/supabase");
+        const { error: appointmentError } = await supabase
+          .from("appointments")
+          .update(updateData)
+          .eq("id", appointmentData.appointment.id);
 
-      if (result) {
-        setToastMessage("Appointment created successfully!");
+        if (appointmentError) {
+          console.error("Error updating appointment:", appointmentError);
+          setToastMessage("Failed to update appointment. Please try again.");
+          setToastType("error");
+          setShowToast(true);
+          return;
+        }
+
+        console.log("[CreateAppointment] Appointments table updated successfully");
+
+        // Update appointment_services (assuming single service for now)
+        const serviceUpdateData = {
+          service_id: selectedServices[0].id,
+          staff_id: selectedStaff,
+          start_time: startTimeFormatted,
+          end_time: endTime,
+          price: selectedServices[0].price,
+        };
+
+        console.log("[CreateAppointment] Updating appointment_services table with:", serviceUpdateData);
+        console.log("[CreateAppointment] Updating appointment_service ID:", appointmentData.id);
+
+        const { data: updatedService, error: serviceError } = await supabase
+          .from("appointment_services")
+          .update(serviceUpdateData)
+          .eq("id", appointmentData.id)
+          .select();
+
+        if (serviceError) {
+          console.error("Error updating appointment service:", serviceError);
+          setToastMessage("Failed to update appointment service. Please try again.");
+          setToastType("error");
+          setShowToast(true);
+          return;
+        }
+
+        console.log("[CreateAppointment] Appointment_services table updated successfully");
+        console.log("[CreateAppointment] Updated service data from DB:", updatedService);
+        console.log("[CreateAppointment] Appointment updated successfully");
+        setToastMessage("Appointment updated successfully!");
         setToastType("success");
         setShowToast(true);
 
@@ -326,10 +480,48 @@ const CreateAppointmentScreen = ({ route }: any) => {
         setTimeout(() => {
           navigation.goBack();
         }, 1500);
+
       } else {
-        setToastMessage("Failed to create appointment. Please try again.");
-        setToastType("error");
-        setShowToast(true);
+        // Create mode: Create new appointment
+        const newAppointmentData = {
+          client_id: selectedClient.id,
+          date: currentDate.toISOString().split("T")[0],
+          time: startTimeFormatted,
+          services: selectedServices.map((s) => ({
+            service_id: s.id,
+            quantity: s.quantity,
+            price: s.price,
+            duration: s.duration,
+          })),
+          total_amount: calculateTotal(),
+          status: "scheduled" as const,
+          notes: "",
+          location_id: selectedLocation,
+          staff_id: selectedStaff,
+          start_time: startTimeFormatted,
+          end_time: endTime,
+        };
+
+        console.log("Creating appointment with data:", newAppointmentData);
+
+        const result = await appointmentsRepository.createAppointment(
+          newAppointmentData
+        );
+
+        if (result) {
+          setToastMessage("Appointment created successfully!");
+          setToastType("success");
+          setShowToast(true);
+
+          // Navigate back after a short delay
+          setTimeout(() => {
+            navigation.goBack();
+          }, 1500);
+        } else {
+          setToastMessage("Failed to create appointment. Please try again.");
+          setToastType("error");
+          setShowToast(true);
+        }
       }
     } catch (error) {
       console.error("Error saving appointment:", error);
@@ -510,7 +702,7 @@ const CreateAppointmentScreen = ({ route }: any) => {
             <ChevronLeft size={24} color={colors.text} />
           </TouchableOpacity>
           <Text style={CreateAppointmentStyles.headerTitle}>
-            New Appointment
+            {mode === "edit" ? "Edit Appointment" : "New Appointment"}
           </Text>
           <TouchableOpacity
             onPress={() => setShowDateModal(true)}
@@ -582,7 +774,7 @@ const CreateAppointmentScreen = ({ route }: any) => {
                       }}
                     >
                       <Text style={CreateAppointmentStyles.viewProfileText}>
-                        <User size={18} color={colors.black} /> View{" "}
+                        <UserRound size={16} color={colors.black} /> View{" "}
                         {selectedClient.first_name} Profile
                       </Text>
                     </TouchableOpacity>
@@ -605,11 +797,8 @@ const CreateAppointmentScreen = ({ route }: any) => {
                 <TouchableOpacity
                   style={CreateAppointmentStyles.clientSelectionCard}
                   onPress={() => setShowClientModal(true)}
-                  activeOpacity={0.7}
+                  activeOpacity={0.2}
                 >
-                  <View style={CreateAppointmentStyles.clientPlaceholderAvatar}>
-                    <User size={24} color={"#3C096C"} />
-                  </View>
                   <View style={CreateAppointmentStyles.clientCardInfo}>
                     <Text style={CreateAppointmentStyles.clientCardPlaceholder}>
                       Add client
@@ -618,7 +807,9 @@ const CreateAppointmentScreen = ({ route }: any) => {
                       Tap to choose a client
                     </Text>
                   </View>
-                  <ChevronDown size={20} color={colors.black} />
+                  <View style={CreateAppointmentStyles.clientPlaceholderAvatar}>
+                    <UserRoundPlus size={24} color={"#3C096C"} />
+                  </View>
                 </TouchableOpacity>
               )}
             </View>
@@ -652,15 +843,15 @@ const CreateAppointmentScreen = ({ route }: any) => {
                             <Text style={CreateAppointmentStyles.serviceName}>
                               {service.name}
                             </Text>
-                            <Text style={CreateAppointmentStyles.servicePrice}>
-                              {service.price} AED
-                            </Text>
                           </View>
+                          <Text style={CreateAppointmentStyles.servicePrice}>
+                            AED {service.price}
+                          </Text>
                           <TouchableOpacity
                             onPress={() => handleRemoveService(service.id)}
                             style={CreateAppointmentStyles.removeButton}
                           >
-                            <X size={16} color={colors.danger} />
+                            <X size={18} color={colors.danger} />
                           </TouchableOpacity>
                         </View>
                       ))}
@@ -668,22 +859,32 @@ const CreateAppointmentScreen = ({ route }: any) => {
                   </>
                 ) : (
                   <View style={CreateAppointmentStyles.noServicesContainer}>
-                    <CalendarPlus size={32} color={colors.textSecondary} />
+                    <CalendarPlus size={42} color={"#3C096C"} />
                     <Text style={CreateAppointmentStyles.noServicesText}>
-                      No services selected
+                      Add a service to save the appointment
                     </Text>
                   </View>
                 )}
                 {/* Add Service Button */}
-                <TouchableOpacity
-                  style={CreateAppointmentStyles.addServiceButton}
-                  onPress={() => setShowServiceModal(true)}
+                <View
+                  style={
+                    selectedServices.length > 0
+                      ? { alignItems: "flex-start" } // left align
+                      : CreateAppointmentStyles.centerContent // center align
+                  }
                 >
-                  <Plus size={20} color={colors.black} />
-                  <Text style={CreateAppointmentStyles.addServiceButtonText}>
-                    Add service
-                  </Text>
-                </TouchableOpacity>
+                  <TouchableOpacity
+                    style={CreateAppointmentStyles.addServiceButton}
+                    onPress={() => setShowServiceModal(true)}
+                  >
+                    <View style={CreateAppointmentStyles.AddIcon}>
+                      <Plus size={14} color={colors.black} />
+                    </View>
+                    <Text style={CreateAppointmentStyles.addServiceButtonText}>
+                      Add service
+                    </Text>
+                  </TouchableOpacity>
+                </View>
               </View>
             </View>
 
@@ -697,7 +898,7 @@ const CreateAppointmentScreen = ({ route }: any) => {
                 onPress={() => setShowLocationModal(true)}
               >
                 <View style={CreateAppointmentStyles.selectionButtonContent}>
-                  <MapPin size={20} color={colors.primary} />
+                  <MapPin size={18} color={colors.black} />
                   <Text
                     style={[
                       CreateAppointmentStyles.selectionButtonText,
@@ -711,7 +912,7 @@ const CreateAppointmentScreen = ({ route }: any) => {
                       : "Select Location"}
                   </Text>
                 </View>
-                <ChevronDown size={20} color={colors.black} />
+                <ChevronDown size={18} color={colors.black} />
               </TouchableOpacity>
             </View>
 
@@ -737,11 +938,11 @@ const CreateAppointmentScreen = ({ route }: any) => {
                   disabled={availableStaff.length === 0}
                 >
                   <View style={CreateAppointmentStyles.selectionButtonContent}>
-                    <User
-                      size={20}
+                    <UserRoundPlus
+                      size={18}
                       color={
                         availableStaff.length > 0
-                          ? colors.primary
+                          ? colors.black
                           : colors.textSecondary
                       }
                     />
@@ -769,7 +970,7 @@ const CreateAppointmentScreen = ({ route }: any) => {
                     </Text>
                   </View>
                   {availableStaff.length > 0 && (
-                    <ChevronDown size={20} color={colors.black} />
+                    <ChevronDown size={18} color={colors.black} />
                   )}
                 </TouchableOpacity>
               )}
@@ -779,39 +980,111 @@ const CreateAppointmentScreen = ({ route }: any) => {
           {/* Bottom Section */}
           <View style={CreateAppointmentStyles.bottomSection}>
             <View style={CreateAppointmentStyles.totalContainer}>
-              <Text style={CreateAppointmentStyles.totalLabel}>Total</Text>
+              <Text style={CreateAppointmentStyles.totalLabel}>
+                Total
+                <Text style={CreateAppointmentStyles.Label}> (Incl. tax)</Text>
+              </Text>
               <Text style={CreateAppointmentStyles.totalAmount}>
-                {calculateTotal().toFixed(2)} AED
+                AED {calculateTotal()}
               </Text>
             </View>
 
-            <TouchableOpacity
-              style={[
-                CreateAppointmentStyles.saveButton,
-                (!selectedClient ||
+            <View
+              style={{ flexDirection: "row", gap: 8, alignItems: "center" }}
+            >
+              {/* Menu Button (only in edit mode) */}
+              {mode === "edit" && (
+                <TouchableOpacity
+                  style={{
+                    width: 48,
+                    height: 48,
+                    borderRadius: 24,
+                    backgroundColor: colors.white,
+                    borderColor: colors.gray[300],
+                    borderWidth: 1,
+                    justifyContent: "center",
+                    alignItems: "center",
+                  }}
+                  onPress={() => setShowMenuModal(true)}
+                >
+                  <MoreVertical size={20} color={colors.text} />
+                </TouchableOpacity>
+              )}
+
+              {/* Checkout Button */}
+              <TouchableOpacity
+                style={[
+                  CreateAppointmentStyles.saveButton,
+                  { flex: 1, backgroundColor: colors.white },
+                  (!selectedClient ||
+                    selectedServices.length === 0 ||
+                    !selectedLocation ||
+                    !selectedStaff) &&
+                    CreateAppointmentStyles.disabledSaveButton,
+                ]}
+                onPress={() => {
+                  navigation.navigate("CheckoutScreen", {
+                    total: calculateTotal(),
+                  });
+                }}
+                disabled={
+                  !selectedClient ||
+                  selectedServices.length === 0 ||
+                  !selectedLocation ||
+                  !selectedStaff
+                }
+              >
+                <Text
+                  style={[
+                    CreateAppointmentStyles.saveButtonText,
+                    { color: colors.black },
+                    (!selectedClient ||
+                      selectedServices.length === 0 ||
+                      !selectedLocation ||
+                      !selectedStaff) && { color: colors.gray[500] },
+                  ]}
+                >
+                  Checkout
+                </Text>
+              </TouchableOpacity>
+              {/* Save Button */}
+              <TouchableOpacity
+                style={[
+                  CreateAppointmentStyles.saveButton,
+                  { flex: 1 },
+                  (!selectedClient ||
+                    selectedServices.length === 0 ||
+                    !selectedLocation ||
+                    !selectedStaff ||
+                    isSaving) &&
+                    CreateAppointmentStyles.disabledSaveButton,
+                ]}
+                onPress={handleSave}
+                disabled={
+                  !selectedClient ||
                   selectedServices.length === 0 ||
                   !selectedLocation ||
                   !selectedStaff ||
-                  isSaving) &&
-                  CreateAppointmentStyles.disabledSaveButton,
-              ]}
-              onPress={handleSave}
-              disabled={
-                !selectedClient ||
-                selectedServices.length === 0 ||
-                !selectedLocation ||
-                !selectedStaff ||
-                isSaving
-              }
-            >
-              {isSaving ? (
-                <ActivityIndicator size="small" color={colors.white} />
-              ) : (
-                <Text style={CreateAppointmentStyles.saveButtonText}>
-                  Save Appointment
-                </Text>
-              )}
-            </TouchableOpacity>
+                  isSaving
+                }
+              >
+                {isSaving ? (
+                  <ActivityIndicator size="small" color={colors.primary} />
+                ) : (
+                  <Text
+                    style={[
+                      CreateAppointmentStyles.saveButtonText,
+                      (!selectedClient ||
+                        selectedServices.length === 0 ||
+                        !selectedLocation ||
+                        !selectedStaff) && { color: colors.gray[500] },
+                    ]}
+                  >
+                    Save
+                  </Text>
+                )}
+              </TouchableOpacity>
+            </View>
           </View>
         </ScrollView>
       </Animated.View>
@@ -919,12 +1192,12 @@ const CreateAppointmentScreen = ({ route }: any) => {
                     <Text style={CreateAppointmentStyles.serviceName}>
                       {item.name}
                     </Text>
-                    <Text style={CreateAppointmentStyles.servicePrice}>
-                      {item.price} AED
+                    <Text style={CreateAppointmentStyles.serviceDuration}>
+                      {item.duration}min
                     </Text>
                   </View>
-                  <Text style={CreateAppointmentStyles.serviceDuration}>
-                    {item.duration}min
+                  <Text style={CreateAppointmentStyles.servicePrice}>
+                    AED {item.price}
                   </Text>
                 </TouchableOpacity>
               ))
@@ -985,7 +1258,7 @@ const CreateAppointmentScreen = ({ route }: any) => {
           {/* Modal Header */}
           <View style={CreateAppointmentStyles.clientModalHeader}>
             <Text style={CreateAppointmentStyles.clientModalTitle}>
-              Select Client
+              Select client
             </Text>
             <TouchableOpacity
               onPress={() => setShowClientModal(false)}
@@ -1005,7 +1278,7 @@ const CreateAppointmentScreen = ({ route }: any) => {
             <TextInput
               style={CreateAppointmentStyles.searchInput}
               placeholder="Search clients..."
-              placeholderTextColor={colors.textSecondary}
+              placeholderTextColor={colors.gray[300]}
               value={searchTerm}
               onChangeText={setSearchTerm}
               autoCapitalize="none"
@@ -1029,12 +1302,21 @@ const CreateAppointmentScreen = ({ route }: any) => {
             }}
             style={CreateAppointmentStyles.addButton}
           >
-            <Plus size={20} color={colors.black} />
+            <View style={CreateAppointmentStyles.add}>
+              <Plus size={22} color={"#3C096C"} />
+            </View>
             <Text style={CreateAppointmentStyles.addButtonText}>
               Add client
             </Text>
           </TouchableOpacity>
 
+          <View
+            style={{
+              borderBottomColor: "#ccc", // line color
+              borderBottomWidth: 1, // thin line
+              //   marginVertical: 0, // spacing around line
+            }}
+          />
           {/* Client List */}
           <View style={CreateAppointmentStyles.clientModalList}>
             {isLoading ? (
@@ -1188,7 +1470,7 @@ const CreateAppointmentScreen = ({ route }: any) => {
                   setShowStaffModal(false);
                 }}
               >
-                <User
+                <UserRoundPlus
                   size={20}
                   color={
                     selectedStaff === staff.id ? colors.primary : colors.text
@@ -1219,6 +1501,82 @@ const CreateAppointmentScreen = ({ route }: any) => {
         type={toastType}
         onHide={() => setShowToast(false)}
       />
+
+      {/* Saving Overlay */}
+      {isSaving && (
+        <View style={CreateAppointmentStyles.savingOverlay}>
+          <View style={CreateAppointmentStyles.savingOverlayContent}>
+            <ActivityIndicator size="large" color={colors.primary} />
+            <Text style={CreateAppointmentStyles.savingOverlayText}>
+              Saving appointment...
+            </Text>
+          </View>
+        </View>
+      )}
+
+      {/* Menu Modal */}
+      <Modal
+        isVisible={showMenuModal}
+        onBackdropPress={() => setShowMenuModal(false)}
+        onSwipeComplete={() => setShowMenuModal(false)}
+        swipeDirection="down"
+        style={{ justifyContent: "flex-end", margin: 0 }}
+        animationIn="slideInUp"
+        animationOut="slideOutDown"
+      >
+        <View
+          style={{
+            backgroundColor: colors.white,
+            borderTopLeftRadius: 20,
+            borderTopRightRadius: 20,
+            paddingTop: 12,
+            paddingBottom: 34,
+          }}
+        >
+          {/* Drag Indicator */}
+          <View
+            style={{
+              width: 40,
+              height: 4,
+              backgroundColor: colors.gray[300],
+              borderRadius: 2,
+              alignSelf: "center",
+              marginBottom: 20,
+            }}
+          />
+
+          {/* Cancel Button */}
+          <TouchableOpacity
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              paddingVertical: 16,
+              paddingHorizontal: 20,
+              backgroundColor: colors.white,
+            }}
+            onPress={handleCancelAppointment}
+            disabled={isCanceling}
+          >
+            {isCanceling ? (
+              <ActivityIndicator size="small" color={colors.danger} />
+            ) : (
+              <>
+                <X size={20} color={colors.danger} />
+                <Text
+                  style={{
+                    marginLeft: 12,
+                    fontSize: 16,
+                    fontWeight: "600",
+                    color: colors.danger,
+                  }}
+                >
+                  Cancel Appointment
+                </Text>
+              </>
+            )}
+          </TouchableOpacity>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };

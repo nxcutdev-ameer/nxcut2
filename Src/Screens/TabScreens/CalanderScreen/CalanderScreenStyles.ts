@@ -26,7 +26,7 @@ export const CalanderScreenStyles = StyleSheet.create({
   },
   // New Header Styles
   newHeaderContainer: {
-    height: getHeightEquivalent(60),
+    height: getHeightEquivalent(50),
     width: "100%",
     backgroundColor: paint.white,
     flexDirection: "row",
@@ -44,7 +44,7 @@ export const CalanderScreenStyles = StyleSheet.create({
   dateContainer: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: paint.white,
+    backgroundColor: paint.gray[50],
     paddingHorizontal: getWidthEquivalent(16),
     paddingVertical: getHeightEquivalent(8),
     borderRadius: getWidthEquivalent(20),
@@ -283,7 +283,7 @@ export const CalanderScreenStyles = StyleSheet.create({
   },
   // Staff navigation bar styles
   staffNavigationBar: {
-    height: getHeightEquivalent(100),
+    height: getHeightEquivalent(80),
     width: "100%",
     backgroundColor: paint.white,
     shadowColor: "#000",
@@ -294,7 +294,8 @@ export const CalanderScreenStyles = StyleSheet.create({
     shadowOpacity: 0.15,
     shadowRadius: 5,
     elevation: 8,
-    zIndex: 10,
+    zIndex: 100,
+  
   },
   staffNavButton: {
     width: getWidthEquivalent(32),

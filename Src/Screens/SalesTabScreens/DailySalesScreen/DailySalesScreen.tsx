@@ -3,8 +3,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { DailySalesScreenStyles } from "./DailySalesScreenStyles";
 import { useDailySalesScreenVM } from "./DailySalesScreenVM";
 import PerformanceDashboardScreenStyles from "../../MoreTabScreens/PerformanceDashboardScreen/PerformanceDashboardScreenStyles";
-import { DatePickerModal } from "react-native-paper-dates";
 import SalesTable from "../../../Components/SalesTable";
+import DateModal from "../../../Components/DateModal";
 import SaleItemSummary from "../../../Components/SaleItemSummary";
 import DailySalesSummary from "../../../Components/DailySalesSummary";
 import CashMovementSummary from "../../../Components/CashMovementSummary";
@@ -98,15 +98,23 @@ const FilterPanelModal = ({
                     height: 24,
                     borderRadius: 4,
                     borderWidth: 2,
-                    borderColor: isSelected ? colors.colors.primary : colors.colors.border,
-                    backgroundColor: isSelected ? colors.colors.primary : "transparent",
+                    borderColor: isSelected
+                      ? colors.colors.primary
+                      : colors.colors.border,
+                    backgroundColor: isSelected
+                      ? colors.colors.primary
+                      : "transparent",
                     alignItems: "center",
                     justifyContent: "center",
                     marginRight: 12,
                   }}
                 >
                   {isSelected && (
-                    <Check size={16} color={colors.colors.white} strokeWidth={3} />
+                    <Check
+                      size={16}
+                      color={colors.colors.white}
+                      strokeWidth={3}
+                    />
                   )}
                 </View>
                 <Text
@@ -129,15 +137,27 @@ const FilterPanelModal = ({
             style={PerformanceDashboardScreenStyles.filterClearButton}
             onPress={onClear}
           >
-            <Text style={PerformanceDashboardScreenStyles.filterClearButtonText}>
+            <Text
+              style={PerformanceDashboardScreenStyles.filterClearButtonText}
+            >
               Clear All
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={PerformanceDashboardScreenStyles.filterApplyButton}
+            style={[
+              DailySalesScreenStyles.filterButton,
+              (!pageFilter.location_ids ||
+                pageFilter.location_ids.length === 0) &&
+                DailySalesScreenStyles.disabledFilterButton, // optional disabled style
+            ]}
             onPress={onApply}
+            disabled={
+              !pageFilter.location_ids || pageFilter.location_ids.length === 0
+            }
           >
-            <Text style={PerformanceDashboardScreenStyles.filterApplyButtonText}>
+            <Text
+              style={PerformanceDashboardScreenStyles.filterApplyButtonText}
+            >
               Apply Filters
             </Text>
           </TouchableOpacity>
@@ -193,7 +213,7 @@ const DailySalesScreen = () => {
           onPress={() => navigation.goBack()}
           style={DailySalesScreenStyles.backArrow}
         >
-          <ArrowLeft size={20} color={colors.colors.text} />
+          <ArrowLeft size={20} color={colors.colors.black} />
         </TouchableOpacity>
         <TouchableOpacity
           style={DailySalesScreenStyles.elipseBox}
@@ -310,18 +330,12 @@ const DailySalesScreen = () => {
       </ScrollView>
 
       {/* Date Picker Modal */}
-      <DatePickerModal
-        locale="en"
-        mode="single"
-        visible={open}
-        onDismiss={() => setOpen(false)}
-        date={selectedDate}
-        onConfirm={(params) => {
-          setOpen(false);
-          if (params.date) {
-            updateSelectedDate(params.date);
-          }
-        }}
+      <DateModal
+        isVisible={open}
+        onClose={() => setOpen(false)}
+        selectedDate={selectedDate}
+        onSelectDate={(date) => updateSelectedDate(date)}
+        title="Select Date"
       />
 
       {/* Export Bottom Sheet */}

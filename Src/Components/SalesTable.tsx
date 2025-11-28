@@ -2,13 +2,11 @@ import React from "react";
 import {
   View,
   Text,
-  FlatList,
   StyleSheet,
   ActivityIndicator,
   TouchableOpacity,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-import { Clock, CreditCard, DollarSign, Coins } from "lucide-react-native";
 import colors from "../Constants/colors";
 import {
   fontEq,
@@ -60,23 +58,18 @@ const SalesTable: React.FC<SalesTableProps> = ({ data, loading }) => {
       ]}
     >
       <View style={[styles.headerCell, styles.timeColumn]}>
-        <Clock size={16} color={paint.primary} />
         <Text style={[styles.headerText, { color: paint.text }]}>Time</Text>
       </View>
       <View style={[styles.headerCell, styles.paymentColumn]}>
-        <CreditCard size={16} color={paint.primary} />
         <Text style={[styles.headerText, { color: paint.text }]}>Payment</Text>
       </View>
       <View style={[styles.headerCell, styles.amountColumn]}>
-        <DollarSign size={16} color={paint.primary} />
         <Text style={[styles.headerText, { color: paint.text }]}>Amount</Text>
       </View>
       <View style={[styles.headerCell, styles.tipColumn]}>
-        <Coins size={16} color={paint.primary} />
         <Text style={[styles.headerText, { color: paint.text }]}>Tip</Text>
       </View>
       <View style={[styles.headerCell, styles.totalColumn]}>
-        <DollarSign size={16} color={paint.primary} />
         <Text style={[styles.headerText, { color: paint.text }]}>Total</Text>
       </View>
     </View>

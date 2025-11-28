@@ -4,7 +4,6 @@ import {
   TouchableOpacity,
   View,
   ActivityIndicator,
-  Modal,
   TextInput,
   TouchableWithoutFeedback,
   Animated,
@@ -28,7 +27,7 @@ import {
   VoucherUsage,
 } from "../../../Repository/clientRepository";
 import VoucherCard from "../../../Components/VoucherCard";
-import { SelectPeriodModal } from "./SelectPeriodModal";
+import SelectPeriodModal from "../../../Components/SelectPeriodModal";
 import BottomSheet, { BottomSheetView } from "@gorhom/bottom-sheet";
 
 const SalesVoucherScreen = () => {
@@ -71,7 +70,7 @@ const SalesVoucherScreen = () => {
           onPress={() => navigation.goBack()}
           style={SalesVoucherScreenStyles.backArrow}
         >
-          <ArrowLeft size={28} color={colors.colors.text} />
+          <ArrowLeft size={20} color={colors.colors.black} />
         </TouchableOpacity>
         <TouchableOpacity
           onPress={openExportBottomSheet}
@@ -153,18 +152,13 @@ const SalesVoucherScreen = () => {
       </ScrollView>
 
       {/* Date Filter Modal */}
-      <Modal
+      <SelectPeriodModal
         visible={showDateFilter}
-        animationType="slide"
-        presentationStyle="pageSheet"
-      >
-        <SelectPeriodModal
-          onClose={() => setShowDateFilter(false)}
-          onApply={updateDateFilter}
-          currentFromDate={pageFilter.start_date}
-          currentToDate={pageFilter.end_date}
-        />
-      </Modal>
+        onClose={() => setShowDateFilter(false)}
+        onApply={updateDateFilter}
+        initialFromDate={pageFilter.start_date}
+        initialToDate={pageFilter.end_date}
+      />
 
       {/* Backdrop overlay when bottom sheet is open */}
       {isBottomSheetOpen && (
