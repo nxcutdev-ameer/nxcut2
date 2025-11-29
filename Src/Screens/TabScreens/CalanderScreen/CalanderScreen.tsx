@@ -418,6 +418,9 @@ const CalanderScreen = () => {
   // NEW: Simple modal state for DateModal
   const [isDateModalVisible, setIsDateModalVisible] = useState(false);
   
+  // NEW: Prevent multiple date changes from scroll
+  const isNavigatingDate = useRef(false);
+  
   // REVERT: Uncomment the lines below to restore BottomSheet
   // // Bottom sheet setup
   // const bottomSheetRef = useRef<BottomSheet>(null);
@@ -515,6 +518,60 @@ const CalanderScreen = () => {
     console.log("Date selected:", date);
     updateCurrentDate(date);
     setIsDateModalVisible(false);
+  };
+
+  // NEW: Navigate to next/previous day when scrolling to edges
+  // REVERT: Delete this entire function block to remove date navigation on scroll
+  const handleHorizontalScrollEnd = (event: any) => {
+    // Prevent multiple triggers while date is changing
+    if (isNavigatingDate.current) {
+      console.log("[Calendar] Already navigating, ignoring scroll event");
+      return;
+    }
+
+    const { contentOffset, contentSize, layoutMeasurement } = event.nativeEvent;
+    const scrollX = contentOffset.x;
+    const scrollWidth = contentSize.width;
+    const viewWidth = layoutMeasurement.width;
+
+    console.log("[Calendar] Scroll ended at:", {
+      scrollX,
+      viewWidth,
+      scrollWidth,
+      atLeftEdge: scrollX <= 1,
+      atRightEdge: scrollX + viewWidth >= scrollWidth - 1,
+    });
+
+    // Threshold for edge detection (1px from edges - very precise)
+    const edgeThreshold = 1;
+
+    // Natural behavior: Scroll left to see previous day, scroll right to see next day
+    // When at LEFT edge (scrollX = 0) - user scrolled left as far as possible → PREVIOUS day
+    if (scrollX <= edgeThreshold) {
+      console.log("[Calendar] At left edge (scrollX=0) - going to PREVIOUS day");
+      isNavigatingDate.current = true; // Set flag to prevent multiple triggers
+      const previousDay = new Date(currentDate);
+      previousDay.setDate(previousDay.getDate() - 1);
+      updateCurrentDate(previousDay);
+      
+      // Reset flag after a delay to allow for new navigation
+      setTimeout(() => {
+        isNavigatingDate.current = false;
+      }, 1000);
+    }
+    // When at RIGHT edge (scrollX at max) - user scrolled right as far as possible → NEXT day
+    else if (scrollX + viewWidth >= scrollWidth - edgeThreshold) {
+      console.log("[Calendar] At right edge (end of scroll) - going to NEXT day");
+      isNavigatingDate.current = true; // Set flag to prevent multiple triggers
+      const nextDay = new Date(currentDate);
+      nextDay.setDate(nextDay.getDate() + 1);
+      updateCurrentDate(nextDay);
+      
+      // Reset flag after a delay to allow for new navigation
+      setTimeout(() => {
+        isNavigatingDate.current = false;
+      }, 1000);
+    }
   };
   
   // REVERT: Uncomment to restore BottomSheet callbacks
@@ -1036,6 +1093,8 @@ const CalanderScreen = () => {
                       });
                     }
                   }}
+                  onScrollEndDrag={handleHorizontalScrollEnd}
+                  onMomentumScrollEnd={handleHorizontalScrollEnd}
                   contentContainerStyle={{
                     flexDirection: "row",
                   }}
