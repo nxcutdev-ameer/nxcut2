@@ -70,9 +70,9 @@ export const CalanderScreenStyles = StyleSheet.create({
     backgroundColor: "#FF4444",
   },
   profileButton: {
-    width: getWidthEquivalent(32),
-    height: getWidthEquivalent(32),
-    borderRadius: getWidthEquivalent(18),
+    width: getWidthEquivalent(38),
+    height: getWidthEquivalent(38),
+    borderRadius: getWidthEquivalent(50),
     backgroundColor: colors.primaryLight,
     alignItems: "center",
     justifyContent: "center",

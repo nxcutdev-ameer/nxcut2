@@ -8,6 +8,8 @@ import {
   ActivityIndicator,
   StyleSheet,
   Alert,
+  StatusBar,
+  Platform,
 } from "react-native";
 import React, {
   useRef,
@@ -17,7 +19,7 @@ import React, {
   useEffect,
   Fragment,
 } from "react";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { CalanderScreenStyles } from "./CalanderScreenStyles";
 import DraggableCalendarColumn from "../../../Components/DraggableCalendarColumn";
 import TimeGutter from "../../../Components/TimeGutter";
@@ -233,6 +235,7 @@ const CalanderScreen = () => {
 
   const navigation: any = useNavigation();
   const route = useRoute();
+  const insets = useSafeAreaInsets();
   // State for carousel pagination
   const [currentStaffIndex, setCurrentStaffIndex] = useState(0);
   const scrollViewRef = useRef<ScrollView>(null);
@@ -625,8 +628,14 @@ const CalanderScreen = () => {
 
   return (
     <>
+      {/* OPTION 1: Status Bar Integration - TO REVERT: Change translucent to false, edges to ["top", "bottom"], remove paddingTop */}
+      <StatusBar 
+        barStyle="dark-content" 
+        backgroundColor={colors.white}
+        translucent={true}
+      />
       <SafeAreaView
-        edges={["top", "bottom"]}
+        edges={["bottom"]}
         style={CalanderScreenStyles.mainContainer}
       >
         <View
@@ -634,10 +643,11 @@ const CalanderScreen = () => {
             backgroundColor: colors.white,
             shadowColor: "#00000079",
             shadowOffset: { width: 0, height: 2 }, // downward shadow
-            shadowOpacity: 0.15,
+            shadowOpacity: 0.35,
             shadowRadius: 4,
             elevation: 4, // Android shadow
-          //  zIndex: 1,
+            zIndex: 1,
+            paddingTop: insets.top, // TO REVERT: Remove this line
           }}
         >
           {/* Header Section: TimeGutterHeader (LEFT) spanning both rows + Date & Staff Headers (RIGHT) stacked */}
@@ -666,14 +676,14 @@ const CalanderScreen = () => {
                     onPress={handleFilterPress}
                     style={CalanderScreenStyles.headerButton}
                   >
-                    <SlidersHorizontal size={20} color={colors.black} />
+                    <SlidersHorizontal size={24} color={colors.black} />
                   </TouchableOpacity>
 
                   <TouchableOpacity
                     onPress={handleNotificationPress}
                     style={CalanderScreenStyles.headerButton}
                   >
-                    <Bell size={20} color={colors.text} />
+                    <Bell size={24} color={colors.black} />
                     {/* Notification badge */}
                     <View style={CalanderScreenStyles.notificationBadge} />
                   </TouchableOpacity>
@@ -732,7 +742,7 @@ const CalanderScreen = () => {
                   }}
                   contentContainerStyle={{
                     flexDirection: "row",
-                    borderBottomWidth: 3,
+                    borderBottomWidth: 1,
                     borderBottomColor: colors.border,
                   }}
                 >
@@ -784,7 +794,7 @@ const CalanderScreen = () => {
           <View style={{ flex: 1, flexDirection: "column" }}>
             <View style={{ flexDirection: "row", flex: 1 }}>
               {/* Fixed Time Gutter Column with Red Line */}
-              <View style={{ width: getWidthEquivalent(42) }}>
+              <View style={{ width: getWidthEquivalent(40)}}>
                 <ScrollView
                   ref={verticalScrollRef}
                   bounces={false}
