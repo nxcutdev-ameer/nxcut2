@@ -114,6 +114,7 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     textAlign: "center",
     marginRight: getWidthEquivalent(2),
+    fontFamily: "Helvetica",
   },
   periodText: {
     fontSize: fontEq(10),
@@ -121,10 +122,10 @@ const styles = StyleSheet.create({
     fontWeight: "400",
     textAlign: "center",
   },
-  periodWrapper:{
-    flexDirection:"row",
-    justifyContent:"flex-end",
-    width:"80%",
+  periodWrapper: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    width: "80%",
   },
 });
 

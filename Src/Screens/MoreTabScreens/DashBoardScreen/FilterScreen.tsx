@@ -5,6 +5,8 @@ import {
   TouchableOpacity,
   ScrollView,
   TextInput,
+  ActivityIndicator,
+  StyleSheet,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Modal from "react-native-modal";
@@ -22,6 +24,7 @@ interface FilterScreenProps {
   initialStartDate?: Date;
   initialEndDate?: Date;
   initialPeriod?: string;
+  isLoading?: boolean;
 }
 
 const DATE_RANGE_OPTIONS = [
@@ -46,6 +49,7 @@ const FilterScreen: React.FC<FilterScreenProps> = ({
   initialStartDate,
   initialEndDate,
   initialPeriod,
+  isLoading = false,
 }) => {
   const { colors: paint } = colors;
 
@@ -596,6 +600,23 @@ const FilterScreen: React.FC<FilterScreenProps> = ({
           </TouchableOpacity>
         </View>
       </SafeAreaView>
+
+      {/* Overlay Loading Indicator - Shows when Apply is clicked */}
+      {isLoading && (
+        <View
+          style={[
+            StyleSheet.absoluteFillObject,
+            {
+              backgroundColor: colors.colors.white,
+              justifyContent: "center",
+              alignItems: "center",
+              zIndex: 9999,
+            },
+          ]}
+        >
+          <ActivityIndicator size="large" color={colors.colors.primary} />
+        </View>
+      )}
     </Modal>
   );
 };

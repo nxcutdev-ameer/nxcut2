@@ -923,7 +923,7 @@ const useDashBoardScreenVM = (dateRange?: {
 
       await Promise.all([
         fetchTopServices(filterObj),
-        fetchApppointmentsActivityData(filterObj),
+        fetchApppointmentsActivityData(filterObj, undefined, 5),
         fetchAppointmentsWithSalesData(filterObj),
         fetchStaffPerformanceData(staffFilter),
         fetchSalesByLocationSummary({

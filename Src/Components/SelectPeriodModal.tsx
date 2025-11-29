@@ -9,6 +9,7 @@ import {
   Text,
   TouchableOpacity,
   View,
+  ActivityIndicator,
 } from "react-native";
 import {
   SafeAreaView,
@@ -39,6 +40,7 @@ interface SelectPeriodModalProps {
   initialToDate?: string | null;
   title?: string;
   mode?: "picker" | "calendar";
+  isLoading?: boolean;
 }
 
 const predefinedPeriods = [
@@ -116,6 +118,7 @@ const SelectPeriodModal: React.FC<SelectPeriodModalProps> = ({
   initialToDate,
   title = "Select Period",
   mode: _mode = "picker",
+  isLoading = false,
 }) => {
   const insets = useSafeAreaInsets();
   const screenHeight = Dimensions.get("window").height;
@@ -393,6 +396,23 @@ const SelectPeriodModal: React.FC<SelectPeriodModalProps> = ({
           </View>
         </AnimatedSafeAreaView>
       </Animated.View>
+
+      {/* Overlay Loading Indicator - Shows when Apply is clicked */}
+      {isLoading && (
+        <View
+          style={[
+            StyleSheet.absoluteFillObject,
+            {
+              backgroundColor: colors.colors.white,
+              justifyContent: "center",
+              alignItems: "center",
+              zIndex: 9999,
+            },
+          ]}
+        >
+          <ActivityIndicator size="large" color={colors.colors.primary} />
+        </View>
+      )}
     </Modal>
   );
 };

@@ -10,6 +10,7 @@ import {
   Alert,
   StatusBar,
   Platform,
+  Pressable,
 } from "react-native";
 import React, {
   useRef,
@@ -27,7 +28,7 @@ import TimeGutterHeader from "../../../Components/TimeGutterHeader";
 import {
   Menu,
   ChevronDown,
-  SlidersHorizontal,
+  SlidersVertical,
   Bell,
   X,
   Check,
@@ -415,13 +416,16 @@ const CalanderScreen = () => {
     }
   }, [editingState, isSaving, updateAppointmentTime]);
 
-  // NEW: Simple modal state for DateModal
+  // Simple modal state for DateModal
   const [isDateModalVisible, setIsDateModalVisible] = useState(false);
   
-  // NEW: Prevent multiple date changes from scroll
+  // Prevent multiple date changes from scroll
   const isNavigatingDate = useRef(false);
+  const lastScrollDirection = useRef<'left' | 'right' | null>(null);
+  const scrollStartX = useRef<number>(0);
+  const ignoreScrollEvents = useRef(false);
   
-  // REVERT: Uncomment the lines below to restore BottomSheet
+  // Uncomment the lines below to restore BottomSheet
   // // Bottom sheet setup
   // const bottomSheetRef = useRef<BottomSheet>(null);
   // const snapPoints = useMemo(() => ["50%", "80%"], []);
@@ -463,13 +467,13 @@ const CalanderScreen = () => {
   };
 
   // Header action handlers
-  // NEW: Simple modal open function
+  // Simple modal open function
   const handleDatePress = () => {
     console.log("Date pressed - opening date modal");
     setIsDateModalVisible(true);
   };
   
-  // REVERT: Uncomment to restore BottomSheet
+  // Uncomment to restore BottomSheet
   // const handleDatePress = () => {
   //   console.log("Date pressed - opening bottom sheet");
   //   console.log("Bottom sheet ref:", bottomSheetRef.current);
@@ -513,19 +517,27 @@ const CalanderScreen = () => {
     return "U"; // Default fallback
   };
 
-  // NEW: Simple date selection handler for DateModal
+  // Simple date selection handler for DateModal
   const handleDateSelect = (date: Date) => {
     console.log("Date selected:", date);
     updateCurrentDate(date);
     setIsDateModalVisible(false);
   };
 
-  // NEW: Navigate to next/previous day when scrolling to edges
-  // REVERT: Delete this entire function block to remove date navigation on scroll
+  // Track scroll start to detect continuous scroll gestures
+  const handleHorizontalScrollBegin = (event: any) => {
+    scrollStartX.current = event.nativeEvent.contentOffset.x;
+  };
+
+  // Delete this entire function block to remove date navigation on scroll
   const handleHorizontalScrollEnd = (event: any) => {
+    // Ignore scroll events when returning from another screen (prevents back swipe from triggering)
+    if (ignoreScrollEvents.current) {
+      return;
+    }
+    
     // Prevent multiple triggers while date is changing
     if (isNavigatingDate.current) {
-      console.log("[Calendar] Already navigating, ignoring scroll event");
       return;
     }
 
@@ -534,43 +546,51 @@ const CalanderScreen = () => {
     const scrollWidth = contentSize.width;
     const viewWidth = layoutMeasurement.width;
 
-    console.log("[Calendar] Scroll ended at:", {
-      scrollX,
-      viewWidth,
-      scrollWidth,
-      atLeftEdge: scrollX <= 1,
-      atRightEdge: scrollX + viewWidth >= scrollWidth - 1,
-    });
+    // Calculate scroll direction
+    const scrollDirection = scrollX < scrollStartX.current ? 'left' : 'right';
 
-    // Threshold for edge detection (1px from edges - very precise)
-    const edgeThreshold = 1;
+    // Threshold - User must be very close to edge (within 0.5px) to trigger navigation
+    const edgeThreshold = 0.5;
 
     // Natural behavior: Scroll left to see previous day, scroll right to see next day
-    // When at LEFT edge (scrollX = 0) - user scrolled left as far as possible → PREVIOUS day
-    if (scrollX <= edgeThreshold) {
-      console.log("[Calendar] At left edge (scrollX=0) - going to PREVIOUS day");
-      isNavigatingDate.current = true; // Set flag to prevent multiple triggers
-      const previousDay = new Date(currentDate);
-      previousDay.setDate(previousDay.getDate() - 1);
-      updateCurrentDate(previousDay);
-      
-      // Reset flag after a delay to allow for new navigation
-      setTimeout(() => {
-        isNavigatingDate.current = false;
-      }, 1000);
+    // When at LEFT edge (scrollX = 0)
+    if (scrollX <= edgeThreshold && scrollDirection === 'left') {
+      // Only trigger if we haven't just navigated in the same direction
+      if (lastScrollDirection.current !== 'left') {
+        lastScrollDirection.current = 'left';
+        isNavigatingDate.current = true;
+        
+        const previousDay = new Date(currentDate);
+        previousDay.setDate(previousDay.getDate() - 1);
+        updateCurrentDate(previousDay);
+        
+        // Reset flags after delay
+        setTimeout(() => {
+          isNavigatingDate.current = false;
+          lastScrollDirection.current = null;
+        }, 1500);
+      }
     }
-    // When at RIGHT edge (scrollX at max) - user scrolled right as far as possible → NEXT day
-    else if (scrollX + viewWidth >= scrollWidth - edgeThreshold) {
-      console.log("[Calendar] At right edge (end of scroll) - going to NEXT day");
-      isNavigatingDate.current = true; // Set flag to prevent multiple triggers
-      const nextDay = new Date(currentDate);
-      nextDay.setDate(nextDay.getDate() + 1);
-      updateCurrentDate(nextDay);
-      
-      // Reset flag after a delay to allow for new navigation
-      setTimeout(() => {
-        isNavigatingDate.current = false;
-      }, 1000);
+    // When at RIGHT edge (scrollX at max)
+    else if (scrollX + viewWidth >= scrollWidth - edgeThreshold && scrollDirection === 'right') {
+      // Only trigger if we haven't just navigated in the same direction
+      if (lastScrollDirection.current !== 'right') {
+        lastScrollDirection.current = 'right';
+        isNavigatingDate.current = true;
+        
+        const nextDay = new Date(currentDate);
+        nextDay.setDate(nextDay.getDate() + 1);
+        updateCurrentDate(nextDay);
+        
+        // Reset flags after delay
+        setTimeout(() => {
+          isNavigatingDate.current = false;
+          lastScrollDirection.current = null;
+        }, 1500);
+      }
+    } else {
+      // Reset direction if not at edge
+      lastScrollDirection.current = null;
     }
   };
   
@@ -687,6 +707,12 @@ const CalanderScreen = () => {
   // Refresh calendar when returning from other screens (create/cancel appointment)
   useFocusEffect(
     useCallback(() => {
+      // NEW: Ignore scroll events temporarily when returning from another screen
+      // This prevents the back swipe gesture from triggering date changes or scrolling
+      ignoreScrollEvents.current = true;
+      lastScrollDirection.current = null; // Reset scroll direction
+      isNavigatingDate.current = false; // Reset navigation flag
+      
       const params = route.params as any;
       if (params?.refresh) {
         // Clear the refresh param
@@ -700,14 +726,18 @@ const CalanderScreen = () => {
       // Function signature: fetchCalanderAppointmentsData(date: string, locationIds?: string[])
       const dateString = currentDate.toISOString().split('T')[0];
       fetchCalanderAppointmentsData(dateString, locationIds);
+      
+      // Re-enable scroll events after a longer delay (1000ms) to ensure back swipe completes
+      setTimeout(() => {
+        ignoreScrollEvents.current = false;
+      }, 1000);
     }, [route.params, fetchCalanderAppointmentsData, pageFilter, allLocations, currentDate, navigation])
   );
 
   return (
     <>
-      {/* OPTION 1: Status Bar Integration - TO REVERT: Change translucent to false, edges to ["top", "bottom"], remove paddingTop */}
-      <StatusBar 
-        barStyle="dark-content" 
+      <StatusBar
+        barStyle="dark-content"
         backgroundColor={colors.white}
         translucent={true}
       />
@@ -724,7 +754,7 @@ const CalanderScreen = () => {
             shadowRadius: 4,
             elevation: 4, // Android shadow
             zIndex: 1,
-            paddingTop: insets.top, // TO REVERT: Remove this line
+            paddingTop: insets.top,
           }}
         >
           {/* Header Section: TimeGutterHeader (LEFT) spanning both rows + Date & Staff Headers (RIGHT) stacked */}
@@ -737,15 +767,23 @@ const CalanderScreen = () => {
               {/* Top: Date Header */}
               <View style={CalanderScreenStyles.newHeaderContainer}>
                 {/* Center - Date */}
-                <TouchableOpacity
+                <Pressable
                   onPress={handleDatePress}
-                  style={CalanderScreenStyles.dateContainer}
+                  style={({ pressed }) => [
+                    CalanderScreenStyles.dateContainer,
+                    {
+                      backgroundColor: pressed
+                        ? colors.gray[100]
+                        : "transparent", // gray when pressed
+                      borderRadius: 50, // rounded corners
+                    },
+                  ]}
                 >
                   <Text style={CalanderScreenStyles.dateText}>
                     {formatDate(currentDate)}
                   </Text>
                   <ChevronDown size={20} color={colors.text} />
-                </TouchableOpacity>
+                </Pressable>
 
                 {/* Right Side - Filter, Notification, Profile */}
                 <View style={CalanderScreenStyles.rightHeaderContainer}>
@@ -753,14 +791,18 @@ const CalanderScreen = () => {
                     onPress={handleFilterPress}
                     style={CalanderScreenStyles.headerButton}
                   >
-                    <SlidersHorizontal size={24} color={colors.black} />
+                    <SlidersVertical
+                      size={24}
+                      color={colors.black}
+                      strokeWidth={1.7}
+                    />
                   </TouchableOpacity>
 
                   <TouchableOpacity
                     onPress={handleNotificationPress}
                     style={CalanderScreenStyles.headerButton}
                   >
-                    <Bell size={24} color={colors.black} />
+                    <Bell size={24} color={colors.black} strokeWidth={1.7} />
                     {/* Notification badge */}
                     <View style={CalanderScreenStyles.notificationBadge} />
                   </TouchableOpacity>
@@ -796,14 +838,16 @@ const CalanderScreen = () => {
                       return;
                     }
                     const offsetX = event.nativeEvent.contentOffset.x;
-                    
+
                     // Only sync if position changed significantly (> 0.5px for smooth snapping)
-                    if (Math.abs(offsetX - lastHorizontalScrollX.current) < 0.5) {
+                    if (
+                      Math.abs(offsetX - lastHorizontalScrollX.current) < 0.5
+                    ) {
                       return;
                     }
                     lastHorizontalScrollX.current = offsetX;
                     savedHorizontalScrollPosition.current = offsetX;
-                    
+
                     if (horizontalScrollRef.current) {
                       isScrollingFromStaffHeader.current = true;
                       horizontalScrollRef.current.scrollTo({
@@ -848,7 +892,7 @@ const CalanderScreen = () => {
                         <View style={CalanderScreenStyles.staffImageContainer}>
                           <Text
                             style={{
-                              color: colors.white,
+                              color: colors.primary,
                               fontWeight: "bold",
                               fontSize: fontEq(10),
                             }}
@@ -871,7 +915,7 @@ const CalanderScreen = () => {
           <View style={{ flex: 1, flexDirection: "column" }}>
             <View style={{ flexDirection: "row", flex: 1 }}>
               {/* Fixed Time Gutter Column with Red Line */}
-              <View style={{ width: getWidthEquivalent(40)}}>
+              <View style={{ width: getWidthEquivalent(40) }}>
                 <ScrollView
                   ref={verticalScrollRef}
                   bounces={false}
@@ -885,13 +929,13 @@ const CalanderScreen = () => {
                       return;
                     }
                     const offsetY = event.nativeEvent.contentOffset.y;
-                    
+
                     // Only sync if position changed significantly (> 1px)
                     if (Math.abs(offsetY - lastVerticalScrollY.current) < 1) {
                       return;
                     }
                     lastVerticalScrollY.current = offsetY;
-                    
+
                     if (calendarVerticalScrollRef.current) {
                       isScrollingVerticalFromTimeGutter.current = true;
                       calendarVerticalScrollRef.current.scrollTo({
@@ -1006,13 +1050,13 @@ const CalanderScreen = () => {
                     return;
                   }
                   const offsetY = event.nativeEvent.contentOffset.y;
-                  
+
                   // Only sync if position changed significantly (> 1px)
                   if (Math.abs(offsetY - lastVerticalScrollY.current) < 1) {
                     return;
                   }
                   lastVerticalScrollY.current = offsetY;
-                  
+
                   if (verticalScrollRef.current) {
                     isScrollingVerticalFromCalendar.current = true;
                     verticalScrollRef.current.scrollTo({
@@ -1069,6 +1113,7 @@ const CalanderScreen = () => {
                   snapToInterval={threeColumnWidth}
                   snapToAlignment="start"
                   decelerationRate="fast"
+                  onScrollBeginDrag={handleHorizontalScrollBegin}
                   onScroll={(event) => {
                     // Sync staff header horizontal scroll
                     if (isScrollingFromStaffHeader.current) {
@@ -1076,14 +1121,16 @@ const CalanderScreen = () => {
                       return;
                     }
                     const offsetX = event.nativeEvent.contentOffset.x;
-                    
+
                     // Only sync if position changed significantly (> 0.5px for smooth snapping)
-                    if (Math.abs(offsetX - lastHorizontalScrollX.current) < 0.5) {
+                    if (
+                      Math.abs(offsetX - lastHorizontalScrollX.current) < 0.5
+                    ) {
                       return;
                     }
                     lastHorizontalScrollX.current = offsetX;
                     savedHorizontalScrollPosition.current = offsetX;
-                    
+
                     if (staffHeaderScrollRef.current) {
                       isScrollingFromCalendar.current = true;
                       staffHeaderScrollRef.current.scrollTo({
@@ -1281,7 +1328,7 @@ const CalanderScreen = () => {
           selectedDate={currentDate}
           title="Select Date"
         />
-        
+
         {/* REVERT: Uncomment to restore BottomSheet */}
         {/* <BottomSheet
           ref={bottomSheetRef}

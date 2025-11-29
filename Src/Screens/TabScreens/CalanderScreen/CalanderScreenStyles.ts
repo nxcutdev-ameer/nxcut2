@@ -44,16 +44,16 @@ export const CalanderScreenStyles = StyleSheet.create({
   dateContainer: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: paint.gray[50],
     paddingHorizontal: getWidthEquivalent(16),
     paddingVertical: getHeightEquivalent(8),
     borderRadius: getWidthEquivalent(20),
   },
   dateText: {
     fontSize: fontEq(16),
-    fontWeight: "700",
+    fontWeight: "500",
     color: paint.black,
     marginRight: getWidthEquivalent(8),
+    fontFamily: "Helvetica",
   },
   rightHeaderContainer: {
     flexDirection: "row",
@@ -295,7 +295,6 @@ export const CalanderScreenStyles = StyleSheet.create({
     shadowRadius: 5,
     elevation: 8,
     zIndex: 100,
-  
   },
   staffNavButton: {
     width: getWidthEquivalent(32),
@@ -322,13 +321,13 @@ export const CalanderScreenStyles = StyleSheet.create({
     height: getHeightEquivalent(36),
     width: getHeightEquivalent(36),
     borderRadius: getHeightEquivalent(18),
-    backgroundColor: paint.primary,
+    backgroundColor: paint.primaryLight,
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 1.5,
-    borderColor: "lightgreen",
+    borderColor: "lightblue",
     marginBottom: getHeightEquivalent(8),
-    shadowColor: "lightgreen",
+    shadowColor: "lightblue",
     shadowOffset: {
       width: 0,
       height: 2,
@@ -448,6 +447,7 @@ export const CalanderScreenStyles = StyleSheet.create({
     paddingVertical: getHeightEquivalent(15),
     borderBottomWidth: 1,
     borderBottomColor: paint.border,
+    marginTop: 10,
   },
   filterPanelTitle: {
     fontSize: fontEq(18),

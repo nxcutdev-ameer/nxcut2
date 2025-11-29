@@ -153,6 +153,8 @@ export const reportsRepository = {
         throw new Error(`Invalid end_date provided: ${source}`);
       }
 
+      // Add one day to include the full end date in the query
+      parsed.setDate(parsed.getDate() + 1);
       parsed.setHours(0, 0, 0, 0);
       return parsed.toISOString();
     };

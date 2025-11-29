@@ -48,7 +48,7 @@ const CashMovementSummary: React.FC<CashMovementSummaryProps> = ({ data }) => {
 
     data.forEach(item => {
       const paymentMethod = item.payment_method;
-      const totalAmount = item.amount + (item.adjustedTipAmount || 0);
+      const totalAmount = item.amount;
 
       if (paymentTypes[paymentMethod]) {
         paymentTypes[paymentMethod] += totalAmount;

@@ -382,6 +382,13 @@ const DraggableAppointment: React.FC<DraggableAppointmentProps> = ({
           Math.abs(gestureState.dy)
         );
 
+        // NEW: Increased threshold to prevent accidental taps during scrolling
+        // If user moves more than 15px, consider it scrolling, not a tap
+        if (distanceMoved > 15) {
+          hasMoved.current = true;
+          suppressTapRef.current = true; // Suppress tap if scrolling
+        }
+
         if (!dragEnabledRef.current) {
           if (distanceMoved > 8 && longPressTimeoutRef.current) {
             clearTimeout(longPressTimeoutRef.current);
@@ -614,6 +621,10 @@ const DraggableAppointment: React.FC<DraggableAppointmentProps> = ({
     zIndex: isDragging ? 1000 : 1,
     borderWidth: isEditing ? 2 : 0,
     borderColor: isEditing ? "#3C096C" : "transparent",
+    borderLeftColor:
+      event.data.appointment.status === "paid"
+        ? colors.gray[500] // Gray stripe for paid appointments
+        : colors.primary, // Primary color stripe for all other appointments
   };
 
   const renderAppointmentContent = () => {

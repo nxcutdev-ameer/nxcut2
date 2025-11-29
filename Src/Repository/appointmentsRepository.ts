@@ -206,14 +206,15 @@ export const appointmentsRepository = {
   // },
   ////----------------------------------------------------------getAppointmentsActivity----------------------------------------------------------
   async getAppointmentsActivity(
-    filter: appointmentFilter
+    filter: appointmentFilter,
+    limitRecords?: number
   ): Promise<AppointmentActivityBO[]> {
     try {
       // Function to fetch data with pagination
       const fetchAllAppointments = async (): Promise<any[]> => {
         let allData: any[] = [];
         let from = 0;
-        const limit = 1000;
+        const limit = limitRecords || 1000;
         let hasMore = true;
 
         while (hasMore) {
@@ -255,6 +256,12 @@ export const appointmentsRepository = {
 
           if (data && data.length > 0) {
             allData = allData.concat(data);
+          }
+
+          // If limitRecords is specified, stop after fetching the limit
+          if (limitRecords && allData.length >= limitRecords) {
+            allData = allData.slice(0, limitRecords);
+            break;
           }
 
           // Check if we've reached the end
@@ -466,7 +473,13 @@ export const appointmentsRepository = {
         const limit = 1000;
         let hasMore = true;
 
+        // Add 1 day to endDate to ensure full end date is included in calculations
+        const endDateObj = new Date(endDateStr);
+        endDateObj.setDate(endDateObj.getDate() + 1);
+        const endDatePlusOne = endDateObj.toISOString().split("T")[0];
+
         while (hasMore) {
+          // Use lt (less than) with next day to include all appointments on the end date
           const { data, error, count } = await supabase
             .from("appointment_services")
             .select(
@@ -478,8 +491,8 @@ export const appointmentsRepository = {
               { count: "exact" }
             )
             .range(from, from + limit - 1)
-            .gte("appointment.appointment_date", startDateStr)
-            .lte("appointment.appointment_date", endDateStr);
+            .gte("appointment.appointment_date::date", startDateStr)
+            .lt("appointment.appointment_date::date", endDatePlusOne);
 
           if (error) throw error;
 

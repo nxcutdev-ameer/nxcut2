@@ -66,7 +66,7 @@ interface AppointmentStore {
   fetchCalanderAppointmentsData: (date: string, locationIds?: string[]) => Promise<void>;
   setComissionSummary: (data: ComissionSummary[]) => void;
   setComissionCaluculationData: (data: ComissionBO) => void;
-  fetchApppointmentsActivityData: (filter: appointmentFilter, options?: FetchOptions) => Promise<void>;
+  fetchApppointmentsActivityData: (filter: appointmentFilter, options?: FetchOptions, limitRecords?: number) => Promise<void>;
   fetchAppointmentsWithSalesData: (filter: appointmentFilter, options?: FetchOptions) => Promise<void>;
   fetchAppointmentsBarGraphData: (value: 7 | 30, options?: FetchOptions) => Promise<void>;
   fetchTopServices: (filter: appointmentFilter, options?: FetchOptions) => Promise<void>;
@@ -155,13 +155,14 @@ export const useAppointmentStore = create<AppointmentStore>((set, get) => ({
       console.error("[STORE-FETCH-CALANDER]", err);
     }
   },
-  fetchApppointmentsActivityData: async (filter: appointmentFilter, options?: FetchOptions) => {
+  fetchApppointmentsActivityData: async (filter: appointmentFilter, options?: FetchOptions, limitRecords?: number) => {
     const { cacheConfig, appointmentsActivityCache } = get();
     const { force = false, useCache } = options ?? {};
     const shouldUseCache = (useCache ?? cacheConfig.enabled) && cacheConfig.enabled && !force;
     const cacheKey = JSON.stringify({
       startDate: filter.startDate,
       endDate: filter.endDate,
+      limit: limitRecords,
     });
 
     if (shouldUseCache) {
@@ -176,7 +177,8 @@ export const useAppointmentStore = create<AppointmentStore>((set, get) => ({
 
     try {
       let responce = await appointmentsRepository.getAppointmentsActivity(
-        filter
+        filter,
+        limitRecords
       );
       if (responce) {
         const reversed = responce.reverse();

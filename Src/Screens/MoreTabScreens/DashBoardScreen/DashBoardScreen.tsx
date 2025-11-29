@@ -363,6 +363,14 @@ const DashBoardScreen = () => {
     }
   };
 
+  // Auto-close FilterScreen when loading finishes
+  useEffect(() => {
+    const isLoading = loadingStates.topServices || loadingStates.pieChart || loadingStates.activity;
+    if (!isLoading && showFilterScreen) {
+      setShowFilterScreen(false);
+    }
+  }, [loadingStates]);
+
   // Fetch upcoming appointments on mount
   useEffect(() => {
     fetchUpcomingAppointments();
@@ -405,7 +413,6 @@ const DashBoardScreen = () => {
         }
       >
         <Text style={DashBoardScreenStyles.title}>DashBoard</Text>
-        {/* ///-----------------------------------LINE-GRAPH-SECTION------------------------------------------- */}
 
         <View style={DashBoardScreenStyles.sectionContainer}>
           <Text style={DashBoardScreenStyles.sectionTitle}>Recent Sales</Text>
@@ -1229,6 +1236,7 @@ const DashBoardScreen = () => {
         initialStartDate={startDate}
         initialEndDate={endDate}
         initialPeriod={selectedPeriod}
+        isLoading={loadingStates.topServices || loadingStates.pieChart || loadingStates.activity}
       />
     </View>
   );

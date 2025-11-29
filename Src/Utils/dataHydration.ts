@@ -90,10 +90,10 @@ export class DataHydrationService {
       updateProgress("Loading upcoming appointments...");
       await store.fetchAppointmentsBarGraphData(7);
 
-      // Step 6: Fetch appointments activity data
+      // Step 6: Fetch appointments activity data (limited to 5 records)
       completedSteps++;
       updateProgress("Loading appointments activity...");
-      await store.fetchApppointmentsActivityData(filter);
+      await store.fetchApppointmentsActivityData(filter, undefined, 5);
 
       // Step 7: Fetch appointments with sales data for line graph
       completedSteps++;
