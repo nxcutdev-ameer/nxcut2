@@ -46,10 +46,12 @@ import useCalanderScreenVM from "./CalanderScreenVM";
 import { colors } from "../../../Constants/colors";
 import CustomToast from "../../../Components/CustomToast";
 import { useNavigation, useRoute, useFocusEffect } from "@react-navigation/native";
-import BottomSheet, {
-  BottomSheetView,
-  BottomSheetBackdrop,
-} from "@gorhom/bottom-sheet";
+import DateModal from "../../../Components/DateModal"; // NEW: Added DateModal
+// REVERT: Uncomment the lines below to restore BottomSheet
+// import BottomSheet, {
+//   BottomSheetView,
+//   BottomSheetBackdrop,
+// } from "@gorhom/bottom-sheet";
 import { CalendarList } from "react-native-calendars";
 import { AppointmentCalanderBO } from "../../../Repository/appointmentsRepository";
 
@@ -413,10 +415,14 @@ const CalanderScreen = () => {
     }
   }, [editingState, isSaving, updateAppointmentTime]);
 
-  // Bottom sheet setup
-  const bottomSheetRef = useRef<BottomSheet>(null);
-  const snapPoints = useMemo(() => ["50%", "80%"], []);
-  const [isBottomSheetOpen, setIsBottomSheetOpen] = useState(false);
+  // NEW: Simple modal state for DateModal
+  const [isDateModalVisible, setIsDateModalVisible] = useState(false);
+  
+  // REVERT: Uncomment the lines below to restore BottomSheet
+  // // Bottom sheet setup
+  // const bottomSheetRef = useRef<BottomSheet>(null);
+  // const snapPoints = useMemo(() => ["50%", "80%"], []);
+  // const [isBottomSheetOpen, setIsBottomSheetOpen] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
 
   // Update current time every minute
@@ -454,13 +460,19 @@ const CalanderScreen = () => {
   };
 
   // Header action handlers
-
+  // NEW: Simple modal open function
   const handleDatePress = () => {
-    console.log("Date pressed - opening bottom sheet");
-    console.log("Bottom sheet ref:", bottomSheetRef.current);
-    bottomSheetRef.current?.expand();
-    setIsBottomSheetOpen(true);
+    console.log("Date pressed - opening date modal");
+    setIsDateModalVisible(true);
   };
+  
+  // REVERT: Uncomment to restore BottomSheet
+  // const handleDatePress = () => {
+  //   console.log("Date pressed - opening bottom sheet");
+  //   console.log("Bottom sheet ref:", bottomSheetRef.current);
+  //   bottomSheetRef.current?.expand();
+  //   setIsBottomSheetOpen(true);
+  // };
 
   const handleFilterPress = () => {
     openFilterPanel();
@@ -498,45 +510,53 @@ const CalanderScreen = () => {
     return "U"; // Default fallback
   };
 
-  // Bottom sheet callbacks
-  const handleSheetChanges = useCallback((index: number) => {
-    console.log("Bottom sheet index changed to:", index);
-    if (index === -1) {
-      setIsBottomSheetOpen(false);
-    }
-  }, []);
-
-  const renderBackdrop = useCallback(
-    (props: any) => (
-      <BottomSheetBackdrop
-        {...props}
-        disappearsOnIndex={-1}
-        appearsOnIndex={0}
-        opacity={0.5}
-        onPress={() => bottomSheetRef.current?.close()}
-      />
-    ),
-    []
-  );
-
-  // Handle date selection from calendar
-  const handleDateSelect = (day: any) => {
-    const selectedDate = new Date(day.dateString);
-    updateCurrentDate(selectedDate);
-    bottomSheetRef.current?.close();
-    setIsBottomSheetOpen(false);
+  // NEW: Simple date selection handler for DateModal
+  const handleDateSelect = (date: Date) => {
+    console.log("Date selected:", date);
+    updateCurrentDate(date);
+    setIsDateModalVisible(false);
   };
-
-  // Format date for calendar
-  const getMarkedDates = () => {
-    const dateString = currentDate.toISOString().split("T")[0];
-    return {
-      [dateString]: {
-        selected: true,
-        selectedColor: colors.primary,
-      },
-    };
-  };
+  
+  // REVERT: Uncomment to restore BottomSheet callbacks
+  // // Bottom sheet callbacks
+  // const handleSheetChanges = useCallback((index: number) => {
+  //   console.log("Bottom sheet index changed to:", index);
+  //   if (index === -1) {
+  //     setIsBottomSheetOpen(false);
+  //   }
+  // }, []);
+  //
+  // const renderBackdrop = useCallback(
+  //   (props: any) => (
+  //     <BottomSheetBackdrop
+  //       {...props}
+  //       disappearsOnIndex={-1}
+  //       appearsOnIndex={0}
+  //       opacity={0.5}
+  //       onPress={() => bottomSheetRef.current?.close()}
+  //     />
+  //   ),
+  //   []
+  // );
+  //
+  // // Handle date selection from calendar
+  // const handleDateSelect = (day: any) => {
+  //   const selectedDate = new Date(day.dateString);
+  //   updateCurrentDate(selectedDate);
+  //   bottomSheetRef.current?.close();
+  //   setIsBottomSheetOpen(false);
+  // };
+  //
+  // // Format date for calendar
+  // const getMarkedDates = () => {
+  //   const dateString = currentDate.toISOString().split("T")[0];
+  //   return {
+  //     [dateString]: {
+  //       selected: true,
+  //       selectedColor: colors.primary,
+  //     },
+  //   };
+  // };
 
   const timeColumnWidth = useMemo(() => getWidthEquivalent(60), []);
 
@@ -1194,7 +1214,17 @@ const CalanderScreen = () => {
         />
 
         {/* Date Picker Bottom Sheet */}
-        <BottomSheet
+        {/* NEW: DateModal Component (Like Daily Sales) */}
+        <DateModal
+          isVisible={isDateModalVisible}
+          onClose={() => setIsDateModalVisible(false)}
+          onSelectDate={handleDateSelect}
+          selectedDate={currentDate}
+          title="Select Date"
+        />
+        
+        {/* REVERT: Uncomment to restore BottomSheet */}
+        {/* <BottomSheet
           ref={bottomSheetRef}
           index={-1}
           snapPoints={snapPoints}
@@ -1222,55 +1252,33 @@ const CalanderScreen = () => {
               showScrollIndicator={false}
               horizontal={false}
               pagingEnabled={false}
-              // Make calendar width responsive with proper margins
               calendarWidth={SCREEN_WIDTH - getWidthEquivalent(32)}
-              // Let the calendar height be determined by its content
               theme={{
-                // Base colors
                 backgroundColor: colors.white,
                 calendarBackground: colors.white,
-
-                // Date selection
                 selectedDayBackgroundColor: colors.primary,
                 selectedDayTextColor: colors.white,
                 selectedDotColor: colors.white,
-
-                // Today's date
                 todayTextColor: colors.primary,
-                todayBackgroundColor: `${colors.primary}20`, // 20% opacity
-
-                // Day text
+                todayBackgroundColor: `${colors.primary}20`,
                 dayTextColor: colors.text,
-                textDayFontSize: fontEq(14), // Slightly smaller for better fit
+                textDayFontSize: fontEq(14),
                 textDayFontWeight: "500",
-
-                // Month header
                 textMonthFontSize: fontEq(18),
                 textMonthFontWeight: "700",
                 monthTextColor: colors.text,
-
-                // Day names (Mon, Tue, etc.)
                 textSectionTitleColor: colors.textSecondary,
                 textDayHeaderFontSize: fontEq(12),
                 textDayHeaderFontWeight: "600",
-
-                // Navigation arrows
                 arrowColor: colors.primary,
                 disabledArrowColor: colors.gray[300],
-
-                // Dot markers
                 dotColor: colors.primary,
-
-                // Disabled dates
                 textDisabledColor: colors.gray[300],
-
-                // General styles
                 indicatorColor: colors.primary,
                 textDayFontFamily: "System",
                 textMonthFontFamily: "System",
                 textDayHeaderFontFamily: "System",
               }}
-              // Calendar container styles
               style={{
                 height: getHeightEquivalent(467),
                 alignSelf: "center",
@@ -1279,7 +1287,7 @@ const CalanderScreen = () => {
               }}
             />
           </BottomSheetView>
-        </BottomSheet>
+        </BottomSheet> */}
 
         {/* Filter Panel Modal */}
         <FilterPanelModal
