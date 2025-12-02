@@ -440,6 +440,50 @@ const CalanderScreen = () => {
     return () => clearInterval(timer);
   }, []);
 
+  // Auto-scroll to current time on mount and date change
+  useEffect(() => {
+    const scrollToCurrentTime = () => {
+      const currentHour = new Date().getHours();
+      const currentMinute = new Date().getMinutes();
+      const minHour = 8;
+      const maxHour = 23;
+      const hourHeight = getHeightEquivalent(80);
+
+      // Only scroll if current time is within calendar hours
+      if (currentHour >= minHour && currentHour <= maxHour) {
+        const minutesFromMinHour = (currentHour - minHour) * 60 + currentMinute;
+        const currentTimePosition = (minutesFromMinHour / 60) * hourHeight;
+
+        // Get screen height to calculate center position
+        const screenHeight = Dimensions.get('window').height;
+        const headerHeight = getHeightEquivalent(135 + 85); // Date header + Staff header
+        const visibleHeight = screenHeight - headerHeight - getHeightEquivalent(100); // Subtract tab bar
+        
+        // Calculate scroll position to center the current time
+        const scrollY = currentTimePosition - (visibleHeight / 2);
+        
+        // Delay to ensure ScrollView is mounted and ready
+        setTimeout(() => {
+          if (verticalScrollRef.current) {
+            verticalScrollRef.current.scrollTo({
+              y: Math.max(0, scrollY), // Ensure non-negative
+              animated: true,
+            });
+          }
+          if (calendarVerticalScrollRef.current) {
+            calendarVerticalScrollRef.current.scrollTo({
+              y: Math.max(0, scrollY), // Ensure non-negative
+              animated: true,
+            });
+          }
+        }, 300); // 300ms delay for mount
+      }
+    };
+
+    // Scroll on mount and when date changes
+    scrollToCurrentTime();
+  }, [currentDate]);
+
   // Handle scroll end to update current index
   const handleScrollEnd = (event: any) => {
     const { contentOffset } = event.nativeEvent;
