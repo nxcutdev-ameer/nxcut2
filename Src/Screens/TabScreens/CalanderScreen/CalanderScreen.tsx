@@ -529,70 +529,71 @@ const CalanderScreen = () => {
     scrollStartX.current = event.nativeEvent.contentOffset.x;
   };
 
+  // TEMPORARILY DISABLED: Date navigation on horizontal scroll
   // Delete this entire function block to remove date navigation on scroll
-  const handleHorizontalScrollEnd = (event: any) => {
-    // Ignore scroll events when returning from another screen (prevents back swipe from triggering)
-    if (ignoreScrollEvents.current) {
-      return;
-    }
-    
-    // Prevent multiple triggers while date is changing
-    if (isNavigatingDate.current) {
-      return;
-    }
+  // const handleHorizontalScrollEnd = (event: any) => {
+  //   // Ignore scroll events when returning from another screen (prevents back swipe from triggering)
+  //   if (ignoreScrollEvents.current) {
+  //     return;
+  //   }
+  //   
+  //   // Prevent multiple triggers while date is changing
+  //   if (isNavigatingDate.current) {
+  //     return;
+  //   }
 
-    const { contentOffset, contentSize, layoutMeasurement } = event.nativeEvent;
-    const scrollX = contentOffset.x;
-    const scrollWidth = contentSize.width;
-    const viewWidth = layoutMeasurement.width;
+  //   const { contentOffset, contentSize, layoutMeasurement } = event.nativeEvent;
+  //   const scrollX = contentOffset.x;
+  //   const scrollWidth = contentSize.width;
+  //   const viewWidth = layoutMeasurement.width;
 
-    // Calculate scroll direction
-    const scrollDirection = scrollX < scrollStartX.current ? 'left' : 'right';
+  //   // Calculate scroll direction
+  //   const scrollDirection = scrollX < scrollStartX.current ? 'left' : 'right';
 
-    // Threshold - User must be very close to edge (within 0.5px) to trigger navigation
-    const edgeThreshold = 0.5;
+  //   // Threshold - User must be very close to edge (within 0.5px) to trigger navigation
+  //   const edgeThreshold = 0.5;
 
-    // Natural behavior: Scroll left to see previous day, scroll right to see next day
-    // When at LEFT edge (scrollX = 0)
-    if (scrollX <= edgeThreshold && scrollDirection === 'left') {
-      // Only trigger if we haven't just navigated in the same direction
-      if (lastScrollDirection.current !== 'left') {
-        lastScrollDirection.current = 'left';
-        isNavigatingDate.current = true;
-        
-        const previousDay = new Date(currentDate);
-        previousDay.setDate(previousDay.getDate() - 1);
-        updateCurrentDate(previousDay);
-        
-        // Reset flags after delay
-        setTimeout(() => {
-          isNavigatingDate.current = false;
-          lastScrollDirection.current = null;
-        }, 1500);
-      }
-    }
-    // When at RIGHT edge (scrollX at max)
-    else if (scrollX + viewWidth >= scrollWidth - edgeThreshold && scrollDirection === 'right') {
-      // Only trigger if we haven't just navigated in the same direction
-      if (lastScrollDirection.current !== 'right') {
-        lastScrollDirection.current = 'right';
-        isNavigatingDate.current = true;
-        
-        const nextDay = new Date(currentDate);
-        nextDay.setDate(nextDay.getDate() + 1);
-        updateCurrentDate(nextDay);
-        
-        // Reset flags after delay
-        setTimeout(() => {
-          isNavigatingDate.current = false;
-          lastScrollDirection.current = null;
-        }, 1500);
-      }
-    } else {
-      // Reset direction if not at edge
-      lastScrollDirection.current = null;
-    }
-  };
+  //   // Natural behavior: Scroll left to see previous day, scroll right to see next day
+  //   // When at LEFT edge (scrollX = 0)
+  //   if (scrollX <= edgeThreshold && scrollDirection === 'left') {
+  //     // Only trigger if we haven't just navigated in the same direction
+  //     if (lastScrollDirection.current !== 'left') {
+  //       lastScrollDirection.current = 'left';
+  //       isNavigatingDate.current = true;
+  //       
+  //       const previousDay = new Date(currentDate);
+  //       previousDay.setDate(previousDay.getDate() - 1);
+  //       updateCurrentDate(previousDay);
+  //       
+  //       // Reset flags after delay
+  //       setTimeout(() => {
+  //         isNavigatingDate.current = false;
+  //         lastScrollDirection.current = null;
+  //       }, 1500);
+  //     }
+  //   }
+  //   // When at RIGHT edge (scrollX at max)
+  //   else if (scrollX + viewWidth >= scrollWidth - edgeThreshold && scrollDirection === 'right') {
+  //     // Only trigger if we haven't just navigated in the same direction
+  //     if (lastScrollDirection.current !== 'right') {
+  //       lastScrollDirection.current = 'right';
+  //       isNavigatingDate.current = true;
+  //       
+  //       const nextDay = new Date(currentDate);
+  //       nextDay.setDate(nextDay.getDate() + 1);
+  //       updateCurrentDate(nextDay);
+  //       
+  //       // Reset flags after delay
+  //       setTimeout(() => {
+  //         isNavigatingDate.current = false;
+  //         lastScrollDirection.current = null;
+  //       }, 1500);
+  //     }
+  //   } else {
+  //     // Reset direction if not at edge
+  //     lastScrollDirection.current = null;
+  //   }
+  // };
   
   // REVERT: Uncomment to restore BottomSheet callbacks
   // // Bottom sheet callbacks
@@ -894,7 +895,7 @@ const CalanderScreen = () => {
                             style={{
                               color: colors.primary,
                               fontWeight: "bold",
-                              fontSize: fontEq(10),
+                              fontSize: fontEq(12),
                             }}
                           >
                             {staff?.staffName?.charAt(0).toUpperCase() || "S"}
@@ -1140,8 +1141,9 @@ const CalanderScreen = () => {
                       });
                     }
                   }}
-                  onScrollEndDrag={handleHorizontalScrollEnd}
-                  onMomentumScrollEnd={handleHorizontalScrollEnd}
+                  // TEMPORARILY DISABLED: Date navigation on horizontal scroll
+                  // onScrollEndDrag={handleHorizontalScrollEnd}
+                  // onMomentumScrollEnd={handleHorizontalScrollEnd}
                   contentContainerStyle={{
                     flexDirection: "row",
                   }}

@@ -24,11 +24,22 @@ interface SalePaymentMethod {
   isTipTransaction?: boolean;
 }
 
-interface CashMovementSummaryProps {
-  data: SalePaymentMethod[];
+interface CashMovementItem {
+  payment_type: string;
+  payment_collected: number;
 }
 
-const CashMovementSummary: React.FC<CashMovementSummaryProps> = ({ data }) => {
+interface CashMovementSummaryProps {
+  data: SalePaymentMethod[] | CashMovementItem[];
+  totalTips?: number;
+  grandTotal?: number;
+}
+
+const CashMovementSummary: React.FC<CashMovementSummaryProps> = ({ 
+  data, 
+  totalTips = 0, 
+  grandTotal = 0 
+}) => {
   const { colors: paint } = colors;
 
   const formatCurrency = (amount: number) => {
@@ -36,26 +47,50 @@ const CashMovementSummary: React.FC<CashMovementSummaryProps> = ({ data }) => {
   };
 
   const calculateSummary = () => {
-    const totalAmount = data.reduce((sum, item) => sum + item.amount, 0);
-    const totalTips = data.reduce((sum, item) => sum + (item.adjustedTipAmount || 0), 0);
-    const grandTotal = totalAmount + totalTips;
-
-    return { totalAmount, totalTips, grandTotal };
+    // Check if data is from RPC function (has payment_type) or old structure (has payment_method)
+    const isRPCData = data.length > 0 && 'payment_type' in data[0];
+    
+    if (isRPCData) {
+      const rpcData = data as CashMovementItem[];
+      const grandTotal = rpcData.reduce((sum, item) => sum + item.payment_collected, 0);
+      return { totalAmount: grandTotal, totalTips: 0, grandTotal };
+    } else {
+      const oldData = data as SalePaymentMethod[];
+      const totalAmount = oldData.reduce((sum, item) => sum + item.amount, 0);
+      const totalTips = oldData.reduce((sum, item) => sum + (item.adjustedTipAmount || 0), 0);
+      const grandTotal = totalAmount + totalTips;
+      return { totalAmount, totalTips, grandTotal };
+    }
   };
 
   const calculateCashMovement = () => {
     const paymentTypes: { [key: string]: number } = {};
 
-    data.forEach(item => {
-      const paymentMethod = item.payment_method;
-      const totalAmount = item.amount;
+    // Check if data is from RPC function (has payment_type) or old structure (has payment_method)
+    const isRPCData = data.length > 0 && 'payment_type' in data[0];
 
-      if (paymentTypes[paymentMethod]) {
-        paymentTypes[paymentMethod] += totalAmount;
-      } else {
-        paymentTypes[paymentMethod] = totalAmount;
-      }
-    });
+    if (isRPCData) {
+      // Data from RPC function
+      const rpcData = data as CashMovementItem[];
+      rpcData.forEach(item => {
+        if (item.payment_type && item.payment_collected > 0) {
+          paymentTypes[item.payment_type] = item.payment_collected;
+        }
+      });
+    } else {
+      // Old data structure
+      const oldData = data as SalePaymentMethod[];
+      oldData.forEach(item => {
+        const paymentMethod = item.payment_method;
+        const totalAmount = item.amount;
+
+        if (paymentTypes[paymentMethod]) {
+          paymentTypes[paymentMethod] += totalAmount;
+        } else {
+          paymentTypes[paymentMethod] = totalAmount;
+        }
+      });
+    }
 
     return paymentTypes;
   };
@@ -73,7 +108,10 @@ const CashMovementSummary: React.FC<CashMovementSummaryProps> = ({ data }) => {
   }
 
   const paymentTypes = calculateCashMovement();
-  const { totalTips, grandTotal } = calculateSummary();
+  
+  // Use props if provided (from parent with RPC data), otherwise calculate from data
+  const displayTotalTips = totalTips > 0 ? totalTips : calculateSummary().totalTips;
+  const displayGrandTotal = grandTotal > 0 ? grandTotal : calculateSummary().grandTotal;
 
   return (
     <View style={[styles.cashMovementContainer, { backgroundColor: paint.surface }]}>
@@ -122,7 +160,7 @@ const CashMovementSummary: React.FC<CashMovementSummaryProps> = ({ data }) => {
             Overall Payments Collected:
           </Text>
           <Text style={[styles.summaryValue, styles.totalValue, { color: paint.primary }]}>
-            {formatCurrency(grandTotal)}
+            {formatCurrency(displayGrandTotal)}
           </Text>
         </View>
 
@@ -131,7 +169,7 @@ const CashMovementSummary: React.FC<CashMovementSummaryProps> = ({ data }) => {
             Of which Tips:
           </Text>
           <Text style={[styles.summaryValue, { color: paint.success }]}>
-            {formatCurrency(totalTips)}
+            {formatCurrency(displayTotalTips)}
           </Text>
         </View>
       </View>

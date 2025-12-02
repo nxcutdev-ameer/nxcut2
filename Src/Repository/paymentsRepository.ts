@@ -65,12 +65,18 @@ export type SaleItem = {
 };
 type SalePaymentMethod = {
   payment_method: string;
+  payment_method_id: string | null;
   amount: number;
+  payment_methods?: {
+    id: string;
+    name: string;
+  } | null;
   sales: {
     id: number;
     location_id: string;
     created_at: string;
     tip_amount: number | null;
+    is_voided: boolean;
     client_id: string;
     location?: {
       id: string;
@@ -226,15 +232,21 @@ export const paymentRepository = {
       .select(
         `
         payment_method,
+        payment_method_id,
         amount,
         sales!inner(
           id,
           location_id,
           created_at,
           tip_amount,
+          is_voided,
           client_id,
           location:locations(id, name),
           client:clients(id, first_name, last_name)
+        ),
+        payment_methods(
+          id,
+          name
         )
       `
       )
@@ -260,15 +272,19 @@ export const paymentRepository = {
     // Transform the data to match our type structure
     const transformedData: SalePaymentMethod[] = (data || []).map((item: any) => {
       const sales = Array.isArray(item.sales) ? item.sales[0] : item.sales;
+      const paymentMethods = Array.isArray(item.payment_methods) ? item.payment_methods[0] : item.payment_methods;
       
       return {
         payment_method: item.payment_method,
+        payment_method_id: item.payment_method_id,
         amount: item.amount,
+        payment_methods: paymentMethods,
         sales: {
           id: sales.id,
           location_id: sales.location_id,
           created_at: sales.created_at,
           tip_amount: sales.tip_amount,
+          is_voided: sales.is_voided,
           client_id: sales.client_id,
           location: Array.isArray(sales.location) ? sales.location[0] : sales.location,
           client: Array.isArray(sales.client) ? sales.client[0] : sales.client,
@@ -579,6 +595,36 @@ export const paymentRepository = {
       console.error("❌ TEST FAILED:", error);
       console.log("===========================================\n");
       return false;
+    }
+  },
+
+  // Get cash movement summary using RPC function
+  getCashMovementSummary: async (
+    locationIds: string[],
+    startDate: string,
+    endDate: string
+  ) => {
+    try {
+      const { data, error } = await supabase.rpc('cash_movement_summary', {
+        p_location_ids: locationIds, // Parameter name is plural: p_location_ids
+        p_start: startDate,
+        p_end: endDate,
+      });
+
+      if (error) {
+        console.error("Error fetching cash movement summary:", error);
+        return [];
+      }
+
+      // Filter out records where payment_collected = 0
+      const filteredData = (data || []).filter(
+        (item: any) => item.payment_collected && item.payment_collected > 0
+      );
+
+      return filteredData;
+    } catch (error) {
+      console.error("Unexpected error in getCashMovementSummary:", error);
+      return [];
     }
   },
 };

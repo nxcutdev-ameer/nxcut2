@@ -88,6 +88,11 @@ const DraggableCalendarColumn: React.FC<DraggableCalendarColumnProps> = ({
     minuteOffset: number;
   } | null>(null);
 
+  // Track touch and scroll state to prevent accidental slot selection
+  const touchStartTime = React.useRef<number>(0);
+  const touchStartPosition = React.useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+  const isScrolling = React.useRef<boolean>(false);
+
   // Clear selection when returning to screen
   useEffect(() => {
     const unsubscribe = navigation.addListener("focus", () => {
@@ -98,6 +103,21 @@ const DraggableCalendarColumn: React.FC<DraggableCalendarColumnProps> = ({
 
   // Handle time slot click for creating new appointment
   const handleTimeSlotPress = (hourIndex: number, minuteOffset: number = 0) => {
+    // Don't trigger if user was scrolling
+    if (isScrolling.current) {
+      isScrolling.current = false;
+      return;
+    }
+
+    // Calculate touch duration
+    const touchDuration = Date.now() - touchStartTime.current;
+    
+    // Only trigger if touch was quick (less than 200ms) - intentional tap
+    // and didn't move much (prevents triggering during scroll)
+    if (touchDuration > 200) {
+      return;
+    }
+
     // Haptic feedback
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
@@ -288,6 +308,24 @@ const DraggableCalendarColumn: React.FC<DraggableCalendarColumnProps> = ({
                       : "transparent",
                   },
                 ]}
+                onPressIn={(e) => {
+                  touchStartTime.current = Date.now();
+                  touchStartPosition.current = {
+                    x: e.nativeEvent.pageX,
+                    y: e.nativeEvent.pageY,
+                  };
+                  isScrolling.current = false;
+                }}
+                onPressOut={(e) => {
+                  // Detect if finger moved significantly (more than 10 pixels)
+                  const moveDistance = Math.sqrt(
+                    Math.pow(e.nativeEvent.pageX - touchStartPosition.current.x, 2) +
+                    Math.pow(e.nativeEvent.pageY - touchStartPosition.current.y, 2)
+                  );
+                  if (moveDistance > 10) {
+                    isScrolling.current = true;
+                  }
+                }}
                 onPress={() => handleTimeSlotPress(index, 0)}
                 activeOpacity={0.7}
               >
@@ -311,6 +349,23 @@ const DraggableCalendarColumn: React.FC<DraggableCalendarColumnProps> = ({
                       : "transparent",
                   },
                 ]}
+                onPressIn={(e) => {
+                  touchStartTime.current = Date.now();
+                  touchStartPosition.current = {
+                    x: e.nativeEvent.pageX,
+                    y: e.nativeEvent.pageY,
+                  };
+                  isScrolling.current = false;
+                }}
+                onPressOut={(e) => {
+                  const moveDistance = Math.sqrt(
+                    Math.pow(e.nativeEvent.pageX - touchStartPosition.current.x, 2) +
+                    Math.pow(e.nativeEvent.pageY - touchStartPosition.current.y, 2)
+                  );
+                  if (moveDistance > 10) {
+                    isScrolling.current = true;
+                  }
+                }}
                 onPress={() => handleTimeSlotPress(index, 15)}
                 activeOpacity={0.7}
               >
@@ -334,6 +389,23 @@ const DraggableCalendarColumn: React.FC<DraggableCalendarColumnProps> = ({
                       : "transparent",
                   },
                 ]}
+                onPressIn={(e) => {
+                  touchStartTime.current = Date.now();
+                  touchStartPosition.current = {
+                    x: e.nativeEvent.pageX,
+                    y: e.nativeEvent.pageY,
+                  };
+                  isScrolling.current = false;
+                }}
+                onPressOut={(e) => {
+                  const moveDistance = Math.sqrt(
+                    Math.pow(e.nativeEvent.pageX - touchStartPosition.current.x, 2) +
+                    Math.pow(e.nativeEvent.pageY - touchStartPosition.current.y, 2)
+                  );
+                  if (moveDistance > 10) {
+                    isScrolling.current = true;
+                  }
+                }}
                 onPress={() => handleTimeSlotPress(index, 30)}
                 activeOpacity={0.7}
               >
@@ -357,6 +429,23 @@ const DraggableCalendarColumn: React.FC<DraggableCalendarColumnProps> = ({
                       : "transparent",
                   },
                 ]}
+                onPressIn={(e) => {
+                  touchStartTime.current = Date.now();
+                  touchStartPosition.current = {
+                    x: e.nativeEvent.pageX,
+                    y: e.nativeEvent.pageY,
+                  };
+                  isScrolling.current = false;
+                }}
+                onPressOut={(e) => {
+                  const moveDistance = Math.sqrt(
+                    Math.pow(e.nativeEvent.pageX - touchStartPosition.current.x, 2) +
+                    Math.pow(e.nativeEvent.pageY - touchStartPosition.current.y, 2)
+                  );
+                  if (moveDistance > 10) {
+                    isScrolling.current = true;
+                  }
+                }}
                 onPress={() => handleTimeSlotPress(index, 45)}
                 activeOpacity={0.7}
               >

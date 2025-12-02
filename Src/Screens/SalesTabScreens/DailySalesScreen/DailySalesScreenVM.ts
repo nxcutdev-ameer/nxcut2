@@ -12,6 +12,7 @@ export const useDailySalesScreenVM = () => {
   const navigation: NavigationProp<any> = useNavigation();
   const [payments, setPayments] = useState<any[]>([]);
   const [saleItems, setSaleItems] = useState<any[]>([]);
+  const [cashMovementData, setCashMovementData] = useState<any[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   // Page filter state for location filtering
@@ -61,7 +62,13 @@ export const useDailySalesScreenVM = () => {
           ? pageFilter.location_ids
           : undefined;
 
-      // Fetch both payments and sale items with location filtering
+      // Calculate start and end of day for cash movement summary
+      const startOfDay = new Date(date);
+      startOfDay.setHours(0, 0, 0, 0);
+      const endOfDay = new Date(date);
+      endOfDay.setHours(23, 59, 59, 999);
+
+      // Fetch payments, sale items, and cash movement summary
       const [paymentsData, saleItemsData] = await Promise.all([
         paymentRepository.getSalePaymentsByDate(dateString, locationIds),
         paymentRepository.getSaleItemsByDate(dateString, locationIds),
@@ -69,12 +76,33 @@ export const useDailySalesScreenVM = () => {
 
       setPayments(paymentsData || []);
       setSaleItems(saleItemsData || []);
-      console.log("[SALES-DATA]", paymentsData);
-      console.log("[SALE-ITEMS-DATA]", saleItemsData);
+
+      // Fetch cash movement summary separately (non-blocking)
+      // Use selected location IDs from filter, or all locations if none selected
+      const selectedLocationIds = locationIds && locationIds.length > 0 
+        ? locationIds 
+        : allLocations.map(loc => loc.id);
+
+      if (selectedLocationIds.length > 0) {
+        try {
+          const cashMovementResult = await paymentRepository.getCashMovementSummary(
+            selectedLocationIds, // Pass array of location IDs
+            startOfDay.toISOString(),
+            endOfDay.toISOString()
+          );
+          setCashMovementData(cashMovementResult || []);
+        } catch (cashError) {
+          console.error("[SALES-VM] Error fetching cash movement:", cashError);
+          setCashMovementData([]);
+        }
+      } else {
+        setCashMovementData([]);
+      }
     } catch (error) {
       console.error("[SALES-VM] Error fetching data:", error);
       setPayments([]);
       setSaleItems([]);
+      setCashMovementData([]);
     } finally {
       setLoading(false);
     }
@@ -192,20 +220,31 @@ export const useDailySalesScreenVM = () => {
 
   const generateCashMovementSummary = () => {
     const paymentTypes: { [key: string]: number } = {};
-    const processedPayments = processPaymentsForTips();
 
-    processedPayments.forEach((item) => {
-      const paymentMethod = item.payment_method;
-      const totalAmount = item.amount+ (item.adjustedTipAmount || 0);
+    // Use data from cash_movement_summary RPC function
+    cashMovementData.forEach((item) => {
+      const paymentType = item.payment_type; // Column name from RPC function
+      const paymentCollected = item.payment_collected; // Column name from RPC function
 
-      if (paymentTypes[paymentMethod]) {
-        paymentTypes[paymentMethod] += totalAmount;
-      } else {
-        paymentTypes[paymentMethod] = totalAmount;
+      // Only include if payment_collected > 0 (already filtered in repository)
+      if (paymentType && paymentCollected > 0) {
+        paymentTypes[paymentType] = paymentCollected;
       }
     });
 
     return paymentTypes;
+  };
+
+  // Calculate totals similar to SalesTable
+  const calculateCashMovementTotals = () => {
+    const totalAmount = processedPayments.reduce((sum, item) => sum + item.amount, 0);
+    const totalTips = processedPayments.reduce(
+      (sum, item) => sum + (item.adjustedTipAmount || 0),
+      0
+    );
+    const grandTotal = totalAmount + totalTips;
+
+    return { totalAmount, totalTips, grandTotal };
   };
 
   const exportAsCSV = async () => {
@@ -750,6 +789,8 @@ export const useDailySalesScreenVM = () => {
     payments,
     processedPayments, // Add processed payments for UI
     saleItems,
+    cashMovementData, // Add cash movement data for UI
+    cashMovementTotals: calculateCashMovementTotals(), // Add totals for tips and grand total
     loading,
     selectedDate,
     updateSelectedDate,

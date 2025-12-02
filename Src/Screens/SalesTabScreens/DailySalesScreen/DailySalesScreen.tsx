@@ -174,6 +174,8 @@ const DailySalesScreen = () => {
     navigation,
     processedPayments,
     saleItems,
+    cashMovementData,
+    cashMovementTotals,
     loading,
     selectedDate,
     updateSelectedDate,
@@ -314,7 +316,11 @@ const DailySalesScreen = () => {
           Cash Movement Summary
         </Text>
 
-        <CashMovementSummary data={processedPayments} />
+        <CashMovementSummary 
+          data={cashMovementData} 
+          totalTips={cashMovementTotals.totalTips}
+          grandTotal={cashMovementTotals.grandTotal}
+        />
 
         <Text style={DailySalesScreenStyles.sectionTitle}>
           Sale Item Summary

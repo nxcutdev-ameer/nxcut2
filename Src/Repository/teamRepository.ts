@@ -64,6 +64,10 @@ export interface SaleTipBO {
   payment_method_tip: string;
   is_voided: boolean;
   payment_method_id: string | null;
+  payment_methods?: {
+    id: string;
+    name: string;
+  } | null;
   sales: SalesBO;
   team_members: TeamMemberBO;
 }
@@ -106,7 +110,8 @@ export const teamRepository = {
         .select(`
           *,
           team_members(*),
-          sales(*,sale_payment_methods(*))
+          sales(*,sale_payment_methods(*)),
+          payment_methods(id, name)
         `)
         .eq("is_voided", false)
         .gte("created_at", startDate)

@@ -338,6 +338,8 @@ const DashBoardScreen = () => {
     setStartDate(start);
     setEndDate(end);
     setSelectedPeriod(period);
+    // Close the filter screen after applying - it will show loading in the background
+    setShowFilterScreen(false);
   };
 
   const onRefresh = async () => {
@@ -363,13 +365,7 @@ const DashBoardScreen = () => {
     }
   };
 
-  // Auto-close FilterScreen when loading finishes
-  useEffect(() => {
-    const isLoading = loadingStates.topServices || loadingStates.pieChart || loadingStates.activity;
-    if (!isLoading && showFilterScreen) {
-      setShowFilterScreen(false);
-    }
-  }, [loadingStates]);
+  // Removed auto-close FilterScreen effect - user should manually close it
 
   // Fetch upcoming appointments on mount
   useEffect(() => {
@@ -1232,6 +1228,7 @@ const DashBoardScreen = () => {
       <FilterScreen
         visible={showFilterScreen}
         onClose={() => setShowFilterScreen(false)}
+        isLoading={loadingStates.topServices || loadingStates.pieChart || loadingStates.activity}
         onApply={handleFilterApply}
         initialStartDate={startDate}
         initialEndDate={endDate}

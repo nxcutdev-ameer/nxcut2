@@ -150,8 +150,9 @@ export const useAuthStore = create<AuthState>(
             );
           }
         } else {
-          set({ error: response.error, loading: false });
-          throw new Error(response.error);
+          const errorMessage = 'error' in response ? response.error : 'Login failed';
+          set({ error: errorMessage, loading: false });
+          throw new Error(errorMessage);
         }
       } catch (err: any) {
         set({ error: err.message || "Unexpected error", loading: false });

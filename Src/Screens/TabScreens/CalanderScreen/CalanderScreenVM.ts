@@ -84,6 +84,9 @@ const useCalanderScreenVM = () => {
 
     // First, initialize all staff members from filtered locations with empty appointment arrays
     const staffInFilteredLocations = allStaff.filter((staff) => {
+      // Only show team members who are visible to clients
+      if (!staff.visible_to_clients) return false;
+      
       // If no locations are filtered (all selected), show all staff
       if (filteredLocationIds.length === 0) return true;
       // Otherwise, check if staff belongs to any of the filtered locations
