@@ -442,6 +442,11 @@ const CalanderScreen = () => {
 
   // Auto-scroll to current time on mount and date change
   useEffect(() => {
+    // Only scroll if we have calendar data loaded
+    if (!calanderData || calanderData.length === 0) {
+      return;
+    }
+
     const scrollToCurrentTime = () => {
       const currentHour = new Date().getHours();
       const currentMinute = new Date().getMinutes();
@@ -456,13 +461,27 @@ const CalanderScreen = () => {
 
         // Get screen height to calculate center position
         const screenHeight = Dimensions.get('window').height;
-        const headerHeight = getHeightEquivalent(135 + 85); // Date header + Staff header
-        const visibleHeight = screenHeight - headerHeight - getHeightEquivalent(100); // Subtract tab bar
+        const statusBarHeight = insets.top;
+        const dateHeaderHeight = getHeightEquivalent(135);
+        const staffHeaderHeight = getHeightEquivalent(85);
+        const tabBarHeight = getHeightEquivalent(100);
+        
+        // Calculate actual visible calendar height
+        const visibleHeight = screenHeight - statusBarHeight - dateHeaderHeight - staffHeaderHeight - tabBarHeight;
         
         // Calculate scroll position to center the current time
         const scrollY = currentTimePosition - (visibleHeight / 2);
         
-        // Delay to ensure ScrollView is mounted and ready
+        console.log('[CalendarScroll] Centering current time:', {
+          currentHour,
+          currentMinute,
+          currentTimePosition,
+          screenHeight,
+          visibleHeight,
+          scrollY: Math.max(0, scrollY)
+        });
+        
+        // Delay to ensure ScrollView is mounted and rendered with data
         setTimeout(() => {
           if (verticalScrollRef.current) {
             verticalScrollRef.current.scrollTo({
@@ -476,13 +495,13 @@ const CalanderScreen = () => {
               animated: true,
             });
           }
-        }, 300); // 300ms delay for mount
+        }, 500); // 500ms delay after data is loaded
       }
     };
 
-    // Scroll on mount and when date changes
+    // Scroll when calendar data is available and when date changes
     scrollToCurrentTime();
-  }, [currentDate]);
+  }, [currentDate, calanderData]);
 
   // Handle scroll end to update current index
   const handleScrollEnd = (event: any) => {
@@ -779,6 +798,12 @@ const CalanderScreen = () => {
       
       // Scroll to center current time when screen comes into focus
       const scrollToCurrentTime = () => {
+        // Only scroll if we have calendar data loaded
+        if (!calanderData || calanderData.length === 0) {
+          console.log('[CalendarScroll-Focus] Skipping scroll - no data loaded yet');
+          return;
+        }
+
         const currentHour = new Date().getHours();
         const currentMinute = new Date().getMinutes();
         const minHour = 8;
@@ -792,13 +817,27 @@ const CalanderScreen = () => {
 
           // Get screen height to calculate center position
           const screenHeight = Dimensions.get('window').height;
-          const headerHeight = getHeightEquivalent(135 + 85); // Date header + Staff header
-          const visibleHeight = screenHeight - headerHeight - getHeightEquivalent(100); // Subtract tab bar
+          const statusBarHeight = insets.top;
+          const dateHeaderHeight = getHeightEquivalent(135);
+          const staffHeaderHeight = getHeightEquivalent(85);
+          const tabBarHeight = getHeightEquivalent(100);
+          
+          // Calculate actual visible calendar height
+          const visibleHeight = screenHeight - statusBarHeight - dateHeaderHeight - staffHeaderHeight - tabBarHeight;
           
           // Calculate scroll position to center the current time
           const scrollY = currentTimePosition - (visibleHeight / 2);
           
-          // Delay to ensure ScrollView is mounted and ready
+          console.log('[CalendarScroll-Focus] Centering current time:', {
+            currentHour,
+            currentMinute,
+            currentTimePosition,
+            screenHeight,
+            visibleHeight,
+            scrollY: Math.max(0, scrollY)
+          });
+          
+          // Same delay as initial mount for consistency
           setTimeout(() => {
             if (verticalScrollRef.current) {
               verticalScrollRef.current.scrollTo({
@@ -812,7 +851,7 @@ const CalanderScreen = () => {
                 animated: true,
               });
             }
-          }, 300); // 300ms delay for mount
+          }, 500); // 500ms delay - same as initial mount for consistency
         }
       };
       
