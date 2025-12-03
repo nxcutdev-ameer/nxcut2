@@ -571,6 +571,7 @@ const CalanderScreen = () => {
   // Global lock for slot presses across ALL columns
   const globalSlotLock = useRef<boolean>(false);
   const globalLastPressTime = useRef<number>(0);
+  const syncTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Track scroll start to detect continuous scroll gestures
   const handleHorizontalScrollBegin = (event: any) => {
@@ -888,7 +889,7 @@ const CalanderScreen = () => {
                     }
                     const offsetX = event.nativeEvent.contentOffset.x;
 
-                    // Only sync if position changed significantly (> 0.5px for smooth snapping)
+                    // Only sync if position changed significantly
                     if (
                       Math.abs(offsetX - lastHorizontalScrollX.current) < 0.5
                     ) {
@@ -961,158 +962,214 @@ const CalanderScreen = () => {
           </View>
         </View>
         <View style={CalanderScreenStyles.bodyContainer}>
-          <View style={{ flex: 1, flexDirection: "column" }}>
-            <View style={{ flexDirection: "row", flex: 1 }}>
-              {/* Fixed Time Gutter Column with Red Line */}
-              <View style={{ width: getWidthEquivalent(40) }}>
-                <ScrollView
-                  ref={verticalScrollRef}
-                  bounces={false}
-                  showsVerticalScrollIndicator={false}
-                  scrollEnabled={scrollEnabled}
-                  scrollEventThrottle={8}
-                  onScroll={(event) => {
-                    // Sync calendar vertical scroll
-                    if (isScrollingVerticalFromCalendar.current) {
-                      isScrollingVerticalFromCalendar.current = false;
-                      return;
-                    }
-                    const offsetY = event.nativeEvent.contentOffset.y;
-
-                    // Only sync if position changed significantly (> 1px)
-                    if (Math.abs(offsetY - lastVerticalScrollY.current) < 1) {
-                      return;
-                    }
-                    lastVerticalScrollY.current = offsetY;
-
-                    if (calendarVerticalScrollRef.current) {
-                      isScrollingVerticalFromTimeGutter.current = true;
-                      calendarVerticalScrollRef.current.scrollTo({
-                        y: offsetY,
-                        animated: false,
-                      });
-                    }
-                  }}
-                >
-                  <View style={{ position: "relative" }}>
-                    {/* Current Time Indicator - Ellipse and Line */}
-                    {(() => {
-                      const currentHour = currentTime.getHours();
-                      const currentMinute = currentTime.getMinutes();
-                      const minHour = 8;
-                      const maxHour = 23;
-                      const hourHeight = getHeightEquivalent(80);
-
-                      if (currentHour < minHour || currentHour > maxHour) {
-                        return null;
-                      }
-
-                      const minutesFromMinHour =
-                        (currentHour - minHour) * 60 + currentMinute;
-                      const currentTimePosition =
-                        (minutesFromMinHour / 60) * hourHeight;
-
-                      return (
-                        <>
-                          {/* Ellipse with time */}
-                          <View
-                            style={{
-                              position: "absolute",
-                              top:
-                                currentTimePosition - getHeightEquivalent(10),
-                              width: getWidthEquivalent(40),
-                              height: getHeightEquivalent(20),
-                              borderRadius: getWidthEquivalent(10),
-                              borderWidth: 1.5,
-                              borderColor: "#D32F2F",
-                              backgroundColor: colors.white,
-                              alignItems: "center",
-                              justifyContent: "center",
-                              zIndex: 3000,
-                              elevation: 20,
-                              pointerEvents: "none",
-                              shadowColor: "#000",
-                              shadowOffset: { width: 0, height: 2 },
-                              shadowOpacity: 0.25,
-                              shadowRadius: 3.84,
-                            }}
-                          >
-                            <Text
-                              style={{
-                                fontSize: fontEq(8),
-                                fontWeight: "700",
-                                color: "#D32F2F",
-                              }}
-                            >
-                              {currentTime
-                                .getHours()
-                                .toString()
-                                .padStart(2, "0")}
-                              :
-                              {currentTime
-                                .getMinutes()
-                                .toString()
-                                .padStart(2, "0")}
-                            </Text>
-                          </View>
-                          {/* Red line in TimeGutter */}
-                          <View
-                            style={{
-                              position: "absolute",
-                              left: 0,
-                              right: 0,
-                              top: currentTimePosition,
-                              height: 2,
-                              backgroundColor: "#D32F2F",
-                              zIndex: 2500,
-                              pointerEvents: "none",
-                              elevation: 10,
-                            }}
-                          />
-                        </>
-                      );
-                    })()}
-
-                    <TimeGutter
-                      minHour={8}
-                      maxHour={23}
-                      hourHeight={getHeightEquivalent(80)}
-                    />
-                    {/* Small bottom padding for better scrolling */}
-                    <View style={{ height: getHeightEquivalent(40) }} />
-                  </View>
-                </ScrollView>
-              </View>
-
-              {/* Scrollable Appointment Columns */}
+          <View style={{ flex: 1, flexDirection: "row" }}>
+            {/* Fixed Time Gutter Column with Red Line */}
+            <View style={{ width: getWidthEquivalent(40) }}>
               <ScrollView
-                ref={calendarVerticalScrollRef}
+                ref={verticalScrollRef}
                 bounces={false}
                 showsVerticalScrollIndicator={false}
                 scrollEnabled={scrollEnabled}
-                style={{ flex: 1 }}
-                scrollEventThrottle={8}
+                scrollEventThrottle={1}
+                decelerationRate="fast"
+                directionalLockEnabled={true}
+                removeClippedSubviews={false}
                 onScroll={(event) => {
-                  // Sync TimeGutter vertical scroll
-                  if (isScrollingVerticalFromTimeGutter.current) {
-                    isScrollingVerticalFromTimeGutter.current = false;
+                  // Sync calendar vertical scroll immediately
+                  if (isScrollingVerticalFromCalendar.current) {
+                    isScrollingVerticalFromCalendar.current = false;
                     return;
                   }
                   const offsetY = event.nativeEvent.contentOffset.y;
-
-                  // Only sync if position changed significantly (> 1px)
-                  if (Math.abs(offsetY - lastVerticalScrollY.current) < 1) {
-                    return;
-                  }
                   lastVerticalScrollY.current = offsetY;
 
-                  if (verticalScrollRef.current) {
-                    isScrollingVerticalFromCalendar.current = true;
-                    verticalScrollRef.current.scrollTo({
+                  if (calendarVerticalScrollRef.current) {
+                    isScrollingVerticalFromTimeGutter.current = true;
+                    calendarVerticalScrollRef.current.scrollTo({
                       y: offsetY,
                       animated: false,
                     });
+                    
+                    // Reset sync flag quickly to allow immediate re-sync
+                    if (syncTimerRef.current) {
+                      clearTimeout(syncTimerRef.current);
+                    }
+                    syncTimerRef.current = setTimeout(() => {
+                      isScrollingVerticalFromTimeGutter.current = false;
+                    }, 10);
                   }
+                }}
+              >
+                <View style={{ position: "relative" }}>
+                  {/* Current Time Indicator - Ellipse and Line */}
+                  {(() => {
+                    const currentHour = currentTime.getHours();
+                    const currentMinute = currentTime.getMinutes();
+                    const minHour = 8;
+                    const maxHour = 23;
+                    const hourHeight = getHeightEquivalent(80);
+
+                    if (currentHour < minHour || currentHour > maxHour) {
+                      return null;
+                    }
+
+                    const minutesFromMinHour =
+                      (currentHour - minHour) * 60 + currentMinute;
+                    const currentTimePosition =
+                      (minutesFromMinHour / 60) * hourHeight;
+
+                    return (
+                      <>
+                        {/* Ellipse with time */}
+                        <View
+                          style={{
+                            position: "absolute",
+                            top:
+                              currentTimePosition - getHeightEquivalent(10),
+                            width: getWidthEquivalent(40),
+                            height: getHeightEquivalent(20),
+                            borderRadius: getWidthEquivalent(10),
+                            borderWidth: 1.5,
+                            borderColor: "#D32F2F",
+                            backgroundColor: colors.white,
+                            alignItems: "center",
+                            justifyContent: "center",
+                            zIndex: 3000,
+                            elevation: 20,
+                            pointerEvents: "none",
+                            shadowColor: "#000",
+                            shadowOffset: { width: 0, height: 2 },
+                            shadowOpacity: 0.25,
+                            shadowRadius: 3.84,
+                          }}
+                        >
+                          <Text
+                            style={{
+                              fontSize: fontEq(8),
+                              fontWeight: "700",
+                              color: "#D32F2F",
+                            }}
+                          >
+                            {currentTime
+                              .getHours()
+                              .toString()
+                              .padStart(2, "0")}
+                            :
+                            {currentTime
+                              .getMinutes()
+                              .toString()
+                              .padStart(2, "0")}
+                          </Text>
+                        </View>
+                        {/* Red line in TimeGutter */}
+                        <View
+                          style={{
+                            position: "absolute",
+                            left: 0,
+                            right: 0,
+                            top: currentTimePosition,
+                            height: 2,
+                            backgroundColor: "#D32F2F",
+                            zIndex: 2500,
+                            pointerEvents: "none",
+                            elevation: 10,
+                          }}
+                        />
+                      </>
+                    );
+                  })()}
+
+                  <TimeGutter
+                    minHour={8}
+                    maxHour={23}
+                    hourHeight={getHeightEquivalent(80)}
+                  />
+                  {/* Small bottom padding for better scrolling */}
+                  <View style={{ height: getHeightEquivalent(40) }} />
+                </View>
+              </ScrollView>
+            </View>
+
+            {/* Combined Vertical + Horizontal Scrollable Area */}
+            <ScrollView
+              ref={calendarVerticalScrollRef}
+              bounces={false}
+              showsVerticalScrollIndicator={false}
+              scrollEnabled={scrollEnabled}
+              style={{ flex: 1 }}
+              scrollEventThrottle={1}
+              decelerationRate="fast"
+              directionalLockEnabled={true}
+              removeClippedSubviews={false}
+              onScroll={(event) => {
+                // Sync TimeGutter vertical scroll immediately
+                if (isScrollingVerticalFromTimeGutter.current) {
+                  isScrollingVerticalFromTimeGutter.current = false;
+                  return;
+                }
+                const offsetY = event.nativeEvent.contentOffset.y;
+                lastVerticalScrollY.current = offsetY;
+
+                if (verticalScrollRef.current) {
+                  isScrollingVerticalFromCalendar.current = true;
+                  verticalScrollRef.current.scrollTo({
+                    y: offsetY,
+                    animated: false,
+                  });
+                  
+                  // Reset sync flag quickly to allow immediate re-sync
+                  if (syncTimerRef.current) {
+                    clearTimeout(syncTimerRef.current);
+                  }
+                  syncTimerRef.current = setTimeout(() => {
+                    isScrollingVerticalFromCalendar.current = false;
+                  }, 10);
+                }
+              }}
+            >
+              <ScrollView
+                ref={horizontalScrollRef}
+                horizontal
+                bounces={false}
+                showsHorizontalScrollIndicator={false}
+                scrollEnabled={scrollEnabled}
+                scrollEventThrottle={8}
+                directionalLockEnabled={true}
+                snapToInterval={threeColumnWidth}
+                snapToAlignment="start"
+                decelerationRate="fast"
+                onScrollBeginDrag={handleHorizontalScrollBegin}
+                onScroll={(event) => {
+                  // Sync staff header horizontal scroll
+                  if (isScrollingFromStaffHeader.current) {
+                    isScrollingFromStaffHeader.current = false;
+                    return;
+                  }
+                  const offsetX = event.nativeEvent.contentOffset.x;
+
+                  // Only sync if position changed significantly (> 0.5px for smooth snapping)
+                  if (
+                    Math.abs(offsetX - lastHorizontalScrollX.current) < 0.5
+                  ) {
+                    return;
+                  }
+                  lastHorizontalScrollX.current = offsetX;
+                  savedHorizontalScrollPosition.current = offsetX;
+
+                  if (staffHeaderScrollRef.current) {
+                    isScrollingFromCalendar.current = true;
+                    staffHeaderScrollRef.current.scrollTo({
+                      x: offsetX,
+                      y: 0,
+                      animated: false,
+                    });
+                  }
+                }}
+                // TEMPORARILY DISABLED: Date navigation on horizontal scroll
+                // onScrollEndDrag={handleHorizontalScrollEnd}
+                // onMomentumScrollEnd={handleHorizontalScrollEnd}
+                contentContainerStyle={{
+                  flexDirection: "column",
                 }}
               >
                 <View style={{ position: "relative" }}>
@@ -1149,173 +1206,130 @@ const CalanderScreen = () => {
                       />
                     );
                   })()}
-                </View>
+                  
+                  {/* Calendar columns container */}
+                  <View style={{ flexDirection: "row" }}>
+                    {columnConfigs.map(({ item, index, columnWidth }) => {
+                      let columnAppointments = item.staffAppointments;
 
-                <ScrollView
-                  ref={horizontalScrollRef}
-                  horizontal
-                  bounces={false}
-                  showsHorizontalScrollIndicator={false}
-                  scrollEnabled={scrollEnabled}
-                  scrollEventThrottle={8}
-                  directionalLockEnabled={true}
-                  snapToInterval={threeColumnWidth}
-                  snapToAlignment="start"
-                  decelerationRate="fast"
-                  onScrollBeginDrag={handleHorizontalScrollBegin}
-                  onScroll={(event) => {
-                    // Sync staff header horizontal scroll
-                    if (isScrollingFromStaffHeader.current) {
-                      isScrollingFromStaffHeader.current = false;
-                      return;
-                    }
-                    const offsetX = event.nativeEvent.contentOffset.x;
+                      if (editingState) {
+                        const {
+                          appointmentId,
+                          originalStaffId,
+                          pendingStaffId,
+                          pendingStart,
+                          pendingEnd,
+                          appointmentSnapshot,
+                        } = editingState;
 
-                    // Only sync if position changed significantly (> 0.5px for smooth snapping)
-                    if (
-                      Math.abs(offsetX - lastHorizontalScrollX.current) < 0.5
-                    ) {
-                      return;
-                    }
-                    lastHorizontalScrollX.current = offsetX;
-                    savedHorizontalScrollPosition.current = offsetX;
+                        const isRelevantColumn =
+                          item.staffId === originalStaffId ||
+                          item.staffId === pendingStaffId;
 
-                    if (staffHeaderScrollRef.current) {
-                      isScrollingFromCalendar.current = true;
-                      staffHeaderScrollRef.current.scrollTo({
-                        x: offsetX,
-                        y: 0,
-                        animated: false,
-                      });
-                    }
-                  }}
-                  // TEMPORARILY DISABLED: Date navigation on horizontal scroll
-                  // onScrollEndDrag={handleHorizontalScrollEnd}
-                  // onMomentumScrollEnd={handleHorizontalScrollEnd}
-                  contentContainerStyle={{
-                    flexDirection: "row",
-                  }}
-                >
-                  {columnConfigs.map(({ item, index, columnWidth }) => {
-                    let columnAppointments = item.staffAppointments;
-
-                    if (editingState) {
-                      const {
-                        appointmentId,
-                        originalStaffId,
-                        pendingStaffId,
-                        pendingStart,
-                        pendingEnd,
-                        appointmentSnapshot,
-                      } = editingState;
-
-                      const isRelevantColumn =
-                        item.staffId === originalStaffId ||
-                        item.staffId === pendingStaffId;
-
-                      if (isRelevantColumn) {
-                        const baseList = columnAppointments.filter(
-                          (appt) => appt.data.id !== appointmentId
-                        );
-
-                        if (item.staffId === pendingStaffId) {
-                          const existing = columnAppointments.find(
-                            (appt) => appt.data.id === appointmentId
+                        if (isRelevantColumn) {
+                          const baseList = columnAppointments.filter(
+                            (appt) => appt.data.id !== appointmentId
                           );
 
-                          const sourceAppointment =
-                            existing ?? appointmentSnapshot;
+                          if (item.staffId === pendingStaffId) {
+                            const existing = columnAppointments.find(
+                              (appt) => appt.data.id === appointmentId
+                            );
 
-                          const updatedAppointment = {
-                            ...sourceAppointment,
-                            start: new Date(pendingStart),
-                            end: new Date(pendingEnd),
-                            data: {
-                              ...sourceAppointment.data,
-                              staff_id: item.staffId,
-                              staff: sourceAppointment.data.staff
-                                ? {
-                                    ...sourceAppointment.data.staff,
-                                    id: item.staffId,
-                                  }
-                                : sourceAppointment.data.staff,
-                            },
-                          };
+                            const sourceAppointment =
+                              existing ?? appointmentSnapshot;
 
-                          columnAppointments = [
-                            ...baseList,
-                            updatedAppointment,
-                          ].sort(
-                            (a, b) => a.start.getTime() - b.start.getTime()
-                          );
-                        } else {
-                          columnAppointments = baseList;
+                            const updatedAppointment = {
+                              ...sourceAppointment,
+                              start: new Date(pendingStart),
+                              end: new Date(pendingEnd),
+                              data: {
+                                ...sourceAppointment.data,
+                                staff_id: item.staffId,
+                                staff: sourceAppointment.data.staff
+                                  ? {
+                                      ...sourceAppointment.data.staff,
+                                      id: item.staffId,
+                                    }
+                                  : sourceAppointment.data.staff,
+                              },
+                            };
+
+                            columnAppointments = [
+                              ...baseList,
+                              updatedAppointment,
+                            ].sort(
+                              (a, b) => a.start.getTime() - b.start.getTime()
+                            );
+                          } else {
+                            columnAppointments = baseList;
+                          }
                         }
                       }
-                    }
 
-                    return (
-                      <Fragment key={index}>
-                        <DraggableCalendarColumn
-                          staffName={item.staffName}
-                          staffId={item.staffId}
-                          columnIndex={index}
-                          allStaffIds={allStaffIds}
-                          appointments={columnAppointments}
-                          onAppointmentUpdate={(
-                            appointmentServiceId,
-                            newStartTime,
-                            newEndTime,
-                            newStaffId
-                          ) => {
-                            updateAppointmentTime(
+                      return (
+                        <Fragment key={index}>
+                          <DraggableCalendarColumn
+                            staffName={item.staffName}
+                            staffId={item.staffId}
+                            columnIndex={index}
+                            allStaffIds={allStaffIds}
+                            appointments={columnAppointments}
+                            onAppointmentUpdate={(
                               appointmentServiceId,
                               newStartTime,
                               newEndTime,
                               newStaffId
-                            ).then((success) => {
-                              if (success) {
-                                console.log(
-                                  "Appointment synced with backend successfully"
-                                );
-                              } else {
-                                console.error(
-                                  "Failed to sync appointment with backend"
-                                );
-                              }
-                            });
-                            return Promise.resolve();
-                          }}
-                          showHours={false}
-                          columnWidth={columnWidth}
-                          hourHeight={getHeightEquivalent(80)}
-                          minHour={8}
-                          maxHour={23}
-                          onScrollEnable={setScrollEnabled}
-                          editingState={editingState}
-                          onStartEditing={handleStartEditing}
-                          onAppointmentPreview={handleAppointmentPreview}
-                          totalStaffColumns={calanderData.length}
-                          globalSlotLock={globalSlotLock}
-                          globalLastPressTime={globalLastPressTime}
-                        />
-                        {index < columnConfigs.length - 1 && (
-                          <View
-                            style={{
-                              width: 1,
-                              height: "100%",
-                              backgroundColor: "rgba(0, 0, 0, 0.2)",
-                              position: "relative",
-                              zIndex: 1,
+                            ) => {
+                              updateAppointmentTime(
+                                appointmentServiceId,
+                                newStartTime,
+                                newEndTime,
+                                newStaffId
+                              ).then((success) => {
+                                if (success) {
+                                  console.log(
+                                    "Appointment synced with backend successfully"
+                                  );
+                                } else {
+                                  console.error(
+                                    "Failed to sync appointment with backend"
+                                  );
+                                }
+                              });
+                              return Promise.resolve();
                             }}
+                            showHours={false}
+                            columnWidth={columnWidth}
+                            hourHeight={getHeightEquivalent(80)}
+                            minHour={8}
+                            maxHour={23}
+                            onScrollEnable={setScrollEnabled}
+                            editingState={editingState}
+                            onStartEditing={handleStartEditing}
+                            onAppointmentPreview={handleAppointmentPreview}
+                            totalStaffColumns={calanderData.length}
+                            globalSlotLock={globalSlotLock}
+                            globalLastPressTime={globalLastPressTime}
                           />
-                        )}
-                      </Fragment>
-                    );
-                  })}
-                </ScrollView>
+                          {index < columnConfigs.length - 1 && (
+                            <View
+                              style={{
+                                width: 1,
+                                height: "100%",
+                                backgroundColor: "rgba(0, 0, 0, 0.2)",
+                                position: "relative",
+                                zIndex: 1,
+                              }}
+                            />
+                          )}
+                        </Fragment>
+                      );
+                    })}
+                  </View>
+                </View>
               </ScrollView>
-            </View>
+            </ScrollView>
           </View>
         </View>
 
