@@ -21,19 +21,38 @@ const useCalanderScreenVM = () => {
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
   const { calanderAppointmentsData, fetchCalanderAppointmentsData } =
     useAppointmentStore();
-  const { isFromLogin, setIsFromLogin, user, allLocations, allTeamMembers } = useAuthStore();
+  const { isFromLogin, setIsFromLogin, user, allLocations, allTeamMembers, currentLocation } = useAuthStore();
   const [hasInitialLoad, setHasInitialLoad] = useState(false);
   const { toast, showComingSoon, hideToast } = useToast();
+
+  // Initialize filter with currentLocation from LocationScreen if available
+  const getInitialLocationFilter = () => {
+    // If a location was selected in LocationScreen, use only that location
+    if (currentLocation) {
+      return [currentLocation];
+    }
+    // Otherwise, use all locations
+    return allLocations.map((location) => location.id);
+  };
 
   // Filter panel state
   const [showFilterPanel, setShowFilterPanel] = useState(false);
   const [pageFilter, setPageFilter] = useState({
-    location_ids: allLocations.map((location) => location.id),
+    location_ids: getInitialLocationFilter(),
   });
   // Temporary filter state for the modal (only applied when "Apply" is pressed)
   const [tempPageFilter, setTempPageFilter] = useState({
-    location_ids: allLocations.map((location) => location.id),
+    location_ids: getInitialLocationFilter(),
   });
+
+  // Update filter when currentLocation changes (e.g., user selects different location)
+  useEffect(() => {
+    if (currentLocation) {
+      const newFilter = { location_ids: [currentLocation] };
+      setPageFilter(newFilter);
+      setTempPageFilter(newFilter);
+    }
+  }, [currentLocation]);
   useEffect(() => {
     // Skip initial fetch if coming from login (data already hydrated)
     if (isFromLogin && !hasInitialLoad) {

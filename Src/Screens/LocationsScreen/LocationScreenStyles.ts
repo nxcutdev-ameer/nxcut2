@@ -100,4 +100,128 @@ export const LocationScreenStyles = StyleSheet.create({
   buttonTextDisabled: {
     color: colors.gray[500],
   },
+  
+  // Modern card-based location styles
+  LocationCard: {
+    marginHorizontal: getWidthEquivalent(20),
+    marginVertical: getHeightEquivalent(10),
+    borderRadius: 16,
+    overflow: 'hidden',
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    backgroundColor: colors.surface,
+    borderWidth: 2,
+    borderColor: 'transparent',
+  },
+  LocationCardSelected: {
+    borderColor: colors.primary,
+    elevation: 8,
+    shadowOpacity: 0.25,
+    shadowRadius: 12,
+  },
+  locationImageBackground: {
+    width: '100%',
+    height: getHeightEquivalent(180),
+    justifyContent: 'flex-end',
+  },
+  locationImage: {
+    borderRadius: 14,
+  },
+  imageGradient: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    padding: getWidthEquivalent(20),
+  },
+  locationNameContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  locationInfo: {
+    flex: 1,
+  },
+  LocationText: {
+    fontSize: fontEq(20),
+    fontWeight: '700',
+    color: '#FFFFFF',
+    textShadowColor: 'rgba(0, 0, 0, 0.5)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
+  },
+  locationDateText: {
+    fontSize: fontEq(12),
+    fontWeight: '400',
+    color: '#FFFFFF',
+    opacity: 0.85,
+    marginTop: getHeightEquivalent(4),
+    textShadowColor: 'rgba(0, 0, 0, 0.5)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
+  },
+  selectedBadge: {
+    backgroundColor: colors.primary,
+    paddingHorizontal: getWidthEquivalent(12),
+    paddingVertical: getHeightEquivalent(6),
+    borderRadius: 20,
+    marginLeft: getWidthEquivalent(10),
+  },
+  selectedBadgeText: {
+    color: '#FFFFFF',
+    fontSize: fontEq(12),
+    fontWeight: '600',
+  },
+  
+  // Placeholder styles for locations without images
+  locationPlaceholder: {
+    width: '100%',
+    height: getHeightEquivalent(180),
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: colors.backgroundSecondary,
+    padding: getWidthEquivalent(20),
+  },
+  locationPlaceholderSelected: {
+    backgroundColor: colors.primaryLight || colors.backgroundSecondary,
+  },
+  placeholderIcon: {
+    width: getWidthEquivalent(70),
+    height: getWidthEquivalent(70),
+    borderRadius: getWidthEquivalent(35),
+    backgroundColor: colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: getHeightEquivalent(15),
+  },
+  placeholderIconText: {
+    fontSize: fontEq(32),
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  placeholderTextContainer: {
+    alignItems: 'center',
+    marginTop: getHeightEquivalent(8),
+  },
+  placeholderLocationText: {
+    fontSize: fontEq(20),
+    fontWeight: '600',
+    color: colors.text,
+    textAlign: 'center',
+  },
+  placeholderLocationTextSelected: {
+    color: colors.primary,
+  },
+  placeholderDateText: {
+    fontSize: fontEq(12),
+    fontWeight: '400',
+    color: colors.textSecondary,
+    textAlign: 'center',
+    marginTop: getHeightEquivalent(4),
+  },
+  placeholderDateTextSelected: {
+    color: colors.primary,
+    opacity: 0.8,
+  },
 });

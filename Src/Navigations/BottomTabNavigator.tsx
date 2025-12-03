@@ -70,12 +70,14 @@ const BottomTabNavigator = () => {
               <Calendar
                 size={fontEq(26)}
                 color={focused ? colors.primary : "black"}
+                strokeWidth={1.8}
               >
                 <Text
                   style={{
                     color: focused ? colors?.primary : "black",
                     fontSize: fontEq(10),
                     fontWeight: "700",
+                    fontFamily: "Helvetica",
                     // position: "absolute",
                     marginTop: fontEq(11),
                     alignSelf: "center",
@@ -98,7 +100,11 @@ const BottomTabNavigator = () => {
         component={SalesScreen}
         options={{
           tabBarIcon: ({ focused }) => (
-            <Tag size={fontEq(26)} color={focused ? colors.primary : "black"} />
+            <Tag
+              size={fontEq(26)}
+              color={focused ? colors.primary : "black"}
+              strokeWidth={1.8}
+            />
           ),
         }}
       />
@@ -109,7 +115,7 @@ const BottomTabNavigator = () => {
         component={CreateAppointmentScreen}
         options={{
           tabBarIcon: ({ focused }) => (
-            <Plus size={fontEq(26)} color={colors.white} strokeWidth={2} />
+            <Plus size={fontEq(26)} color={colors.white} strokeWidth={1.8} />
           ),
           tabBarButton: (props) => <CreateButton {...props} />,
         }}
@@ -124,6 +130,7 @@ const BottomTabNavigator = () => {
             <Smile
               size={fontEq(26)}
               color={focused ? colors.primary : "black"}
+              strokeWidth={1.8}
             />
           ),
         }}
@@ -138,6 +145,7 @@ const BottomTabNavigator = () => {
             <LayoutGrid
               size={fontEq(26)}
               color={focused ? colors.primary : "black"}
+              strokeWidth={1.8}
             />
           ),
         }}

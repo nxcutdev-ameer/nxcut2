@@ -63,8 +63,15 @@ export const useAuthStore = create<AuthState>(
     isFromLogin: false,
     setEmail: (email: string) => set({ email }),
     setPassword: (password: string) => set({ password }),
-    setCurrentLocation: (location: string) =>
-      set({ currentLocation: location }),
+    setCurrentLocation: async (location: string) => {
+      set({ currentLocation: location });
+      // Persist location to AsyncStorage
+      try {
+        await AsyncStorage.setItem("@auth_location", location);
+      } catch (error) {
+        console.error("[AuthStore] Error saving location:", error);
+      }
+    },
     setUser: (user: UserBO) => set({ user }),
     setSession: (session: SessionBO | Session) => set({ session }),
     setIsFromLogin: (isFromLogin: boolean) => set({ isFromLogin }),

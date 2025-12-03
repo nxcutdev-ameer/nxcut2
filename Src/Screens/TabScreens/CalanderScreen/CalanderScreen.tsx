@@ -568,6 +568,10 @@ const CalanderScreen = () => {
     setIsDateModalVisible(false);
   };
 
+  // Global lock for slot presses across ALL columns
+  const globalSlotLock = useRef<boolean>(false);
+  const globalLastPressTime = useRef<number>(0);
+
   // Track scroll start to detect continuous scroll gestures
   const handleHorizontalScrollBegin = (event: any) => {
     scrollStartX.current = event.nativeEvent.contentOffset.x;
@@ -684,7 +688,7 @@ const CalanderScreen = () => {
 
   // All columns now have consistent width since time labels are in a separate fixed column
   const getColumnWidth = useCallback(
-    (index: number) => getWidthEquivalent(120),
+    (index: number) => getWidthEquivalent(111),
     []
   );
 
@@ -939,7 +943,7 @@ const CalanderScreen = () => {
                             style={{
                               color: colors.primary,
                               fontWeight: "bold",
-                              fontSize: fontEq(12),
+                              fontSize: fontEq(10),
                             }}
                           >
                             {staff?.staffName?.charAt(0).toUpperCase() || "S"}
@@ -1292,6 +1296,8 @@ const CalanderScreen = () => {
                           onStartEditing={handleStartEditing}
                           onAppointmentPreview={handleAppointmentPreview}
                           totalStaffColumns={calanderData.length}
+                          globalSlotLock={globalSlotLock}
+                          globalLastPressTime={globalLastPressTime}
                         />
                         {index < columnConfigs.length - 1 && (
                           <View

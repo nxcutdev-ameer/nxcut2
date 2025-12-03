@@ -87,7 +87,7 @@ const MoreScreen = () => {
             onPress={() => navigation.navigate("NotificationScreen")}
             style={MoreScreenStyles.bellWrapper}
           >
-            <Bell size={24} color={colors.text} />
+            <Bell size={24} color={colors.text} strokeWidth={1.7} />
             {/* <View style={MoreScreenStyles.badge} /> */}
           </TouchableOpacity>
           <TouchableOpacity
@@ -101,7 +101,11 @@ const MoreScreen = () => {
       <ScrollView style={MoreScreenStyles.container}>
         {/* Wallet Card */}
         <LinearGradient
-          colors={[colors.gradient.start, colors.gradient.middle, colors.gradient.end]}
+          colors={[
+            colors.gradient.start,
+            colors.gradient.middle,
+            colors.gradient.end,
+          ]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={[MoreScreenStyles.walletCard, shadows.medium]}

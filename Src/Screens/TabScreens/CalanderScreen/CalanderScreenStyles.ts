@@ -234,8 +234,8 @@ export const CalanderScreenStyles = StyleSheet.create({
     borderColor: paint.border,
   },
   staffImage: {
-    height: getHeightEquivalent(36),
-    width: getHeightEquivalent(36),
+    height: getHeightEquivalent(35),
+    width: getHeightEquivalent(35),
     borderRadius: 100,
     resizeMode: "cover",
     borderWidth: 1,
@@ -243,7 +243,7 @@ export const CalanderScreenStyles = StyleSheet.create({
     marginRight: getWidthEquivalent(8),
   },
   staffName: {
-    fontSize: fontEq(12),
+    fontSize: fontEq(10),
     fontWeight: "600",
     color: paint.text,
     textAlign: "center",
@@ -318,8 +318,8 @@ export const CalanderScreenStyles = StyleSheet.create({
     height: "100%",
   },
   staffImageContainer: {
-    height: getHeightEquivalent(36),
-    width: getHeightEquivalent(36),
+    height: getHeightEquivalent(35),
+    width: getHeightEquivalent(35),
     borderRadius: getHeightEquivalent(18),
     backgroundColor: paint.primaryLight,
     alignItems: "center",

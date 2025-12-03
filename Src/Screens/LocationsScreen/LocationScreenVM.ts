@@ -28,13 +28,8 @@ const useLocationScreenVM = () => {
     }
   }, []);
 
-  const updateCurrentLocation = (location: string) => {
-    setCurrentLocation(location);
-    console.log("location", currentLocation);
-    // navigation.reset({
-    //   index: 0,
-    //   routes: [{ name: "BottomTabNavigator" }],
-    // });
+  const updateCurrentLocation = async (location: string) => {
+    await setCurrentLocation(location);
   };
 
   const getLocationDetails = async () => {

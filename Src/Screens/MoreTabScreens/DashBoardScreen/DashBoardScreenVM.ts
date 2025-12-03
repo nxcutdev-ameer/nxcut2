@@ -50,7 +50,7 @@ const useDashBoardScreenVM = (dateRange?: {
     salesByLocationLoading,
     fetchSalesByLocationSummary,
   } = useReportStore();
-  const { isFromLogin, setIsFromLogin } = useAuthStore();
+  const { isFromLogin, setIsFromLogin, currentLocation, allLocations } = useAuthStore();
   const navigation: NavigationProp<any> = useNavigation();
 
   const [filter, setFilter] = React.useState(() => {
@@ -175,6 +175,8 @@ const useDashBoardScreenVM = (dateRange?: {
           staffPerformance: !hasData.staffPerformance,
           pieChart: !hasData.pieChart,
         });
+        
+        console.log("[DashBoard] Using location from LocationScreen:", currentLocation);
         return;
       }
 

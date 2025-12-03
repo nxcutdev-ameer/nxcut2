@@ -646,7 +646,7 @@ const DraggableAppointment: React.FC<DraggableAppointmentProps> = ({
           numberOfLines={1}
           ellipsizeMode="tail"
         >
-          {event.data.appointment.client.first_name} {" "}
+          {event.data.appointment.client.first_name}{" "}
           {event.data.appointment.client.last_name}
         </Text>
         <Text
@@ -676,8 +676,8 @@ const DraggableAppointment: React.FC<DraggableAppointmentProps> = ({
           {displayStart.toLocaleTimeString([], {
             hour: "2-digit",
             minute: "2-digit",
-          })}
-          {" "}-{" "}
+          })}{" "}
+          -{" "}
           {displayEnd.toLocaleTimeString([], {
             hour: "2-digit",
             minute: "2-digit",

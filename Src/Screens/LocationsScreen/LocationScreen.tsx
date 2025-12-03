@@ -1,11 +1,12 @@
 import React, { useEffect } from "react";
-import { FlatList, Text, TouchableOpacity, View, ActivityIndicator } from "react-native";
+import { FlatList, Text, TouchableOpacity, View, ActivityIndicator, Image, ImageBackground } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuthStore } from "../../Store/useAuthStore";
 import { LocationScreenStyles } from "./LocationScreenStyles";
 import useLocationScreenVM from "./LocationScreenVM";
 import colors from "../../Constants/colors";
 import { fontEq, getHeightEquivalent, getWidthEquivalent } from "../../Utils/helpers";
+import { LinearGradient } from 'expo-linear-gradient';
 
 const LocationScreen = () => {
   const {
@@ -33,32 +34,108 @@ const LocationScreen = () => {
       <FlatList
         data={locationData}
         keyExtractor={(item) => item.id}
+        contentContainerStyle={{ paddingBottom: getHeightEquivalent(20) }}
+        showsVerticalScrollIndicator={false}
         renderItem={({ item }) => {
           const isCurrent = item.id === currentLocation;
+          const imageUrl = item.photosUrl && item.photosUrl.length > 0 ? item.photosUrl[0] : null;
+          
+          // Format created_at date
+          const formatDate = (dateString: string) => {
+            if (!dateString) return '';
+            const date = new Date(dateString);
+            return date.toLocaleDateString('en-US', { 
+              month: 'short', 
+              day: 'numeric', 
+              year: 'numeric' 
+            });
+          };
+          
           return (
             <TouchableOpacity
               onPress={() => updateCurrentLocation(item.id)}
               style={[
-                LocationScreenStyles.locationItem, //51f127d0-8993-4b19-a60e-b515a8e50fa7  //8e369b56-fe5b-42de-a7ba-4a49da9511db
-                isCurrent && LocationScreenStyles.currentLocationItem,
+                LocationScreenStyles.LocationCard,
+                isCurrent && LocationScreenStyles.LocationCardSelected,
               ]}
+              activeOpacity={0.8}
             >
-              <Text
-                style={[
-                  LocationScreenStyles.locationText,
-                  isCurrent && LocationScreenStyles.currentLocationText,
-                ]}
-              >
-                {item.name}
-              </Text>
-              {/* <Text
-                style={[
-                  LocationScreenStyles.locationIDText,
-                  isCurrent && LocationScreenStyles.currentLocationText,
-                ]}
-              >
-                Location ID: {item.id}
-              </Text> */}
+              {imageUrl ? (
+                <ImageBackground
+                  source={{ uri: imageUrl }}
+                  style={LocationScreenStyles.locationImageBackground}
+                  imageStyle={LocationScreenStyles.locationImage}
+                  resizeMode="cover"
+                >
+                  <LinearGradient
+                    colors={["transparent", "rgba(0,0,0,0.7)"]}
+                    style={LocationScreenStyles.imageGradient}
+                  >
+                    <View style={LocationScreenStyles.locationNameContainer}>
+                      <View style={LocationScreenStyles.locationInfo}>
+                        <Text style={LocationScreenStyles.LocationText}>
+                          {item.name}
+                        </Text>
+                        {item.created_at && (
+                          <Text style={LocationScreenStyles.locationDateText}>
+                            Created: {formatDate(item.created_at)}
+                          </Text>
+                        )}
+                      </View>
+                      {isCurrent && (
+                        <View style={LocationScreenStyles.selectedBadge}>
+                          <Text style={LocationScreenStyles.selectedBadgeText}>
+                            ✓ Selected
+                          </Text>
+                        </View>
+                      )}
+                    </View>
+                  </LinearGradient>
+                </ImageBackground>
+              ) : (
+                <View
+                  style={[
+                    LocationScreenStyles.locationPlaceholder,
+                    isCurrent &&
+                      LocationScreenStyles.locationPlaceholderSelected,
+                  ]}
+                >
+                  <View style={LocationScreenStyles.placeholderIcon}>
+                    <Text style={LocationScreenStyles.placeholderIconText}>
+                      {item.name.charAt(0).toUpperCase()}
+                    </Text>
+                  </View>
+                  <View style={LocationScreenStyles.placeholderTextContainer}>
+                    <Text
+                      style={[
+                        LocationScreenStyles.placeholderLocationText,
+                        isCurrent &&
+                          LocationScreenStyles.placeholderLocationTextSelected,
+                      ]}
+                    >
+                      {item.name}
+                    </Text>
+                    {item.created_at && (
+                      <Text
+                        style={[
+                          LocationScreenStyles.placeholderDateText,
+                          isCurrent &&
+                            LocationScreenStyles.placeholderDateTextSelected,
+                        ]}
+                      >
+                        Added: {formatDate(item.created_at)}
+                      </Text>
+                    )}
+                  </View>
+                  {isCurrent && (
+                    <View style={LocationScreenStyles.selectedBadge}>
+                      <Text style={LocationScreenStyles.selectedBadgeText}>
+                        ✓ Selected
+                      </Text>
+                    </View>
+                  )}
+                </View>
+              )}
             </TouchableOpacity>
           );
         }}

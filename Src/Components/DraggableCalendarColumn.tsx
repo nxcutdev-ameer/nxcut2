@@ -81,6 +81,8 @@ const DraggableCalendarColumn: React.FC<DraggableCalendarColumnProps> = ({
   onStartEditing,
   onAppointmentPreview,
   totalStaffColumns,
+  globalSlotLock,
+  globalLastPressTime,
 }) => {
   const navigation = useNavigation<any>();
   const [selectedSlot, setSelectedSlot] = useState<{
@@ -92,17 +94,46 @@ const DraggableCalendarColumn: React.FC<DraggableCalendarColumnProps> = ({
   const touchStartTime = React.useRef<number>(0);
   const touchStartPosition = React.useRef<{ x: number; y: number }>({ x: 0, y: 0 });
   const isScrolling = React.useRef<boolean>(false);
+  const isSlotBeingPressed = React.useRef<boolean>(false); // Prevent multiple simultaneous touches
+  const lastPressTime = React.useRef<number>(0); // Track last press time for cooldown
 
   // Clear selection when returning to screen
   useEffect(() => {
     const unsubscribe = navigation.addListener("focus", () => {
       setSelectedSlot(null);
+      // Reset all locks when returning to calendar screen (GLOBAL + LOCAL)
+      if (globalSlotLock) globalSlotLock.current = false;
+      if (globalLastPressTime) globalLastPressTime.current = 0;
+      isSlotBeingPressed.current = false;
+      lastPressTime.current = 0;
     });
     return unsubscribe;
-  }, [navigation]);
+  }, [navigation, globalSlotLock, globalLastPressTime]);
 
   // Handle time slot click for creating new appointment
   const handleTimeSlotPress = (hourIndex: number, minuteOffset: number = 0) => {
+    const now = Date.now();
+    
+    // GLOBAL cooldown: Check global lock across ALL columns
+    if (globalLastPressTime?.current && now - globalLastPressTime.current < 3000) {
+      return;
+    }
+
+    // GLOBAL lock: Check if ANY slot is being pressed
+    if (globalSlotLock?.current) {
+      return;
+    }
+
+    // Local cooldown: Prevent any press within 3000ms (3 seconds) of last press
+    if (now - lastPressTime.current < 3000) {
+      return;
+    }
+
+    // Prevent multiple simultaneous slot presses
+    if (isSlotBeingPressed.current) {
+      return;
+    }
+
     // Don't trigger if user was scrolling
     if (isScrolling.current) {
       isScrolling.current = false;
@@ -110,13 +141,18 @@ const DraggableCalendarColumn: React.FC<DraggableCalendarColumnProps> = ({
     }
 
     // Calculate touch duration
-    const touchDuration = Date.now() - touchStartTime.current;
+    const touchDuration = now - touchStartTime.current;
     
     // Only trigger if touch was quick (less than 200ms) - intentional tap
-    // and didn't move much (prevents triggering during scroll)
     if (touchDuration > 200) {
       return;
     }
+
+    // Mark that a slot is being pressed and record time (GLOBAL + LOCAL)
+    if (globalSlotLock) globalSlotLock.current = true;
+    if (globalLastPressTime) globalLastPressTime.current = now;
+    isSlotBeingPressed.current = true;
+    lastPressTime.current = now;
 
     // Haptic feedback
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -128,20 +164,24 @@ const DraggableCalendarColumn: React.FC<DraggableCalendarColumnProps> = ({
     const slotTime = new Date();
     slotTime.setHours(minHour + hourIndex, minuteOffset, 0, 0);
 
-    // Wait 0.5 second then navigate
+    // Navigate immediately (no delay for better UX)
+    navigation.navigate("CreateAppointment", {
+      prefilledData: {
+        date: new Date(), // Current date - can be enhanced to use calendar date
+        time: `${slotTime.getHours().toString().padStart(2, "0")}:${slotTime
+          .getMinutes()
+          .toString()
+          .padStart(2, "0")}`,
+        staffId: staffId,
+        staffName: staffName,
+      },
+    });
+    
+    // Keep lock active for 3 seconds to ensure CreateAppointment screen is fully loaded
     setTimeout(() => {
-      navigation.navigate("CreateAppointment", {
-        prefilledData: {
-          date: new Date(), // Current date - can be enhanced to use calendar date
-          time: `${slotTime.getHours().toString().padStart(2, "0")}:${slotTime
-            .getMinutes()
-            .toString()
-            .padStart(2, "0")}`,
-          staffId: staffId,
-          staffName: staffName,
-        },
-      });
-    }, 500);
+      if (globalSlotLock) globalSlotLock.current = false;
+      isSlotBeingPressed.current = false;
+    }, 3000);
   };
   const hours = Array.from(
     { length: maxHour - minHour + 1 },

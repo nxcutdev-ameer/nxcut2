@@ -19,7 +19,7 @@ const SalesScreen = () => {
           onPress={() => navigation.navigate("NotificationScreen")}
           style={SalesScreenStyles.headerNotification}
         >
-          <Bell size={25} color={colors.text} />
+          <Bell size={25} color={colors.text} strokeWidth={1.7} />
         </TouchableOpacity>
         <TouchableOpacity
           onPress={() => navigation.navigate("ProfileAreaScreen")}
