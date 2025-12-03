@@ -210,6 +210,9 @@ export const appointmentsRepository = {
     limitRecords?: number
   ): Promise<AppointmentActivityBO[]> {
     try {
+      // Get current location fresh from store (not the stale module-level variable)
+      const { currentLocation } = useAuthStore.getState();
+      
       // Function to fetch data with pagination
       const fetchAllAppointments = async (): Promise<any[]> => {
         let allData: any[] = [];
@@ -239,7 +242,7 @@ export const appointmentsRepository = {
             .range(from, from + limit - 1);
 
           if (filter.endDate) {
-            // ✅ Between startDate and endDate
+            // ✅ Between startDate and endDate - filtered by current location
             query = query
               .gte("appointment_date", filter.startDate)
               .lte("appointment_date", filter.endDate)

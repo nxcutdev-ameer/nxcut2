@@ -167,8 +167,8 @@ const ClientScreen = () => {
               navigateToAddClient();
             }}
           >
-            <Text style={ClientScreenStyles.actionButtonText}>Add</Text>
-            <Plus size={20} />
+            <Text style={ClientScreenStyles.actionButtonText}> Add </Text>
+            <Plus size={20} strokeWidth={1.7} />
           </TouchableOpacity>
         </View>
       </View>

@@ -221,13 +221,17 @@ const DailySalesScreen = () => {
           style={DailySalesScreenStyles.elipseBox}
           onPress={openExportBottomSheet}
         >
-          <EllipsisVertical size={20} color={colors.colors.text} />
+          <EllipsisVertical
+            size={20}
+            color={colors.colors.text}
+            strokeWidth={1.7}
+          />
         </TouchableOpacity>
         <TouchableOpacity
           onPress={openFilterPanel}
           style={DailySalesScreenStyles.filter}
         >
-          <Sliders size={22} color={colors.colors.black} />
+          <Sliders size={22} color={colors.colors.black} strokeWidth={1.7} />
           {/* <Text style={DailySalesScreenStyles.addButtonText}>Add</Text> */}
         </TouchableOpacity>
       </View>
@@ -301,7 +305,6 @@ const DailySalesScreen = () => {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={DailySalesScreenStyles.scrollContent}
       >
-
         <Text style={DailySalesScreenStyles.sectionTitle}>Summary</Text>
 
         <DailySalesSummary
@@ -316,8 +319,8 @@ const DailySalesScreen = () => {
           Cash Movement Summary
         </Text>
 
-        <CashMovementSummary 
-          data={cashMovementData} 
+        <CashMovementSummary
+          data={cashMovementData}
           totalTips={cashMovementTotals.totalTips}
           grandTotal={cashMovementTotals.grandTotal}
         />

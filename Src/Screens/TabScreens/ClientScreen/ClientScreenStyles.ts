@@ -21,7 +21,7 @@ export const ClientScreenStyles = StyleSheet.create({
     justifyContent: "space-between",
     flexDirection: "row",
     backgroundColor: paint.white,
-   // borderBottomWidth: 1,
+    // borderBottomWidth: 1,
     paddingLeft: getWidthEquivalent(20),
     borderBottomColor: paint.border,
   },
@@ -42,15 +42,15 @@ export const ClientScreenStyles = StyleSheet.create({
     borderRadius: 50,
     borderWidth: 1,
     backgroundColor: paint.white,
-    borderColor: paint.border,
+    borderColor: paint.backdrop,
     width: getWidthEquivalent(80),
     alignItems: "center",
     justifyContent: "center",
     alignSelf: "center",
   },
   actionButtonText: {
-    fontSize: fontEq(16),
-    fontWeight: "400",
+    fontSize: fontEq(14),
+    fontWeight: "500",
     color: paint.text,
   },
   elipseContainer: {
@@ -210,7 +210,7 @@ export const ClientScreenStyles = StyleSheet.create({
   },
   clearButton: {
     //padding: getWidthEquivalent(5),
-   // marginLeft: getWidthEquivalent(5),
+    // marginLeft: getWidthEquivalent(5),
   },
   loadMoreButton: {
     backgroundColor: paint.white,

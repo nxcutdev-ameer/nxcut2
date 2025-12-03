@@ -923,9 +923,22 @@ const useDashBoardScreenVM = (dateRange?: {
         staffNameFilter: debouncedStaffSearchText.trim() || undefined,
       };
 
+      // For Activity section, always use today's date only
+      // Use local timezone to avoid UTC date mismatch
+      const todayDate = new Date();
+      const year = todayDate.getFullYear();
+      const month = String(todayDate.getMonth() + 1).padStart(2, '0');
+      const day = String(todayDate.getDate()).padStart(2, '0');
+      const today = `${year}-${month}-${day}`;
+      
+      const activityFilter = {
+        startDate: today,
+        endDate: today,
+      };
+      
       await Promise.all([
         fetchTopServices(filterObj),
-        fetchApppointmentsActivityData(filterObj, undefined, 5),
+        fetchApppointmentsActivityData(activityFilter, undefined, undefined), // All today's appointments (no limit)
         fetchAppointmentsWithSalesData(filterObj),
         fetchStaffPerformanceData(staffFilter),
         fetchSalesByLocationSummary({
