@@ -340,6 +340,13 @@ const DraggableAppointment: React.FC<DraggableAppointmentProps> = ({
       onPanResponderGrant: (evt: GestureResponderEvent) => {
         evt.stopPropagation();
 
+        // Prevent any interactions for paid appointments
+        if (event.data.appointment.status === "paid") {
+          suppressTapRef.current = false; // Allow tap for viewing
+          onScrollEnable?.(true);
+          return;
+        }
+
         if (disableInteractionsRef.current && !isEditing) {
           suppressTapRef.current = true;
           onScrollEnable?.(true);
@@ -373,6 +380,11 @@ const DraggableAppointment: React.FC<DraggableAppointmentProps> = ({
         lastSnappedSlotRef.current = getTimeSlotIndex(currentY);
       },
       onPanResponderMove: (_evt: GestureResponderEvent, gestureState: PanResponderGestureState) => {
+        // Prevent any dragging for paid appointments
+        if (event.data.appointment.status === "paid") {
+          return;
+        }
+
         if (disableInteractionsRef.current && !isEditing) {
           return;
         }
@@ -469,6 +481,17 @@ const DraggableAppointment: React.FC<DraggableAppointmentProps> = ({
         pan.setValue({ x: translateX, y: translateY });
       },
       onPanResponderRelease: (_evt: GestureResponderEvent, gesture: PanResponderGestureState) => {
+        // Prevent any dragging for paid appointments - allow tap only
+        if (event.data.appointment.status === "paid") {
+          onScrollEnable?.(true);
+          // Allow tap to view appointment details
+          if (!hasMoved.current && onPress && !disableInteractions) {
+            onPress();
+          }
+          pan.setValue({ x: 0, y: 0 });
+          return;
+        }
+
         if (disableInteractionsRef.current && !isEditing) {
           onScrollEnable?.(true);
           suppressTapRef.current = false;
