@@ -62,6 +62,8 @@ interface DraggableCalendarColumnProps {
     targetStaffId: string
   ) => void;
   totalStaffColumns: number;
+  globalSlotLock?: React.MutableRefObject<boolean>;
+  globalLastPressTime?: React.MutableRefObject<number>;
 }
 
 const DraggableCalendarColumn: React.FC<DraggableCalendarColumnProps> = ({
@@ -669,7 +671,7 @@ const styles = StyleSheet.create({
   hourSlot: {
     position: "relative",
     borderBottomWidth: 1,
-    borderBottomColor: colors.gray[200],
+    borderBottomColor: colors.backdrop,
   },
   hourLabelContainer: {
     position: "absolute",
@@ -720,7 +722,7 @@ const styles = StyleSheet.create({
     backgroundColor: "transparent",
     alignItems: "center",
     justifyContent: "center",
-    borderRadius: 5,
+    borderRadius: 6,
   },
   slotTimeText: {
     fontSize: fontEq(12),

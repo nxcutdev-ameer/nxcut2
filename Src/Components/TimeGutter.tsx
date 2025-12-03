@@ -87,7 +87,7 @@ const styles = StyleSheet.create({
     width: getWidthEquivalent(40),
     backgroundColor: colors.white,
     borderRightWidth: 1,
-    borderRightColor: colors.gray[300],
+    borderRightColor: colors.backdrop,
     shadowColor: "#000",
     shadowOffset: {
       width: 2,
@@ -96,12 +96,13 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 3,
     elevation: 5,
+    height: getHeightEquivalent(1235),
   },
   timeSlot: {
     justifyContent: "flex-start",
     alignItems: "center",
     backgroundColor: colors.white,
-    marginTop: getHeightEquivalent(-2),
+    marginTop: getHeightEquivalent(-1),
   },
   timeContainer: {
     flexDirection: "row",
