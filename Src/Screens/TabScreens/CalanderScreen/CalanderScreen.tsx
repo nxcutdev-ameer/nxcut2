@@ -777,6 +777,48 @@ const CalanderScreen = () => {
       const dateString = currentDate.toISOString().split('T')[0];
       fetchCalanderAppointmentsData(dateString, locationIds);
       
+      // Scroll to center current time when screen comes into focus
+      const scrollToCurrentTime = () => {
+        const currentHour = new Date().getHours();
+        const currentMinute = new Date().getMinutes();
+        const minHour = 8;
+        const maxHour = 23;
+        const hourHeight = getHeightEquivalent(80);
+
+        // Only scroll if current time is within calendar hours
+        if (currentHour >= minHour && currentHour <= maxHour) {
+          const minutesFromMinHour = (currentHour - minHour) * 60 + currentMinute;
+          const currentTimePosition = (minutesFromMinHour / 60) * hourHeight;
+
+          // Get screen height to calculate center position
+          const screenHeight = Dimensions.get('window').height;
+          const headerHeight = getHeightEquivalent(135 + 85); // Date header + Staff header
+          const visibleHeight = screenHeight - headerHeight - getHeightEquivalent(100); // Subtract tab bar
+          
+          // Calculate scroll position to center the current time
+          const scrollY = currentTimePosition - (visibleHeight / 2);
+          
+          // Delay to ensure ScrollView is mounted and ready
+          setTimeout(() => {
+            if (verticalScrollRef.current) {
+              verticalScrollRef.current.scrollTo({
+                y: Math.max(0, scrollY), // Ensure non-negative
+                animated: true,
+              });
+            }
+            if (calendarVerticalScrollRef.current) {
+              calendarVerticalScrollRef.current.scrollTo({
+                y: Math.max(0, scrollY), // Ensure non-negative
+                animated: true,
+              });
+            }
+          }, 300); // 300ms delay for mount
+        }
+      };
+      
+      // Trigger scroll to current time
+      scrollToCurrentTime();
+      
       // Re-enable scroll events after a longer delay (1000ms) to ensure back swipe completes
       setTimeout(() => {
         ignoreScrollEvents.current = false;

@@ -98,6 +98,7 @@ const DraggableCalendarColumn: React.FC<DraggableCalendarColumnProps> = ({
   const isScrolling = React.useRef<boolean>(false);
   const isSlotBeingPressed = React.useRef<boolean>(false); // Prevent multiple simultaneous touches
   const lastPressTime = React.useRef<number>(0); // Track last press time for cooldown
+  const slotNavigationTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null); // Track navigation delay
 
   // Clear selection when returning to screen
   useEffect(() => {
@@ -111,6 +112,16 @@ const DraggableCalendarColumn: React.FC<DraggableCalendarColumnProps> = ({
     });
     return unsubscribe;
   }, [navigation, globalSlotLock, globalLastPressTime]);
+
+  // Cleanup navigation timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (slotNavigationTimeoutRef.current) {
+        clearTimeout(slotNavigationTimeoutRef.current);
+        slotNavigationTimeoutRef.current = null;
+      }
+    };
+  }, []);
 
   // Handle time slot click for creating new appointment
   const handleTimeSlotPress = (hourIndex: number, minuteOffset: number = 0) => {
@@ -166,18 +177,20 @@ const DraggableCalendarColumn: React.FC<DraggableCalendarColumnProps> = ({
     const slotTime = new Date();
     slotTime.setHours(minHour + hourIndex, minuteOffset, 0, 0);
 
-    // Navigate immediately (no delay for better UX)
-    navigation.navigate("CreateAppointment", {
-      prefilledData: {
-        date: new Date(), // Current date - can be enhanced to use calendar date
-        time: `${slotTime.getHours().toString().padStart(2, "0")}:${slotTime
-          .getMinutes()
-          .toString()
-          .padStart(2, "0")}`,
-        staffId: staffId,
-        staffName: staffName,
-      },
-    });
+    // Navigate after 100ms delay to prevent accidental taps during scrolling
+    slotNavigationTimeoutRef.current = setTimeout(() => {
+      navigation.navigate("CreateAppointment", {
+        prefilledData: {
+          date: new Date(), // Current date - can be enhanced to use calendar date
+          time: `${slotTime.getHours().toString().padStart(2, "0")}:${slotTime
+            .getMinutes()
+            .toString()
+            .padStart(2, "0")}`,
+          staffId: staffId,
+          staffName: staffName,
+        },
+      });
+    }, 400); // 100ms delay before navigation
     
     // Keep lock active for 3 seconds to ensure CreateAppointment screen is fully loaded
     setTimeout(() => {
@@ -357,6 +370,12 @@ const DraggableCalendarColumn: React.FC<DraggableCalendarColumnProps> = ({
                     y: e.nativeEvent.pageY,
                   };
                   isScrolling.current = false;
+                  
+                  // Clear any pending navigation timeout
+                  if (slotNavigationTimeoutRef.current) {
+                    clearTimeout(slotNavigationTimeoutRef.current);
+                    slotNavigationTimeoutRef.current = null;
+                  }
                 }}
                 onPressOut={(e) => {
                   // Detect if finger moved significantly (more than 10 pixels)
@@ -366,6 +385,12 @@ const DraggableCalendarColumn: React.FC<DraggableCalendarColumnProps> = ({
                   );
                   if (moveDistance > 10) {
                     isScrolling.current = true;
+                    
+                    // Cancel pending navigation if user is scrolling
+                    if (slotNavigationTimeoutRef.current) {
+                      clearTimeout(slotNavigationTimeoutRef.current);
+                      slotNavigationTimeoutRef.current = null;
+                    }
                   }
                 }}
                 onPress={() => handleTimeSlotPress(index, 0)}
@@ -398,6 +423,12 @@ const DraggableCalendarColumn: React.FC<DraggableCalendarColumnProps> = ({
                     y: e.nativeEvent.pageY,
                   };
                   isScrolling.current = false;
+                  
+                  // Clear any pending navigation timeout
+                  if (slotNavigationTimeoutRef.current) {
+                    clearTimeout(slotNavigationTimeoutRef.current);
+                    slotNavigationTimeoutRef.current = null;
+                  }
                 }}
                 onPressOut={(e) => {
                   const moveDistance = Math.sqrt(
@@ -406,6 +437,12 @@ const DraggableCalendarColumn: React.FC<DraggableCalendarColumnProps> = ({
                   );
                   if (moveDistance > 10) {
                     isScrolling.current = true;
+                    
+                    // Cancel pending navigation if user is scrolling
+                    if (slotNavigationTimeoutRef.current) {
+                      clearTimeout(slotNavigationTimeoutRef.current);
+                      slotNavigationTimeoutRef.current = null;
+                    }
                   }
                 }}
                 onPress={() => handleTimeSlotPress(index, 15)}
@@ -438,6 +475,12 @@ const DraggableCalendarColumn: React.FC<DraggableCalendarColumnProps> = ({
                     y: e.nativeEvent.pageY,
                   };
                   isScrolling.current = false;
+                  
+                  // Clear any pending navigation timeout
+                  if (slotNavigationTimeoutRef.current) {
+                    clearTimeout(slotNavigationTimeoutRef.current);
+                    slotNavigationTimeoutRef.current = null;
+                  }
                 }}
                 onPressOut={(e) => {
                   const moveDistance = Math.sqrt(
@@ -446,6 +489,12 @@ const DraggableCalendarColumn: React.FC<DraggableCalendarColumnProps> = ({
                   );
                   if (moveDistance > 10) {
                     isScrolling.current = true;
+                    
+                    // Cancel pending navigation if user is scrolling
+                    if (slotNavigationTimeoutRef.current) {
+                      clearTimeout(slotNavigationTimeoutRef.current);
+                      slotNavigationTimeoutRef.current = null;
+                    }
                   }
                 }}
                 onPress={() => handleTimeSlotPress(index, 30)}
@@ -478,6 +527,12 @@ const DraggableCalendarColumn: React.FC<DraggableCalendarColumnProps> = ({
                     y: e.nativeEvent.pageY,
                   };
                   isScrolling.current = false;
+                  
+                  // Clear any pending navigation timeout
+                  if (slotNavigationTimeoutRef.current) {
+                    clearTimeout(slotNavigationTimeoutRef.current);
+                    slotNavigationTimeoutRef.current = null;
+                  }
                 }}
                 onPressOut={(e) => {
                   const moveDistance = Math.sqrt(
@@ -486,6 +541,12 @@ const DraggableCalendarColumn: React.FC<DraggableCalendarColumnProps> = ({
                   );
                   if (moveDistance > 10) {
                     isScrolling.current = true;
+                    
+                    // Cancel pending navigation if user is scrolling
+                    if (slotNavigationTimeoutRef.current) {
+                      clearTimeout(slotNavigationTimeoutRef.current);
+                      slotNavigationTimeoutRef.current = null;
+                    }
                   }
                 }}
                 onPress={() => handleTimeSlotPress(index, 45)}

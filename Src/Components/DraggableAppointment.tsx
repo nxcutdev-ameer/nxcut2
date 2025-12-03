@@ -77,6 +77,8 @@ const DraggableAppointment: React.FC<DraggableAppointmentProps> = ({
   const longPressTriggeredRef = useRef(false);
   const suppressTapRef = useRef(false);
   const longPressTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const intentionalTouchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const intentionalTouchTriggeredRef = useRef(false);
   const dragEnabledRef = useRef<boolean>(canDrag);
   const lastSnappedColumnRef = useRef<number>(0);
   const lastSnappedSlotRef = useRef<number | null>(null);
@@ -113,6 +115,10 @@ const DraggableAppointment: React.FC<DraggableAppointmentProps> = ({
       if (longPressTimeoutRef.current) {
         clearTimeout(longPressTimeoutRef.current);
         longPressTimeoutRef.current = null;
+      }
+      if (intentionalTouchTimeoutRef.current) {
+        clearTimeout(intentionalTouchTimeoutRef.current);
+        intentionalTouchTimeoutRef.current = null;
       }
     };
   }, []);
@@ -340,9 +346,27 @@ const DraggableAppointment: React.FC<DraggableAppointmentProps> = ({
       onPanResponderGrant: (evt: GestureResponderEvent) => {
         evt.stopPropagation();
 
-        // Prevent any interactions for paid appointments
+        // For paid appointments, require intentional touch (600ms hold without movement)
         if (event.data.appointment.status === "paid") {
-          suppressTapRef.current = false; // Allow tap for viewing
+          touchStartTime.current = Date.now();
+          hasMoved.current = false;
+          intentionalTouchTriggeredRef.current = false;
+          suppressTapRef.current = true; // Suppress quick taps by default
+          
+          // Start timer for intentional touch
+          if (intentionalTouchTimeoutRef.current) {
+            clearTimeout(intentionalTouchTimeoutRef.current);
+          }
+          intentionalTouchTimeoutRef.current = setTimeout(() => {
+            // Only trigger if user hasn't moved
+            if (!hasMoved.current && !disableInteractions) {
+              intentionalTouchTriggeredRef.current = true;
+              suppressTapRef.current = false;
+              // Light haptic feedback to confirm intentional touch registered
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            }
+          }, 10); // 400ms hold required for paid appointments (same as long press)
+          
           onScrollEnable?.(true);
           return;
         }
@@ -371,7 +395,7 @@ const DraggableAppointment: React.FC<DraggableAppointmentProps> = ({
             dragEnabledRef.current = true;
             suppressTapRef.current = true;
             onLongPress(event.data.id, staffId);
-          }, 400);
+          }, 300);
         }
 
         // Set initial slot for haptic feedback
@@ -382,6 +406,22 @@ const DraggableAppointment: React.FC<DraggableAppointmentProps> = ({
       onPanResponderMove: (_evt: GestureResponderEvent, gestureState: PanResponderGestureState) => {
         // Prevent any dragging for paid appointments
         if (event.data.appointment.status === "paid") {
+          const distanceMoved = Math.max(
+            Math.abs(gestureState.dx),
+            Math.abs(gestureState.dy)
+          );
+          
+          // If user moves more than 8px, cancel intentional touch and mark as moved
+          // This prevents accidental touches during scrolling
+          if (distanceMoved > 8) {
+            hasMoved.current = true;
+            suppressTapRef.current = true;
+            intentionalTouchTriggeredRef.current = false;
+            if (intentionalTouchTimeoutRef.current) {
+              clearTimeout(intentionalTouchTimeoutRef.current);
+              intentionalTouchTimeoutRef.current = null;
+            }
+          }
           return;
         }
 
@@ -481,13 +521,25 @@ const DraggableAppointment: React.FC<DraggableAppointmentProps> = ({
         pan.setValue({ x: translateX, y: translateY });
       },
       onPanResponderRelease: (_evt: GestureResponderEvent, gesture: PanResponderGestureState) => {
-        // Prevent any dragging for paid appointments - allow tap only
+        // For paid appointments - only allow intentional touch (600ms hold without movement)
         if (event.data.appointment.status === "paid") {
           onScrollEnable?.(true);
-          // Allow tap to view appointment details
-          if (!hasMoved.current && onPress && !disableInteractions) {
+          
+          // Clear the intentional touch timer
+          if (intentionalTouchTimeoutRef.current) {
+            clearTimeout(intentionalTouchTimeoutRef.current);
+            intentionalTouchTimeoutRef.current = null;
+          }
+          
+          // Only trigger onPress if intentional touch was registered (600ms hold without movement)
+          if (intentionalTouchTriggeredRef.current && onPress && !disableInteractions) {
             onPress();
           }
+          
+          // Reset flags
+          intentionalTouchTriggeredRef.current = false;
+          suppressTapRef.current = false;
+          hasMoved.current = false;
           pan.setValue({ x: 0, y: 0 });
           return;
         }
