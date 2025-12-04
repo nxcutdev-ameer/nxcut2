@@ -9,7 +9,6 @@ import {
   StyleSheet,
   Alert,
   StatusBar,
-  Platform,
   Pressable,
 } from "react-native";
 import React, {
@@ -26,15 +25,11 @@ import DraggableCalendarColumn from "../../../Components/DraggableCalendarColumn
 import TimeGutter from "../../../Components/TimeGutter";
 import TimeGutterHeader from "../../../Components/TimeGutterHeader";
 import {
-  Menu,
   ChevronDown,
   SlidersVertical,
   Bell,
   X,
   Check,
-  Plus,
-  Calendar,
-  Clock,
 } from "lucide-react-native";
 import Modal from "react-native-modal";
 import {
@@ -47,13 +42,12 @@ import useCalanderScreenVM from "./CalanderScreenVM";
 import { colors } from "../../../Constants/colors";
 import CustomToast from "../../../Components/CustomToast";
 import { useNavigation, useRoute, useFocusEffect } from "@react-navigation/native";
-import DateModal from "../../../Components/DateModal"; // NEW: Added DateModal
-// REVERT: Uncomment the lines below to restore BottomSheet
+import DateModal from "../../../Components/DateModal";
+
 // import BottomSheet, {
 //   BottomSheetView,
 //   BottomSheetBackdrop,
 // } from "@gorhom/bottom-sheet";
-import { CalendarList } from "react-native-calendars";
 import { AppointmentCalanderBO } from "../../../Repository/appointmentsRepository";
 
 type EditingState = {
@@ -248,11 +242,8 @@ const CalanderScreen = () => {
   const staffHeaderScrollRef = useRef<ScrollView>(null);
   const isScrollingFromStaffHeader = useRef(false);
   const isScrollingFromCalendar = useRef(false);
-  const isScrollingVerticalFromTimeGutter = useRef(false);
-  const isScrollingVerticalFromCalendar = useRef(false);
   const [scrollEnabled, setScrollEnabled] = useState(true);
   const savedHorizontalScrollPosition = useRef(0);
-  const lastVerticalScrollY = useRef(0);
   const lastHorizontalScrollX = useRef(0);
   const [editingState, setEditingState] = useState<EditingState | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -1031,19 +1022,14 @@ const CalanderScreen = () => {
                   snapToAlignment="start"
                   decelerationRate="fast"
                   onScroll={(event) => {
-                    // Sync calendar columns when staff header is scrolled
+                    // Sync calendar columns when staff header is scrolled - INSTANT SYNC
                     if (isScrollingFromCalendar.current) {
                       isScrollingFromCalendar.current = false;
                       return;
                     }
                     const offsetX = event.nativeEvent.contentOffset.x;
 
-                    // Only sync if position changed significantly
-                    if (
-                      Math.abs(offsetX - lastHorizontalScrollX.current) < 0.5
-                    ) {
-                      return;
-                    }
+                    // Remove threshold check for instant sync - always sync position
                     lastHorizontalScrollX.current = offsetX;
                     savedHorizontalScrollPosition.current = offsetX;
 
@@ -1052,8 +1038,12 @@ const CalanderScreen = () => {
                       horizontalScrollRef.current.scrollTo({
                         x: offsetX,
                         y: 0,
-                        animated: false,
+                        animated: false, // No animation for instant sync
                       });
+                      // Reset flag immediately after sync
+                      setTimeout(() => {
+                        isScrollingFromStaffHeader.current = false;
+                      }, 0);
                     }
                   }}
                   style={{
@@ -1111,8 +1101,7 @@ const CalanderScreen = () => {
           </View>
         </View>
         <View style={CalanderScreenStyles.bodyContainer}>
-          {/* UNIFIED SCROLL: Time gutter and calendar scroll together as one block */}
-          {/* REVERT: To restore separate scrolls, see git commit or backup patch file */}
+          {/* UNIFIED VERTICAL SCROLL: Time gutter and calendar scroll together */}
           <ScrollView
             ref={verticalScrollRef}
             bounces={false}
@@ -1231,19 +1220,14 @@ const CalanderScreen = () => {
                 decelerationRate="fast"
                 onScrollBeginDrag={handleHorizontalScrollBegin}
                 onScroll={(event) => {
-                  // Sync staff header horizontal scroll
+                  // Sync staff header horizontal scroll - INSTANT SYNC
                   if (isScrollingFromStaffHeader.current) {
                     isScrollingFromStaffHeader.current = false;
                     return;
                   }
                   const offsetX = event.nativeEvent.contentOffset.x;
 
-                  // Only sync if position changed significantly (> 0.5px for smooth snapping)
-                  if (
-                    Math.abs(offsetX - lastHorizontalScrollX.current) < 0.5
-                  ) {
-                    return;
-                  }
+                  // Remove threshold check for instant sync - always sync position
                   lastHorizontalScrollX.current = offsetX;
                   savedHorizontalScrollPosition.current = offsetX;
 
@@ -1252,8 +1236,12 @@ const CalanderScreen = () => {
                     staffHeaderScrollRef.current.scrollTo({
                       x: offsetX,
                       y: 0,
-                      animated: false,
+                      animated: false, // No animation for instant sync
                     });
+                    // Reset flag immediately after sync
+                    setTimeout(() => {
+                      isScrollingFromCalendar.current = false;
+                    }, 0);
                   }
                 }}
                 // TEMPORARILY DISABLED: Date navigation on horizontal scroll
