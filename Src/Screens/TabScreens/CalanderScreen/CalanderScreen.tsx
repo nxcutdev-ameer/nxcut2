@@ -796,14 +796,8 @@ const CalanderScreen = () => {
       const dateString = currentDate.toISOString().split('T')[0];
       fetchCalanderAppointmentsData(dateString, locationIds);
       
-      // Scroll to center current time when screen comes into focus
+      // Scroll to center current time when screen comes into focus - ONLY ONCE
       const scrollToCurrentTime = () => {
-        // Only scroll if we have calendar data loaded
-        if (!calanderData || calanderData.length === 0) {
-          console.log('[CalendarScroll-Focus] Skipping scroll - no data loaded yet');
-          return;
-        }
-
         const currentHour = new Date().getHours();
         const currentMinute = new Date().getMinutes();
         const minHour = 8;
@@ -837,32 +831,37 @@ const CalanderScreen = () => {
             scrollY: Math.max(0, scrollY)
           });
           
-          // Same delay as initial mount for consistency
-          setTimeout(() => {
-            if (verticalScrollRef.current) {
-              verticalScrollRef.current.scrollTo({
-                y: Math.max(0, scrollY), // Ensure non-negative
-                animated: true,
-              });
-            }
-            if (calendarVerticalScrollRef.current) {
-              calendarVerticalScrollRef.current.scrollTo({
-                y: Math.max(0, scrollY), // Ensure non-negative
-                animated: true,
-              });
-            }
-          }, 500); // 500ms delay - same as initial mount for consistency
+          // Instantly scroll when returning from other tabs (no animation for immediate centering)
+          if (verticalScrollRef.current) {
+            verticalScrollRef.current.scrollTo({
+              y: Math.max(0, scrollY), // Ensure non-negative
+              animated: false, // Instant scroll - no animation
+            });
+          }
+          if (calendarVerticalScrollRef.current) {
+            calendarVerticalScrollRef.current.scrollTo({
+              y: Math.max(0, scrollY), // Ensure non-negative
+              animated: false, // Instant scroll - no animation
+            });
+          }
         }
       };
       
-      // Trigger scroll to current time
-      scrollToCurrentTime();
+      // Wait for data to load and refs to be ready before scrolling (only once when tab comes into focus)
+      const scrollTimer = setTimeout(() => {
+        scrollToCurrentTime();
+      }, 100); // Small delay to ensure data is loaded
       
       // Re-enable scroll events after a longer delay (1000ms) to ensure back swipe completes
       setTimeout(() => {
         ignoreScrollEvents.current = false;
       }, 1000);
-    }, [route.params, fetchCalanderAppointmentsData, pageFilter, allLocations, currentDate, navigation])
+      
+      // Cleanup: clear timer if component unmounts before scroll happens
+      return () => {
+        clearTimeout(scrollTimer);
+      };
+    }, [route.params, fetchCalanderAppointmentsData, pageFilter, allLocations, currentDate, navigation, insets])
   );
 
   return (
