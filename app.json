@@ -2,7 +2,7 @@
   "expo": {
     "name": "Nxcut",
     "slug": "nxcut-nwq15agvmp1-rzo14zffy",
-    "version": "1.1.5",
+    "version": "1.1.6",
     "orientation": "portrait",
     "icon": "./assets/nxcutLogo.png",
     "splash": {
@@ -12,14 +12,14 @@
     "userInterfaceStyle": "light",
     "ios": {
       "bundleIdentifier": "com.qdealsllc.nxcut",
-      "buildNumber": "15",
+      "buildNumber": "16",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
       "package": "com.qdealsllc.nxcut",
-      "versionCode": 15,
+      "versionCode": 16,
       "adaptiveIcon": {
         "foregroundImage": "./assets/nxcutLogo.png",
         "backgroundColor": "#ffffff"
@@ -32,7 +32,7 @@
     "updates": {
       "url": "https://u.expo.dev/YOUR-UPDATE-ID"
     },
-    "runtimeVersion": "1.1.5",
+    "runtimeVersion": "1.1.6",
     "owner": "qdealsllc",
     "extra": {
       "eas": {
