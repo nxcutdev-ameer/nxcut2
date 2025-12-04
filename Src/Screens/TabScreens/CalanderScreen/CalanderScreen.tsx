@@ -513,12 +513,7 @@ const CalanderScreen = () => {
               animated: true,
             });
           }
-          if (calendarVerticalScrollRef.current) {
-            calendarVerticalScrollRef.current.scrollTo({
-              y: Math.max(0, scrollY), // Ensure non-negative
-              animated: true,
-            });
-          }
+          // UNIFIED SCROLL: Only need to scroll one ref now (calendarVerticalScrollRef removed)
         }, 500); // 500ms delay after data is loaded
       }
     };
@@ -882,19 +877,14 @@ const CalanderScreen = () => {
               scrollY: Math.max(0, scrollY)
             });
             
-            // Scroll to current time
+            // Scroll to current time (unified scroll)
             if (verticalScrollRef.current) {
               verticalScrollRef.current.scrollTo({
                 y: Math.max(0, scrollY),
                 animated: false, // Instant scroll for smooth transition
               });
             }
-            if (calendarVerticalScrollRef.current) {
-              calendarVerticalScrollRef.current.scrollTo({
-                y: Math.max(0, scrollY),
-                animated: false, // Instant scroll for smooth transition
-              });
-            }
+            // UNIFIED SCROLL: Only need to scroll one ref now
           }
         };
         
@@ -1121,44 +1111,22 @@ const CalanderScreen = () => {
           </View>
         </View>
         <View style={CalanderScreenStyles.bodyContainer}>
-          <View style={{ flex: 1, flexDirection: "row" }}>
-            {/* Fixed Time Gutter Column with Red Line */}
-            <View style={{ width: getWidthEquivalent(40) }}>
-              <ScrollView
-                ref={verticalScrollRef}
-                bounces={false}
-                showsVerticalScrollIndicator={false}
-                scrollEnabled={scrollEnabled}
-                scrollEventThrottle={1}
-                decelerationRate="fast"
-                directionalLockEnabled={true}
-                removeClippedSubviews={false}
-                onScroll={(event) => {
-                  // Sync calendar vertical scroll immediately
-                  if (isScrollingVerticalFromCalendar.current) {
-                    isScrollingVerticalFromCalendar.current = false;
-                    return;
-                  }
-                  const offsetY = event.nativeEvent.contentOffset.y;
-                  lastVerticalScrollY.current = offsetY;
-
-                  if (calendarVerticalScrollRef.current) {
-                    isScrollingVerticalFromTimeGutter.current = true;
-                    calendarVerticalScrollRef.current.scrollTo({
-                      y: offsetY,
-                      animated: false,
-                    });
-                    
-                    // Reset sync flag quickly to allow immediate re-sync
-                    if (syncTimerRef.current) {
-                      clearTimeout(syncTimerRef.current);
-                    }
-                    syncTimerRef.current = setTimeout(() => {
-                      isScrollingVerticalFromTimeGutter.current = false;
-                    }, 10);
-                  }
-                }}
-              >
+          {/* UNIFIED SCROLL: Time gutter and calendar scroll together as one block */}
+          {/* REVERT: To restore separate scrolls, see git commit or backup patch file */}
+          <ScrollView
+            ref={verticalScrollRef}
+            bounces={false}
+            showsVerticalScrollIndicator={false}
+            scrollEnabled={scrollEnabled}
+            scrollEventThrottle={1}
+            decelerationRate="fast"
+            directionalLockEnabled={true}
+            removeClippedSubviews={false}
+            style={{ flex: 1 }}
+          >
+            <View style={{ flexDirection: "row" }}>
+              {/* Fixed Time Gutter Column with Red Line */}
+              <View style={{ width: getWidthEquivalent(40) }}>
                 <View style={{ position: "relative" }}>
                   {/* Current Time Indicator - Ellipse and Line */}
                   {(() => {
@@ -1246,46 +1214,10 @@ const CalanderScreen = () => {
                   {/* Small bottom padding for better scrolling */}
                   <View style={{ height: getHeightEquivalent(40) }} />
                 </View>
-              </ScrollView>
-            </View>
+              </View>
 
-            {/* Combined Vertical + Horizontal Scrollable Area */}
-            <ScrollView
-              ref={calendarVerticalScrollRef}
-              bounces={false}
-              showsVerticalScrollIndicator={false}
-              scrollEnabled={scrollEnabled}
-              style={{ flex: 1 }}
-              scrollEventThrottle={1}
-              decelerationRate="fast"
-              directionalLockEnabled={true}
-              removeClippedSubviews={false}
-              onScroll={(event) => {
-                // Sync TimeGutter vertical scroll immediately
-                if (isScrollingVerticalFromTimeGutter.current) {
-                  isScrollingVerticalFromTimeGutter.current = false;
-                  return;
-                }
-                const offsetY = event.nativeEvent.contentOffset.y;
-                lastVerticalScrollY.current = offsetY;
-
-                if (verticalScrollRef.current) {
-                  isScrollingVerticalFromCalendar.current = true;
-                  verticalScrollRef.current.scrollTo({
-                    y: offsetY,
-                    animated: false,
-                  });
-                  
-                  // Reset sync flag quickly to allow immediate re-sync
-                  if (syncTimerRef.current) {
-                    clearTimeout(syncTimerRef.current);
-                  }
-                  syncTimerRef.current = setTimeout(() => {
-                    isScrollingVerticalFromCalendar.current = false;
-                  }, 10);
-                }
-              }}
-            >
+              {/* Calendar Columns - Now scrolls together with time gutter */}
+              <View style={{ flex: 1 }}>
               <ScrollView
                 ref={horizontalScrollRef}
                 horizontal
@@ -1488,8 +1420,9 @@ const CalanderScreen = () => {
                   </View>
                 </View>
               </ScrollView>
-            </ScrollView>
-          </View>
+              </View>
+            </View>
+          </ScrollView>
         </View>
 
         {editingState && (
