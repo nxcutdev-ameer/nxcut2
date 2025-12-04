@@ -1233,7 +1233,6 @@ const DashBoardScreen = () => {
         initialStartDate={startDate}
         initialEndDate={endDate}
         initialPeriod={selectedPeriod}
-        isLoading={loadingStates.topServices || loadingStates.pieChart || loadingStates.activity}
       />
     </View>
   );
