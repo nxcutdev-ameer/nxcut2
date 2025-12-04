@@ -440,10 +440,32 @@ const CalanderScreen = () => {
     return () => clearInterval(timer);
   }, []);
 
+  // Track initial mount for auto-scroll
+  const isInitialMount = useRef(true);
+  const previousDate = useRef(currentDate);
+  const isComingFromAppointmentScreen = useRef(false);
+  const isRefreshingData = useRef(false);
+
   // Auto-scroll to current time on mount and date change
   useEffect(() => {
     // Only scroll if we have calendar data loaded
     if (!calanderData || calanderData.length === 0) {
+      return;
+    }
+
+    // Check if date actually changed (not just a refresh)
+    const dateChanged = previousDate.current.toDateString() !== currentDate.toDateString();
+    
+    // Skip scroll if:
+    // 1. Not initial mount AND date hasn't changed (just a data refresh)
+    // 2. Currently refreshing data (coming back from appointment screens)
+    if (isRefreshingData.current) {
+      console.log('[CalendarScroll] Skipping auto-scroll - data refresh in progress');
+      return;
+    }
+    
+    if (!isInitialMount.current && !dateChanged) {
+      console.log('[CalendarScroll] Skipping auto-scroll - no date change, just data refresh');
       return;
     }
 
@@ -472,13 +494,15 @@ const CalanderScreen = () => {
         // Calculate scroll position to center the current time
         const scrollY = currentTimePosition - (visibleHeight / 2);
         
-        console.log('[CalendarScroll] Centering current time:', {
+        console.log('[CalendarScroll] Centering current time (initial mount or date change):', {
           currentHour,
           currentMinute,
           currentTimePosition,
           screenHeight,
           visibleHeight,
-          scrollY: Math.max(0, scrollY)
+          scrollY: Math.max(0, scrollY),
+          isInitialMount: isInitialMount.current,
+          dateChanged
         });
         
         // Delay to ensure ScrollView is mounted and rendered with data
@@ -501,7 +525,11 @@ const CalanderScreen = () => {
 
     // Scroll when calendar data is available and when date changes
     scrollToCurrentTime();
-  }, [currentDate, calanderData]);
+    
+    // Mark as no longer initial mount and update previous date
+    isInitialMount.current = false;
+    previousDate.current = currentDate;
+  }, [currentDate, calanderData, insets.top]);
 
   // Handle scroll end to update current index
   const handleScrollEnd = (event: any) => {
@@ -715,7 +743,7 @@ const CalanderScreen = () => {
   // Calculate the width for 3 columns (including separators)
   const threeColumnWidth = useMemo(() => {
     const columnWidth = getColumnWidth(0);
-    const separatorWidth = 2;
+    const separatorWidth = 1.5;
     // 3 columns + 2 separators between them
     return (columnWidth * 3) + (separatorWidth * 2);
   }, [getColumnWidth]);
@@ -773,96 +801,147 @@ const CalanderScreen = () => {
     }
   }, [scrollEnabled]);
 
+  // Track if we're returning from an appointment screen
+  const isReturningFromAppointmentScreen = useRef(false);
+  
   // Refresh calendar when returning from other screens (create/cancel appointment)
   useFocusEffect(
     useCallback(() => {
-      // NEW: Ignore scroll events temporarily when returning from another screen
+      // Ignore scroll events temporarily when returning from another screen
       // This prevents the back swipe gesture from triggering date changes or scrolling
       ignoreScrollEvents.current = true;
       lastScrollDirection.current = null; // Reset scroll direction
       isNavigatingDate.current = false; // Reset navigation flag
       
       const params = route.params as any;
-      if (params?.refresh) {
-        // Clear the refresh param
-        navigation.setParams({ refresh: undefined });
+      const dataChanged = params?.dataChanged;
+      const isRefreshing = params?.refresh;
+      
+      // Clear the params
+      if (dataChanged || isRefreshing) {
+        navigation.setParams({ dataChanged: undefined, refresh: undefined });
       }
       
-      // Always refresh when screen comes into focus
-      const locationIds = pageFilter.location_ids.length > 0 
-        ? pageFilter.location_ids 
-        : allLocations.map((loc) => loc.id);
-      // Function signature: fetchCalanderAppointmentsData(date: string, locationIds?: string[])
-      const dateString = currentDate.toISOString().split('T')[0];
-      fetchCalanderAppointmentsData(dateString, locationIds);
+      // Check if returning from appointment screen
+      const isReturningFromAppointment = isComingFromAppointmentScreen.current;
       
-      // Scroll to center current time when screen comes into focus - ONLY ONCE
-      const scrollToCurrentTime = () => {
-        const currentHour = new Date().getHours();
-        const currentMinute = new Date().getMinutes();
-        const minHour = 8;
-        const maxHour = 23;
-        const hourHeight = getHeightEquivalent(80);
-
-        // Only scroll if current time is within calendar hours
-        if (currentHour >= minHour && currentHour <= maxHour) {
-          const minutesFromMinHour = (currentHour - minHour) * 60 + currentMinute;
-          const currentTimePosition = (minutesFromMinHour / 60) * hourHeight;
-
-          // Get screen height to calculate center position
-          const screenHeight = Dimensions.get('window').height;
-          const statusBarHeight = insets.top;
-          const dateHeaderHeight = getHeightEquivalent(135);
-          const staffHeaderHeight = getHeightEquivalent(85);
-          const tabBarHeight = getHeightEquivalent(100);
-          
-          // Calculate actual visible calendar height
-          const visibleHeight = screenHeight - statusBarHeight - dateHeaderHeight - staffHeaderHeight - tabBarHeight;
-          
-          // Calculate scroll position to center the current time
-          const scrollY = currentTimePosition - (visibleHeight / 2);
-          
-          console.log('[CalendarScroll-Focus] Centering current time:', {
-            currentHour,
-            currentMinute,
-            currentTimePosition,
-            screenHeight,
-            visibleHeight,
-            scrollY: Math.max(0, scrollY)
-          });
-          
-          // Instantly scroll when returning from other tabs (no animation for immediate centering)
-          if (verticalScrollRef.current) {
-            verticalScrollRef.current.scrollTo({
-              y: Math.max(0, scrollY), // Ensure non-negative
-              animated: false, // Instant scroll - no animation
-            });
-          }
-          if (calendarVerticalScrollRef.current) {
-            calendarVerticalScrollRef.current.scrollTo({
-              y: Math.max(0, scrollY), // Ensure non-negative
-              animated: false, // Instant scroll - no animation
-            });
-          }
-        }
-      };
+      console.log('[CalendarScroll-Focus] Screen focused:', {
+        isComingFromAppointmentScreen: isComingFromAppointmentScreen.current,
+        dataChanged,
+        isReturningFromAppointment,
+        reason: isReturningFromAppointment ? 'Returning from appointment screen' : 'Tab navigation or other navigation'
+      });
       
-      // Wait for data to load and refs to be ready before scrolling (only once when tab comes into focus)
-      const scrollTimer = setTimeout(() => {
-        scrollToCurrentTime();
-      }, 100); // Small delay to ensure data is loaded
+      // Set refresh flag to prevent auto-scroll in useEffect when:
+      // 1. Returning from appointment screens (even if no data changed)
+      // 2. Data changed and we're refreshing
+      if (isReturningFromAppointment) {
+        isRefreshingData.current = true;
+        console.log('[CalendarScroll-Focus] Blocking auto-scroll - returning from appointment screen');
+      }
+      
+      // Only refresh calendar data if backend interaction occurred (dataChanged flag)
+      if (dataChanged) {
+        console.log('[CalendarScroll-Focus] Backend data changed - refreshing calendar');
+        const locationIds = pageFilter.location_ids.length > 0 
+          ? pageFilter.location_ids 
+          : allLocations.map((loc) => loc.id);
+        const dateString = currentDate.toISOString().split('T')[0];
+        fetchCalanderAppointmentsData(dateString, locationIds);
+      } else if (!isReturningFromAppointment) {
+        // Auto-scroll when navigating from tabs (not returning from appointment screens and no data change)
+        console.log('[CalendarScroll-Focus] Tab navigation - performing auto-scroll');
+        const scrollToCurrentTime = () => {
+          const currentHour = new Date().getHours();
+          const currentMinute = new Date().getMinutes();
+          const minHour = 8;
+          const maxHour = 23;
+          const hourHeight = getHeightEquivalent(80);
+
+          // Only scroll if current time is within calendar hours
+          if (currentHour >= minHour && currentHour <= maxHour) {
+            const minutesFromMinHour = (currentHour - minHour) * 60 + currentMinute;
+            const currentTimePosition = (minutesFromMinHour / 60) * hourHeight;
+
+            // Get screen height to calculate center position
+            const screenHeight = Dimensions.get('window').height;
+            const statusBarHeight = insets.top;
+            const dateHeaderHeight = getHeightEquivalent(135);
+            const staffHeaderHeight = getHeightEquivalent(85);
+            const tabBarHeight = getHeightEquivalent(100);
+            
+            // Calculate actual visible calendar height
+            const visibleHeight = screenHeight - statusBarHeight - dateHeaderHeight - staffHeaderHeight - tabBarHeight;
+            
+            // Calculate scroll position to center the current time
+            const scrollY = currentTimePosition - (visibleHeight / 2);
+            
+            console.log('[CalendarScroll-Focus] Auto-scrolling to current time (tab navigation):', {
+              currentHour,
+              currentMinute,
+              scrollY: Math.max(0, scrollY)
+            });
+            
+            // Scroll to current time
+            if (verticalScrollRef.current) {
+              verticalScrollRef.current.scrollTo({
+                y: Math.max(0, scrollY),
+                animated: false, // Instant scroll for smooth transition
+              });
+            }
+            if (calendarVerticalScrollRef.current) {
+              calendarVerticalScrollRef.current.scrollTo({
+                y: Math.max(0, scrollY),
+                animated: false, // Instant scroll for smooth transition
+              });
+            }
+          }
+        };
+        
+        // Small delay to ensure view is ready
+        setTimeout(() => {
+          scrollToCurrentTime();
+        }, 100);
+      } else {
+        console.log('[CalendarScroll-Focus] No backend changes - skipping refresh');
+      }
+      
+      // Reset the flags after a delay to allow data to load
+      setTimeout(() => {
+        isComingFromAppointmentScreen.current = false;
+        isRefreshingData.current = false;
+        console.log('[CalendarScroll-Focus] Flags reset - auto-scroll re-enabled');
+      }, 700); // Reset after data loads (matches the 500ms delay in useEffect + buffer)
       
       // Re-enable scroll events after a longer delay (1000ms) to ensure back swipe completes
       setTimeout(() => {
         ignoreScrollEvents.current = false;
       }, 1000);
-      
-      // Cleanup: clear timer if component unmounts before scroll happens
-      return () => {
-        clearTimeout(scrollTimer);
-      };
-    }, [route.params, fetchCalanderAppointmentsData, pageFilter, allLocations, currentDate, navigation, insets])
+    }, [route.params, fetchCalanderAppointmentsData, pageFilter, allLocations, currentDate, navigation, insets.top])
   );
+  
+  // Track when navigating to AppointmentDetailsScreen or CreateAppointmentScreen
+  // Auto-scroll is disabled ONLY when returning from these specific screens
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('blur', () => {
+      // Check if we're navigating to AppointmentDetailsScreen or CreateAppointmentScreen
+      const state = navigation.getState();
+      const routes = state.routes;
+      const currentRoute = routes[routes.length - 1];
+      
+      // Only disable auto-scroll for these two specific screens
+      if (currentRoute?.name === 'AppointmentDetailsScreen' || 
+          currentRoute?.name === 'CreateAppointment') {
+        isComingFromAppointmentScreen.current = true;
+        console.log('[CalendarScroll-Focus] Navigating to appointment screen (auto-scroll will be disabled):', currentRoute.name);
+      } else {
+        isComingFromAppointmentScreen.current = false;
+        console.log('[CalendarScroll-Focus] Navigating to other screen (auto-scroll will work):', currentRoute?.name);
+      }
+    });
+    
+    return unsubscribe;
+  }, [navigation]);
 
   return (
     <>

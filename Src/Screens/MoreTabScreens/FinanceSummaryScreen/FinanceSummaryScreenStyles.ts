@@ -18,6 +18,7 @@ export const styles = StyleSheet.create({
     paddingHorizontal: getWidthEquivalent(20),
     paddingVertical: getHeightEquivalent(12),
     backgroundColor: colors.white,
+    height: getHeightEquivalent(50),
   },
   back: {
     flexDirection: "row",
@@ -25,11 +26,20 @@ export const styles = StyleSheet.create({
   },
   titleContainer: {
     flexDirection: "row",
-    alignItems: "center",
-    gap: getWidthEquivalent(12),
+    alignSelf: "center",
+    height: getHeightEquivalent(50),
+    gap: getWidthEquivalent(10),
   },
-  ellipsis: {
-    color: colors.text,
+  headerButton: {
+    height: getHeightEquivalent(50),
+    width: getHeightEquivalent(50),
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderRadius: 8,
+    backgroundColor: colors.white,
+    borderColor: colors.border,
+    flexDirection: "row",
   },
   header: {
     paddingHorizontal: getWidthEquivalent(20),

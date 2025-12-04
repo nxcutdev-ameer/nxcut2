@@ -126,9 +126,6 @@ const AppointmentDetailsScreen = () => {
       const serviceData = data.services as any;
       const staffData = data.staff as any;
       
-      console.log("[AppointmentDetails] Appointment main ID:", appointmentData?.id);
-      console.log("[AppointmentDetails] Client ID from appointments:", appointmentData?.client_id);
-      console.log("[AppointmentDetails] Client data:", appointmentData?.clients);
       
       // Transform the data to match AppointmentCalanderBO structure
       const freshAppointment: AppointmentCalanderBO = {
@@ -156,12 +153,6 @@ const AppointmentDetailsScreen = () => {
         voucher_discount: data.voucher_discount,
       };
       
-      console.log("[AppointmentDetails] Transformed appointment:");
-      console.log("  - Client ID:", freshAppointment.appointment.client_id);
-      console.log("  - Client Name:", `${freshAppointment.appointment.client.first_name} ${freshAppointment.appointment.client.last_name}`);
-      console.log("  - Client Phone:", freshAppointment.appointment.client.phone);
-      console.log("  - Staff:", `${freshAppointment.staff.first_name} ${freshAppointment.staff.last_name}`);
-      console.log("  - Location:", freshAppointment.appointment.location_id);
       
       setAppointment(freshAppointment);
       console.log("[AppointmentDetails] State updated successfully");
@@ -212,7 +203,14 @@ const AppointmentDetailsScreen = () => {
                   [
                     {
                       text: "OK",
-                      onPress: () => navigation.goBack(),
+                      onPress: () => {
+                        // Navigate back with params using setParams before going back
+                        const parent = navigation.getParent();
+                        if (parent) {
+                          parent.setParams({ dataChanged: true });
+                        }
+                        navigation.goBack();
+                      },
                     },
                   ]
                 );

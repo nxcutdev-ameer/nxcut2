@@ -100,7 +100,7 @@ const useFinanceSummaryScreenVM = () => {
     }
   }, [dateFilter]);
 
-  const fetchAllFinanceData = async (fromDate: string, toDate: string) => {
+  const fetchAllFinanceData = async (fromDate: string, toDate: string, locationIds?: string[]) => {
     try {
       setLoading(true);
 
@@ -116,11 +116,13 @@ const useFinanceSummaryScreenVM = () => {
       const startDate = formatDate(fromDate);
       const endDate = formatDate(toDate);
 
+      console.log("[FinanceSummaryVM] Fetching finance data with locationIds:", locationIds);
+
       // Fetch all finance data in parallel
       const [salesResponse, paymentResponse, voucherResponse] = await Promise.all([
-        financeRepository.getFinanceSalesData(startDate, endDate),
-        financeRepository.getFinanceDiscountData(startDate, endDate),
-        financeRepository.getFinanceVoucherData(startDate, endDate)
+        financeRepository.getFinanceSalesData(startDate, endDate, locationIds),
+        financeRepository.getFinanceDiscountData(startDate, endDate, locationIds),
+        financeRepository.getFinanceVoucherData(startDate, endDate, locationIds)
       ]);
 
       // Update sales data
@@ -157,9 +159,10 @@ const useFinanceSummaryScreenVM = () => {
     }
   };
 
-  const fetchFinanceSalesData = async (fromDate: string, toDate: string) => {
+  const fetchFinanceSalesData = async (fromDate: string, toDate: string, locationIds?: string[]) => {
     // Keep this method for backward compatibility if needed elsewhere
-    await fetchAllFinanceData(fromDate, toDate);
+    console.log("fetchFinanceSalesData", fromDate, toDate, "locationIds:", locationIds);
+    await fetchAllFinanceData(fromDate, toDate, locationIds);
   };
 
   const updateDateFilter = useCallback((filter: { fromDate: string; toDate: string }) => {

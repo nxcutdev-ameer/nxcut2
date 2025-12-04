@@ -18,7 +18,6 @@ export const DailySalesScreenStyles = StyleSheet.create({
     borderColor: paint.border,
     backgroundColor: paint.white,
     alignItems: "center",
-    // borderWidth: 1,
     flexDirection: "row",
     justifyContent: "space-between",
     paddingLeft: getWidthEquivalent(20),
@@ -27,10 +26,7 @@ export const DailySalesScreenStyles = StyleSheet.create({
   backArrow: {
     height: "100%",
     width: getHeightEquivalent(80),
-    //alignItems: "center",
     justifyContent: "center",
-    //marginLeft: getWidthEquivalent(10),
-    // borderWidth: 1,
   },
   filter: {
     height: "100%",

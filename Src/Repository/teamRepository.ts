@@ -105,7 +105,7 @@ export const teamRepository = {
     locationIds?: string[]
   ): Promise<SaleTipBO[]> {
     try {
-      let query = supabase
+      const query = supabase
         .from("sale_tips")
         .select(`
           *,
@@ -118,16 +118,24 @@ export const teamRepository = {
         .lte("created_at", endDate)
         .order("created_at", { ascending: false });
 
-      // Apply location filter if provided
-      if (locationIds && locationIds.length > 0) {
-        query = query.in("sales.location_id", locationIds);
-      }
-
       const { data, error } = await query;
 
       if (error) {
         console.error("Error fetching sales tips:", error.message);
         return [];
+      }
+
+      // Apply location filter after fetching (filtering on nested relationship)
+      if (locationIds && locationIds.length > 0) {
+        const filteredData = (data as SaleTipBO[])?.filter((tip) => 
+          locationIds.includes(tip.sales?.location_id)
+        );
+        console.log("Filtered sales tips by location:", {
+          locationIds,
+          totalTips: data?.length || 0,
+          filteredTips: filteredData?.length || 0
+        });
+        return filteredData || [];
       }
 
       return (data as SaleTipBO[]) || [];

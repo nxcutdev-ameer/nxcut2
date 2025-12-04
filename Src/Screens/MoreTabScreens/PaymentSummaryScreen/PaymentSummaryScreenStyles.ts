@@ -34,13 +34,22 @@ export const PaymentSummaryScreenStyles = StyleSheet.create({
     color: colors.colors.black,
     marginLeft: getHeightEquivalent(5),
   },
-  elipseBox: {
-    width: getWidthEquivalent(40),
-    height: getHeightEquivalent(40),
-    borderRadius: getWidthEquivalent(20),
-    backgroundColor: colors.colors.backgroundSecondary,
-    justifyContent: "center",
+  headerButton: {
+    height: getHeightEquivalent(50),
+    width: getHeightEquivalent(50),
     alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderRadius: 8,
+    backgroundColor: colors.colors.white,
+    borderColor: colors.colors.border,
+    flexDirection: "row",
+  },
+  titleContainer: {
+    flexDirection: "row",
+    alignSelf: "center",
+    height: "100%",
+    gap: getWidthEquivalent(10),
   },
   addButton: {
     flexDirection: "row",

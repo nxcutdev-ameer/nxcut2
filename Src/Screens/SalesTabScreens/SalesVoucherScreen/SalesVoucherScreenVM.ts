@@ -38,34 +38,43 @@ const useSalesVoucherScreenVM = () => {
   const [pageFilter, setPageFilter] = useState({
     start_date: "2025-10-01T00:00:00",
     end_date: "2025-10-04T23:59:59",
-    location_id: [],
+    location_ids: [] as string[],
     client_name: "",
     voucher_name: "",
     voucher_code: "",
   });
+  
+  // Location filter modal state
+  const [showFilterPanel, setShowFilterPanel] = useState<boolean>(false);
 
-  // Filter vouchers based on search query
+  // Filter vouchers based on search query only (location filtering done on backend)
   const filteredVoucherData = useMemo(() => {
-    if (!searchQuery.trim()) {
-      return voucherData;
+    let filtered = voucherData;
+
+    // Apply search filter
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase().trim();
+      filtered = filtered.filter((voucher) => {
+        const clientName =
+          `${voucher.client_first_name} ${voucher.client_last_name}`.toLowerCase();
+        const voucherName = voucher.voucher_name.toLowerCase();
+        const voucherCode = voucher.voucher_code.toLowerCase();
+
+        return (
+          clientName.includes(query) ||
+          voucherName.includes(query) ||
+          voucherCode.includes(query)
+        );
+      });
     }
 
-    const query = searchQuery.toLowerCase().trim();
-    return voucherData.filter((voucher) => {
-      const clientName =
-        `${voucher.client_first_name} ${voucher.client_last_name}`.toLowerCase();
-      const voucherName = voucher.voucher_name.toLowerCase();
-      const voucherCode = voucher.voucher_code.toLowerCase();
-
-      return (
-        clientName.includes(query) ||
-        voucherName.includes(query) ||
-        voucherCode.includes(query)
-      );
-    });
+    return filtered;
   }, [voucherData, searchQuery]);
 
   useEffect(() => {
+    // Initialize location_ids with all locations
+    const locationIds = allLocations?.map((location) => location.id) || [];
+    setPageFilter((prev) => ({ ...prev, location_ids: locationIds }));
     init();
   }, []); // Empty dependency array to run only once on mount
 
@@ -76,10 +85,16 @@ const useSalesVoucherScreenVM = () => {
       // Use provided filter or current pageFilter
       const filterToUse = customFilter || pageFilter;
 
-      // Fetch voucher data
+      // Get location IDs to filter by
+      const locationIds = filterToUse.location_ids && filterToUse.location_ids.length > 0
+        ? filterToUse.location_ids
+        : allLocations?.map((location) => location.id);
+
+      // Fetch voucher data with location filter
       let voucherResponse = await clientRepository.getClientVouchers(
         filterToUse.start_date,
-        filterToUse.end_date
+        filterToUse.end_date,
+        locationIds
       );
 
       if (voucherResponse && voucherResponse.length > 0) {
@@ -145,6 +160,42 @@ const useSalesVoucherScreenVM = () => {
     };
 
     return `${formatDate(startDate)} - ${formatDate(endDate)}`;
+  };
+
+  // Location filter functions
+  const openFilterPanel = () => {
+    setShowFilterPanel(true);
+  };
+
+  const closeFilterPanel = () => {
+    setShowFilterPanel(false);
+  };
+
+  const toggleLocationFilter = (locationId: string) => {
+    setPageFilter((prev) => {
+      const currentIds = prev.location_ids || [];
+      const isSelected = currentIds.includes(locationId);
+      
+      return {
+        ...prev,
+        location_ids: isSelected
+          ? currentIds.filter((id) => id !== locationId)
+          : [...currentIds, locationId],
+      };
+    });
+  };
+
+  const clearAllFilters = () => {
+    setPageFilter((prev) => ({
+      ...prev,
+      location_ids: [],
+    }));
+  };
+
+  const applyFilters = async () => {
+    setShowFilterPanel(false);
+    // Refetch data with new location filters
+    await init();
   };
 
   // Bottom sheet handlers
@@ -373,6 +424,12 @@ const useSalesVoucherScreenVM = () => {
     handleExport,
     isBottomSheetOpen,
     backdropOpacity,
+    showFilterPanel,
+    openFilterPanel,
+    closeFilterPanel,
+    toggleLocationFilter,
+    clearAllFilters,
+    applyFilters,
   };
 };
 

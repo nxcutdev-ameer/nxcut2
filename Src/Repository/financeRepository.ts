@@ -78,10 +78,17 @@ export interface SalePaymentMethod {
 export const financeRepository = {
   async getFinanceSalesData(
     startDate: string, // "YYYY-MM-DD"
-    endDate: string // "YYYY-MM-DD"
+    endDate: string, // "YYYY-MM-DD"
+    locationIds?: string[]
   ): Promise<FinanceSalesBO[]> {
     try {
       const currentLocation = useAuthStore.getState().currentLocation;
+      
+      // Use provided locationIds or fallback to currentLocation
+      const locationsToFilter = locationIds && locationIds.length > 0 
+        ? locationIds 
+        : [currentLocation];
+      
       // If startDate === endDate, fetch entire day 24h
       const start = new Date(startDate);
       const end = new Date(endDate);
@@ -90,9 +97,8 @@ export const financeRepository = {
         start.setHours(0, 0, 0, 0);
         end.setHours(23, 59, 59, 999);
       }
-      //   console.log("startdate", start);
-      //   console.log("enddate", end);
-      const { data, error } = await supabase
+      
+      let query = supabase
         .from("sales")
         .select(
           `
@@ -103,9 +109,15 @@ export const financeRepository = {
             `
         )
         .eq("is_voided", false)
-        // .eq("location_id", currentLocation)
         .gte("created_at", start.toISOString())
         .lte("created_at", end.toISOString());
+      
+      // Apply location filter
+      if (locationsToFilter.length > 0) {
+        query = query.in("location_id", locationsToFilter);
+      }
+      
+      const { data, error } = await query;
 
       if (error) {
         console.error("Supabase fetch error:", error.message);
@@ -120,9 +132,16 @@ export const financeRepository = {
   },
   async getFinanceDiscountData(
     startDate: string,
-    endDate: string
+    endDate: string,
+    locationIds?: string[]
   ): Promise<SalePaymentMethod[]> {
     const currentLocation = useAuthStore.getState().currentLocation;
+    
+    // Use provided locationIds or fallback to currentLocation
+    const locationsToFilter = locationIds && locationIds.length > 0 
+      ? locationIds 
+      : [currentLocation];
+    
     const { data, error } = await supabase
       .from("sale_payment_methods")
       .select(
@@ -144,7 +163,7 @@ export const financeRepository = {
       )
       .eq("is_voided", false)
       .eq("sale.is_voided", false)
-      // .eq("sale.location_id", currentLocation)
+      .in("sale.location_id", locationsToFilter)
       .gte("sale.created_at", startDate)
       .lte("sale.created_at", endDate);
 
@@ -158,30 +177,52 @@ export const financeRepository = {
 
   async getFinanceVoucherData(
     startDate: string,
-    endDate: string
+    endDate: string,
+    locationIds?: string[]
   ): Promise<ClientVoucher[]> {
     // Use string dates directly for Supabase queries
     let queryStartDate = startDate;
     let queryEndDate = endDate;
     const currentLocation = useAuthStore.getState().currentLocation;
+    
+    // Use provided locationIds or fallback to currentLocation
+    const locationsToFilter = locationIds && locationIds.length > 0 
+      ? locationIds 
+      : [currentLocation];
+    
     // If same date, expand to full day
     if (startDate === endDate) {
       queryStartDate = `${startDate} 00:00:00`;
       queryEndDate = `${endDate} 23:59:59`;
     }
 
-    const { data, error } = await supabase
+    let query = supabase
       .from("client_vouchers")
-      .select("*")
-      //   .eq("location_id", currentLocation)
+      .select("*, sales:purchase_sale_id(location_id)")
       .gte("purchase_date", queryStartDate)
       .lte("purchase_date", queryEndDate);
+    
+    const { data, error } = await query;
 
     if (error) {
       console.error("❌ Error fetching finance vouchers:", error.message);
       return [];
     }
-    console.log("getFinanceVoucherData", data.length);
-    return (data ?? []) as ClientVoucher[];
+    
+    // Filter by location IDs client-side (filtering on joined table)
+    let filteredData = data ?? [];
+    if (locationIds && locationIds.length > 0) {
+      filteredData = (data ?? []).filter((voucher: any) => 
+        voucher.sales?.location_id && locationsToFilter.includes(voucher.sales.location_id)
+      );
+      console.log("Filtered vouchers by location:", {
+        locationIds: locationsToFilter,
+        totalVouchers: data?.length || 0,
+        filteredVouchers: filteredData.length
+      });
+    }
+    
+    console.log("getFinanceVoucherData", filteredData.length);
+    return filteredData as ClientVoucher[];
   },
 };

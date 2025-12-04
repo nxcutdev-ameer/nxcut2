@@ -2,37 +2,28 @@ import { View, Text, TouchableOpacity, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { PaymentSummaryScreenStyles } from "./PaymentSummaryScreenStyles";
 import usePaymentSummaryScreenVM from "./PaymentSummaryScreenVM";
+import { useAuthStore } from "../../../Store/useAuthStore";
 import SelectPeriodModal from "../../../Components/SelectPeriodModal";
 import PaymentSummaryTable from "../../../Components/PaymentSummaryTable";
 import ExportBottomSheet from "../../../Components/ExportBottomSheet";
-import FilterPanelModal from "../../../Components/FilterPanelModal";
+import LocationFilterModal from "../../../Components/LocationFilterModal";
 import {
-  ArrowLeft,
   SlidersVertical,
   EllipsisVertical,
-  Plus,
   ChevronLeft,
+  Sliders,
 } from "lucide-react-native";
 import colors from "../../../Constants/colors";
-import React, { useMemo, useState } from "react";
+import React, { useState } from "react";
 
-type PageFilterState = {
-  location_ids: string[];
-  staff_ids: string[];
-};
 
 const PaymentSummaryScreen = () => {
   const [showPeriodFilter, setShowPeriodFilter] = useState(false);
   const [exportSheetOpen, setExportSheetOpen] = useState(false);
-  const [showAdvancedFilter, setShowAdvancedFilter] = useState(false);
-  const [expandedFilter, setExpandedFilter] = useState<string | null>(null);
-  const [pageFilter, setPageFilter] = useState<PageFilterState>({
-    location_ids: [],
-    staff_ids: [],
-  });
+  const [showFilterPanel, setShowFilterPanel] = useState(false);
+  const [selectedLocationIds, setSelectedLocationIds] = useState<string[]>([]);
 
-  const allLocations = useMemo<any[]>(() => [], []);
-  const allTeamMembers = useMemo<any[]>(() => [], []);
+  const { allLocations, allTeamMembers } = useAuthStore();
 
   const {
     navigation,
@@ -63,19 +54,27 @@ const PaymentSummaryScreen = () => {
           {/* <ArrowLeft size={20} color={colors.colors.black} />
           <Text style={PaymentSummaryScreenStyles.backArrowText}>Back</Text> */}
         </TouchableOpacity>
-        <TouchableOpacity
-          style={PaymentSummaryScreenStyles.elipseBox}
-          onPress={() => setExportSheetOpen(true)}
-        >
-          <EllipsisVertical size={20} color={colors.colors.text} />
-        </TouchableOpacity>
-        {/* <TouchableOpacity
+        <View style={PaymentSummaryScreenStyles.titleContainer}>
+          <TouchableOpacity
+            style={PaymentSummaryScreenStyles.headerButton}
+            onPress={() => setExportSheetOpen(true)}
+          >
+            <EllipsisVertical strokeWidth={1.7} />
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => setShowFilterPanel(true)}
+            style={PaymentSummaryScreenStyles.headerButton}
+          >
+            <Sliders size={22} color={colors.colors.black} strokeWidth={1.7} />
+          </TouchableOpacity>
+          {/* <TouchableOpacity
           onPress={fetchPaymentSummary}
           style={PaymentSummaryScreenStyles.addButton}
         >
           <Plus size={16} color={colors.colors.white} />
           <Text style={PaymentSummaryScreenStyles.addButtonText}>Add</Text>
         </TouchableOpacity> */}
+        </View>
       </View>
 
       {/* Fixed Title Section */}
@@ -97,7 +96,11 @@ const PaymentSummaryScreen = () => {
               setShowPeriodFilter(true);
             }}
           >
-            <SlidersVertical size={18} color={colors.colors.text} />
+            <SlidersVertical
+              size={18}
+              color={colors.colors.text}
+              strokeWidth={1.7}
+            />
             <Text style={PaymentSummaryScreenStyles.filterButtonText}>
               {getDateRangeDisplay()}
             </Text>
@@ -149,45 +152,31 @@ const PaymentSummaryScreen = () => {
         onExportExcel={exportAsExcel}
       />
 
-      <FilterPanelModal
-        visible={showAdvancedFilter}
-        onClose={() => setShowAdvancedFilter(false)}
+      <LocationFilterModal
+        visible={showFilterPanel}
+        onClose={() => setShowFilterPanel(false)}
         onClear={() => {
-          setPageFilter({ location_ids: [], staff_ids: [] });
-          setExpandedFilter(null);
+          setSelectedLocationIds([]);
         }}
         onApply={() => {
-          setShowAdvancedFilter(false);
-          fetchPaymentSummary();
-        }}
-        expandedFilter={expandedFilter}
-        toggleFilterAccordion={(filterType: string) => {
-          setExpandedFilter((prev) =>
-            prev === filterType ? null : filterType
-          );
+          setShowFilterPanel(false);
+          // Call fetchPaymentSummary with selected location IDs
+          const locationIds = selectedLocationIds.length > 0 
+            ? selectedLocationIds 
+            : allLocations.map(loc => loc.id);
+          fetchPaymentSummary(locationIds);
         }}
         allLocations={allLocations}
-        allTeamMembers={allTeamMembers}
-        pageFilter={pageFilter}
-        allowedFilters={["location"]}
+        pageFilter={{ location_ids: selectedLocationIds }}
         toggleLocationFilter={(locationId: string) => {
-          setPageFilter((prev) => {
-            const exists = prev.location_ids.includes(locationId);
-            const location_ids = exists
-              ? prev.location_ids.filter((id) => id !== locationId)
-              : [...prev.location_ids, locationId];
-            return { ...prev, location_ids };
+          setSelectedLocationIds(prev => {
+            const isSelected = prev.includes(locationId);
+            return isSelected
+              ? prev.filter(id => id !== locationId)
+              : [...prev, locationId];
           });
         }}
-        toggleTeamMemberFilter={(staffId: string) => {
-          setPageFilter((prev) => {
-            const exists = prev.staff_ids.includes(staffId);
-            const staff_ids = exists
-              ? prev.staff_ids.filter((id) => id !== staffId)
-              : [...prev.staff_ids, staffId];
-            return { ...prev, staff_ids };
-          });
-        }}
+        title="Filter Payment Summary"
       />
     </SafeAreaView>
   );

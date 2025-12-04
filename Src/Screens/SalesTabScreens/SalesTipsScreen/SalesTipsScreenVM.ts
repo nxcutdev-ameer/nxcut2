@@ -26,11 +26,14 @@ const useSalesTipsScreenVM = () => {
   const [pageFilter, setPageFilter] = useState({
     start_date: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString(),
     end_date: new Date().toISOString(),
-    location_id: [],
+    location_ids: [] as string[],
     staff_name: "",
     tip_amount: "",
     payment_method: "",
   });
+  
+  // Location filter modal state
+  const [showFilterPanel, setShowFilterPanel] = useState<boolean>(false);
 
   // Filter tips based on search query
   const filteredTipsData = useMemo(() => {
@@ -79,6 +82,7 @@ const useSalesTipsScreenVM = () => {
   // Initialize data on component mount
   useEffect(() => {
     const locationIds = allLocations?.map((location) => location.id);
+    setPageFilter((prev) => ({ ...prev, location_ids: locationIds || [] }));
     fetchSalesTips(undefined, undefined, locationIds);
   }, [allLocations]);
 
@@ -95,9 +99,49 @@ const useSalesTipsScreenVM = () => {
     setPageFilter(updatedFilter);
     setShowDateFilter(false);
 
-    // Refetch data with new date range
-    const locationIds = allLocations?.map((location) => location.id);
+    // Refetch data with new date range and current location filters
+    const locationIds = pageFilter.location_ids.length > 0 
+      ? pageFilter.location_ids 
+      : allLocations?.map((location) => location.id);
     await fetchSalesTips(filter.fromDate, filter.toDate, locationIds);
+  };
+
+  // Location filter functions
+  const openFilterPanel = () => {
+    setShowFilterPanel(true);
+  };
+
+  const closeFilterPanel = () => {
+    setShowFilterPanel(false);
+  };
+
+  const toggleLocationFilter = (locationId: string) => {
+    setPageFilter((prev) => {
+      const currentIds = prev.location_ids || [];
+      const isSelected = currentIds.includes(locationId);
+      
+      return {
+        ...prev,
+        location_ids: isSelected
+          ? currentIds.filter((id) => id !== locationId)
+          : [...currentIds, locationId],
+      };
+    });
+  };
+
+  const clearAllFilters = () => {
+    setPageFilter((prev) => ({
+      ...prev,
+      location_ids: [],
+    }));
+  };
+
+  const applyFilters = async () => {
+    setShowFilterPanel(false);
+    const locationIds = pageFilter.location_ids.length > 0 
+      ? pageFilter.location_ids 
+      : allLocations?.map((location) => location.id);
+    await fetchSalesTips(pageFilter.start_date, pageFilter.end_date, locationIds);
   };
 
   // Function to format date range for display
@@ -326,6 +370,12 @@ const useSalesTipsScreenVM = () => {
     handleExport,
     isBottomSheetOpen,
     backdropOpacity,
+    showFilterPanel,
+    openFilterPanel,
+    closeFilterPanel,
+    toggleLocationFilter,
+    clearAllFilters,
+    applyFilters,
   };
 };
 

@@ -7,6 +7,7 @@ import {
   SCREEN_WIDTH,
 } from "../../../Utils/helpers";
 
+
 const SalesTipsScreenStyles = StyleSheet.create({
   mainContainer: {
     flex: 1,
@@ -28,37 +29,53 @@ const SalesTipsScreenStyles = StyleSheet.create({
     width: getHeightEquivalent(80),
     justifyContent: "center",
   },
+  headerButtons: {
+    flexDirection: "row",
+    height: "100%",
+    gap: getWidthEquivalent(10),
+  },
   addButton: {
     height: "100%",
     width: getHeightEquivalent(80),
     alignItems: "center",
     justifyContent: "center",
-    borderWidth: 0.5,
-    borderColor: colors.black,
+    borderWidth: 1,
+    borderColor: colors.border,
     borderRadius: 8,
-    backgroundColor: `${colors.black}`,
+    backgroundColor: `${colors.white}`,
     flexDirection: "row",
   },
   addButtonText: {
-    color: colors.white,
+    color: colors.black,
     fontSize: fontEq(14),
     fontWeight: "600",
   },
+  filter: {
+    height: "100%",
+    width: getHeightEquivalent(50),
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderRadius: 8,
+    backgroundColor: colors.white,
+    borderColor: colors.border,
+    flexDirection: "row",
+  },
   titleSection: {
-    width: '100%',
+    width: "100%",
     paddingHorizontal: getWidthEquivalent(20),
     paddingTop: getHeightEquivalent(16),
     paddingBottom: getHeightEquivalent(20),
     backgroundColor: colors.white,
   },
   titleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: getHeightEquivalent(8),
   },
   title: {
     fontSize: fontEq(22),
-    fontWeight: '700',
+    fontWeight: "700",
     color: colors.text,
     flex: 1,
   },
@@ -114,14 +131,14 @@ const SalesTipsScreenStyles = StyleSheet.create({
     fontWeight: "500",
   },
   dateRangeButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     backgroundColor: colors.background,
     borderRadius: 8,
     paddingHorizontal: getWidthEquivalent(12),
     height: getHeightEquivalent(44),
-    width: '100%',
+    width: "100%",
   },
   dateRangeText: {
     fontSize: fontEq(14),
@@ -137,12 +154,12 @@ const SalesTipsScreenStyles = StyleSheet.create({
   },
   countText: {
     fontSize: fontEq(14),
-    fontWeight: '600',
+    fontWeight: "600",
     color: colors.text,
   },
   searchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     backgroundColor: colors.background,
     borderRadius: 8,
     paddingHorizontal: getWidthEquivalent(12),
@@ -155,7 +172,7 @@ const SalesTipsScreenStyles = StyleSheet.create({
     fontSize: fontEq(14),
     color: colors.text,
     paddingVertical: 0,
-    height: '100%',
+    height: "100%",
   },
   bottomSheetContainer: {
     flex: 1,

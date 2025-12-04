@@ -1,8 +1,9 @@
-import React, { FC, ReactElement, useEffect } from "react";
+import React, { FC, ReactElement, useEffect, useState } from "react";
 import { View, Text, TouchableOpacity, ScrollView, Modal } from "react-native";
 import { colors } from "../../../Constants/colors";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { getWidthEquivalent } from "../../../Utils/helpers";
+import { useAuthStore } from "../../../Store/useAuthStore";
 import {
   ChevronLeft,
   EllipsisVertical,
@@ -12,8 +13,10 @@ import {
   DollarSign,
   X,
   SlidersVertical,
+  Sliders,
 } from "lucide-react-native";
 import SelectPeriodModal from "../../../Components/SelectPeriodModal";
+import LocationFilterModal from "../../../Components/LocationFilterModal";
 import LottieView from "lottie-react-native";
 import useFinanceSummaryScreenVM from "./FinanceSummaryScreenVM";
 import { styles } from "./FinanceSummaryScreenStyles";
@@ -22,10 +25,15 @@ import CustomToast from "../../../Components/CustomToast";
 
 const FinanceSummaryScreen = () => {
   const { toast, hideToast, showToast } = useToast();
+  const [showFilterPanel, setShowFilterPanel] = useState(false);
+  const [selectedLocationIds, setSelectedLocationIds] = useState<string[]>([]);
+  const { allLocations } = useAuthStore();
+  
   const {
     navigation,
     salesSection,
     dailyBreakdown,
+    fetchFinanceSalesData,
     dynamicColumns,
     showDailyBreakdown,
     loading,
@@ -482,17 +490,23 @@ const FinanceSummaryScreen = () => {
              <ChevronLeft size={24} />
         </TouchableOpacity>
 
-        <View style={styles.titleContainer}>
-          <TouchableOpacity
-            onPress={() => {
-              console.log("EllipsisVertical pressed");
-              setShowExportModal(true);
-            }}
-            hitSlop={10}
-          >
-            <EllipsisVertical style={styles.ellipsis as any} size={25} />
-          </TouchableOpacity>
-        </View>
+           <View style={styles.titleContainer}>
+                 <TouchableOpacity
+                   onPress={() => {
+                     setShowExportModal(true);
+                   }}
+                   hitSlop={10}
+                   style={styles.headerButton}
+                 >
+                   <EllipsisVertical strokeWidth={1.7} />
+                 </TouchableOpacity>
+                 <TouchableOpacity 
+                   onPress={() => setShowFilterPanel(true)} 
+                   style={styles.headerButton}
+                 >
+                   <Sliders size={22} color={colors.black} strokeWidth={1.7} />
+                 </TouchableOpacity>
+               </View>
       </View>
 
       {/* Header */}
@@ -794,6 +808,33 @@ const FinanceSummaryScreen = () => {
         type={toast.type}
         onHide={hideToast}
       /> */}
+      {/* Location Filter Modal */}
+      <LocationFilterModal
+        visible={showFilterPanel}
+        onClose={() => setShowFilterPanel(false)}
+        onClear={() => {
+          setSelectedLocationIds([]);
+        }}
+        onApply={() => {
+          setShowFilterPanel(false);
+          // Call fetchFinanceSalesData with selected location IDs
+          const locationIds = selectedLocationIds.length > 0 
+            ? selectedLocationIds 
+            : allLocations.map(loc => loc.id);
+          fetchFinanceSalesData(dateFilter.fromDate, dateFilter.toDate, locationIds);
+        }}
+        allLocations={allLocations}
+        pageFilter={{ location_ids: selectedLocationIds }}
+        toggleLocationFilter={(locationId: string) => {
+          setSelectedLocationIds(prev => {
+            const isSelected = prev.includes(locationId);
+            return isSelected
+              ? prev.filter(id => id !== locationId)
+              : [...prev, locationId];
+          });
+        }}
+        title="Filter Finance Summary"
+      />
     </SafeAreaView>
   );
 };

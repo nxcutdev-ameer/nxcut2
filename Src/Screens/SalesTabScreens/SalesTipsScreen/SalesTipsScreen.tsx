@@ -21,10 +21,12 @@ import {
   FileText,
   Download,
   FileSpreadsheet,
+  Sliders,
 } from "lucide-react-native";
 import colors from "../../../Constants/colors";
 import TipsTable from "../../../Components/TipsTable";
 import SelectPeriodModal from "../../../Components/SelectPeriodModal";
+import LocationFilterModal from "../../../Components/LocationFilterModal";
 import BottomSheet, { BottomSheetView } from "@gorhom/bottom-sheet";
 
 const SalesTipsScreen = () => {
@@ -37,6 +39,7 @@ const SalesTipsScreen = () => {
     pageFilter,
     updateDateFilter,
     getDateRangeText,
+    allLocations,
     searchQuery,
     setSearchQuery,
     filteredTipsData,
@@ -47,6 +50,12 @@ const SalesTipsScreen = () => {
     handleExport,
     isBottomSheetOpen,
     backdropOpacity,
+    showFilterPanel,
+    openFilterPanel,
+    closeFilterPanel,
+    toggleLocationFilter,
+    clearAllFilters,
+    applyFilters,
   } = useSalesTipsScreenVM();
 
   return (
@@ -62,12 +71,20 @@ const SalesTipsScreen = () => {
         >
           <ArrowLeft size={20} color={colors.colors.text} />
         </TouchableOpacity>
+       <View style={SalesTipsScreenStyles.headerButtons}>
         <TouchableOpacity
           onPress={openExportBottomSheet}
           style={SalesTipsScreenStyles.addButton}
         >
           <Text style={SalesTipsScreenStyles.addButtonText}>Export</Text>
         </TouchableOpacity>
+        <TouchableOpacity
+          onPress={openFilterPanel}
+          style={SalesTipsScreenStyles.filter}
+        >
+          <Sliders size={22} color={colors.colors.black} strokeWidth={1.7} />
+        </TouchableOpacity>
+        </View>
       </View>
       <View style={SalesTipsScreenStyles.titleSection}>
         <View style={SalesTipsScreenStyles.titleRow}>
@@ -101,7 +118,8 @@ const SalesTipsScreen = () => {
         >
           <Calendar size={18} color={colors.colors.black} />
           <Text style={SalesTipsScreenStyles.dateRangeText}>
-           {" "} {getDateRangeText()}
+            {" "}
+            {getDateRangeText()}
           </Text>
         </TouchableOpacity>
       </View>
@@ -255,6 +273,18 @@ const SalesTipsScreen = () => {
           </View>
         </BottomSheetView>
       </BottomSheet>
+
+      {/* Location Filter Modal */}
+      <LocationFilterModal
+        visible={showFilterPanel}
+        onClose={closeFilterPanel}
+        onClear={clearAllFilters}
+        onApply={applyFilters}
+        allLocations={allLocations}
+        pageFilter={pageFilter}
+        toggleLocationFilter={toggleLocationFilter}
+        title="Filter Sales Tips"
+      />
     </SafeAreaView>
   );
 };

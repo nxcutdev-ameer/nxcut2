@@ -101,7 +101,6 @@ export const LocationScreenStyles = StyleSheet.create({
     color: colors.gray[500],
   },
   
-  // Modern card-based location styles
   LocationCard: {
     marginHorizontal: getWidthEquivalent(20),
     marginVertical: getHeightEquivalent(10),
@@ -128,6 +127,10 @@ export const LocationScreenStyles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   locationImage: {
+    borderRadius: 14,
+  },
+  topFadeOverlay: {
+    ...StyleSheet.absoluteFillObject,
     borderRadius: 14,
   },
   imageGradient: {

@@ -19,6 +19,7 @@ import {
   Modal,
 } from "react-native";
 import { useReportStore } from "../../../Store/useReportsStore";
+import { useAuthStore } from "../../../Store/useAuthStore";
 import { colors } from "../../../Constants/colors";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
@@ -32,12 +33,14 @@ import {
   FileArchive,
   FileSpreadsheet,
   FileText,
+  Sliders,
   SlidersVertical,
   Star,
   X,
 } from "lucide-react-native";
 import { NavigationProp, useNavigation } from "@react-navigation/native";
 import SelectPeriodModal from "../../../Components/SelectPeriodModal";
+import LocationFilterModal from "../../../Components/LocationFilterModal";
 import LottieView from "lottie-react-native";
 import { BottomSheetModal, BottomSheetBackdrop } from "@gorhom/bottom-sheet";
 import { paymentRepository } from "../../../Repository/paymentsRepository";
@@ -50,6 +53,9 @@ import { Dimensions } from "react-native";
 export const PaymentTransactionsScreen = () => {
   const [showMonthFilter, setShowMonthFilter] = useState(false);
   const [showExportModal, setShowExportModal] = useState(false);
+  const [showFilterPanel, setShowFilterPanel] = useState(false);
+  const [selectedLocationIds, setSelectedLocationIds] = useState<string[]>([]);
+  
   const {
     paymentTransactions,
     loading,
@@ -58,7 +64,15 @@ export const PaymentTransactionsScreen = () => {
     setFilter,
     resetPaymentFilter,
   } = useReportStore();
+  const { allLocations } = useAuthStore();
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
+  
+  // Initialize with all locations
+  useEffect(() => {
+    if (allLocations && allLocations.length > 0) {
+      setSelectedLocationIds(allLocations.map(loc => loc.id));
+    }
+  }, [allLocations]);
 
   // Fetch on first render with default filter
   useEffect(() => {
@@ -589,15 +603,20 @@ export const PaymentTransactionsScreen = () => {
         </TouchableOpacity>
 
         <View style={styles.titleContainer}>
-          {/* <Star size={25} color={"#fbbf24"} fill={"#fbbf24"} /> */}
           <TouchableOpacity
             onPress={() => {
-              console.log("EllipsisVertical pressed");
               setShowExportModal(true);
             }}
             hitSlop={10}
+            style={styles.headerButton}
           >
-            <EllipsisVertical style={styles.ellipsis} size={25} />
+            <EllipsisVertical strokeWidth={1.7} />
+          </TouchableOpacity>
+          <TouchableOpacity 
+            onPress={() => setShowFilterPanel(true)} 
+            style={styles.headerButton}
+          >
+            <Sliders size={22} color={colors.black} strokeWidth={1.7} />
           </TouchableOpacity>
         </View>
       </View>
@@ -613,7 +632,9 @@ export const PaymentTransactionsScreen = () => {
             style={styles.periodFilterButton}
           >
             <SlidersVertical size={18} color={colors.text} />
-            <Text style={styles.periodFilterButtonText}>{selectedPeriodLabel}</Text>
+            <Text style={styles.periodFilterButtonText}>
+              {selectedPeriodLabel}
+            </Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -628,7 +649,8 @@ export const PaymentTransactionsScreen = () => {
           style={styles.horizontalScrollView}
           contentContainerStyle={{
             minWidth: scrollContentWidth,
-            paddingHorizontal: scrollContentWidth > screenWidth ? horizontalPadding / 2 : 0,
+            paddingHorizontal:
+              scrollContentWidth > screenWidth ? horizontalPadding / 2 : 0,
           }}
         >
           <View style={[styles.tableWrapper, { width: tableContentWidth }]}>
@@ -688,6 +710,36 @@ export const PaymentTransactionsScreen = () => {
           </View>
         </ScrollView>
       </View>
+
+      {/* Location Filter Modal */}
+      <LocationFilterModal
+        visible={showFilterPanel}
+        onClose={() => setShowFilterPanel(false)}
+        onClear={() => {
+          setSelectedLocationIds([]);
+        }}
+        onApply={() => {
+          setShowFilterPanel(false);
+          // Update filter with selected location IDs
+          if (selectedLocationIds.length > 0) {
+            setFilter({ locationId: selectedLocationIds as any }, true);
+          } else {
+            // If no locations selected, fetch all
+            setFilter({ locationId: allLocations.map(loc => loc.id) as any }, true);
+          }
+        }}
+        allLocations={allLocations}
+        pageFilter={{ location_ids: selectedLocationIds }}
+        toggleLocationFilter={(locationId: string) => {
+          setSelectedLocationIds(prev => {
+            const isSelected = prev.includes(locationId);
+            return isSelected
+              ? prev.filter(id => id !== locationId)
+              : [...prev, locationId];
+          });
+        }}
+        title="Filter Payment Transactions"
+      />
 
       {/* Export Modal */}
       <Modal
@@ -798,6 +850,17 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     backgroundColor: colors.gray[100],
   },
+  headerButton: {
+    height: "100%",
+    width: getHeightEquivalent(50),
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderRadius: 8,
+    backgroundColor: colors.white,
+    borderColor: colors.border,
+    flexDirection: "row",
+  },
   exportOptions: {
     flex: 1,
   },
@@ -852,9 +915,8 @@ const styles = StyleSheet.create({
   titleContainer: {
     flexDirection: "row",
     alignSelf: "center",
-  },
-  ellipsis: {
-    marginLeft: getWidthEquivalent(10),
+    height: "100%",
+    gap: getWidthEquivalent(10),
   },
   header: {
     //flexDirection: "row",
@@ -941,7 +1003,6 @@ const styles = StyleSheet.create({
     textAlign: "center",
     lineHeight: 18,
     width: getWidthEquivalent(100),
-
   },
   linkText: {
     color: colors.primary,

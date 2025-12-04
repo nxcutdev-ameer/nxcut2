@@ -2,13 +2,12 @@ import { View, Text, TouchableOpacity, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { DailySalesScreenStyles } from "./DailySalesScreenStyles";
 import { useDailySalesScreenVM } from "./DailySalesScreenVM";
-import PerformanceDashboardScreenStyles from "../../MoreTabScreens/PerformanceDashboardScreen/PerformanceDashboardScreenStyles";
 import SalesTable from "../../../Components/SalesTable";
 import DateModal from "../../../Components/DateModal";
 import SaleItemSummary from "../../../Components/SaleItemSummary";
 import DailySalesSummary from "../../../Components/DailySalesSummary";
 import CashMovementSummary from "../../../Components/CashMovementSummary";
-import Modal from "react-native-modal";
+import LocationFilterModal from "../../../Components/LocationFilterModal";
 import BottomSheet, { BottomSheetView, BottomSheetBackdrop } from "@gorhom/bottom-sheet";
 import {
   ArrowLeft,
@@ -17,155 +16,11 @@ import {
   ChevronLeft,
   ChevronRight,
   Sliders,
-  X,
-  Check,
   FileText,
-  Download,
   Grid3X3,
 } from "lucide-react-native";
 import colors from "../../../Constants/colors";
 import React, { useState } from "react";
-
-// Filter Panel Modal Component
-const FilterPanelModal = ({
-  visible,
-  onClose,
-  onClear,
-  onApply,
-  allLocations,
-  pageFilter,
-  toggleLocationFilter,
-}: {
-  visible: boolean;
-  onClose: () => void;
-  onClear: () => void;
-  onApply: () => void;
-  allLocations: any[];
-  pageFilter: any;
-  toggleLocationFilter: (locationId: string) => void;
-}) => {
-  return (
-    <Modal
-      isVisible={visible}
-      animationIn="slideInRight"
-      animationOut="slideOutRight"
-      onBackdropPress={onClose}
-      style={PerformanceDashboardScreenStyles.filterPanelModal}
-    >
-      <SafeAreaView
-        edges={["top", "right", "bottom"]}
-        style={PerformanceDashboardScreenStyles.filterPanel}
-      >
-        {/* Header */}
-        <View style={PerformanceDashboardScreenStyles.filterPanelHeader}>
-          <Text style={PerformanceDashboardScreenStyles.filterPanelTitle}>
-            Filter Daily Sales
-          </Text>
-          <TouchableOpacity
-            onPress={onClose}
-            style={PerformanceDashboardScreenStyles.filterCloseButton}
-          >
-            <X size={20} color={colors.colors.textSecondary} />
-          </TouchableOpacity>
-        </View>
-
-        {/* Content */}
-        <ScrollView style={PerformanceDashboardScreenStyles.filterPanelContent}>
-          {/* Location Filter */}
-          <View style={PerformanceDashboardScreenStyles.filterOption}>
-            <Text style={PerformanceDashboardScreenStyles.filterOptionText}>
-              Locations
-            </Text>
-          </View>
-
-          {allLocations.map((location) => {
-            const isSelected = pageFilter.location_ids?.includes(location.id);
-            return (
-              <TouchableOpacity
-                key={location.id}
-                style={{
-                  flexDirection: "row",
-                  alignItems: "center",
-                  paddingVertical: 12,
-                  paddingHorizontal: 16,
-                  marginVertical: 2,
-                }}
-                onPress={() => toggleLocationFilter(location.id)}
-              >
-                <View
-                  style={{
-                    width: 24,
-                    height: 24,
-                    borderRadius: 4,
-                    borderWidth: 2,
-                    borderColor: isSelected
-                      ? colors.colors.primary
-                      : colors.colors.border,
-                    backgroundColor: isSelected
-                      ? colors.colors.primary
-                      : "transparent",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    marginRight: 12,
-                  }}
-                >
-                  {isSelected && (
-                    <Check
-                      size={16}
-                      color={colors.colors.white}
-                      strokeWidth={3}
-                    />
-                  )}
-                </View>
-                <Text
-                  style={{
-                    fontSize: 16,
-                    color: colors.colors.text,
-                    fontWeight: isSelected ? "600" : "400",
-                  }}
-                >
-                  {location.name}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </ScrollView>
-
-        {/* Footer Buttons */}
-        <View style={PerformanceDashboardScreenStyles.filterPanelButtons}>
-          <TouchableOpacity
-            style={PerformanceDashboardScreenStyles.filterClearButton}
-            onPress={onClear}
-          >
-            <Text
-              style={PerformanceDashboardScreenStyles.filterClearButtonText}
-            >
-              Clear All
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[
-              DailySalesScreenStyles.filterButton,
-              (!pageFilter.location_ids ||
-                pageFilter.location_ids.length === 0) &&
-                DailySalesScreenStyles.disabledFilterButton, // optional disabled style
-            ]}
-            onPress={onApply}
-            disabled={
-              !pageFilter.location_ids || pageFilter.location_ids.length === 0
-            }
-          >
-            <Text
-              style={PerformanceDashboardScreenStyles.filterApplyButtonText}
-            >
-              Apply Filters
-            </Text>
-          </TouchableOpacity>
-        </View>
-      </SafeAreaView>
-    </Modal>
-  );
-};
 
 const DailySalesScreen = () => {
   const [open, setOpen] = useState(false);
@@ -456,8 +311,8 @@ const DailySalesScreen = () => {
         </BottomSheetView>
       </BottomSheet>
 
-      {/* Filter Panel Modal */}
-      <FilterPanelModal
+      {/* Location Filter Modal */}
+      <LocationFilterModal
         visible={showFilterPanel}
         onClose={closeFilterPanel}
         onClear={clearAllFilters}
@@ -465,6 +320,8 @@ const DailySalesScreen = () => {
         allLocations={allLocations}
         pageFilter={pageFilter}
         toggleLocationFilter={toggleLocationFilter}
+        title="Filter Daily Sales"
+        applyButtonStyle={DailySalesScreenStyles.filterButton}
       />
     </SafeAreaView>
   );

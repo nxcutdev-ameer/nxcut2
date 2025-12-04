@@ -95,13 +95,19 @@ export const paymentRepository = {
     fromDate: string;
     toDate: string;
     isVoided?: boolean;
-    locationId?: string;
+    locationId?: string | string[];
     teamMemberId?: string;
     paymentMethod?: string;
     minAmount?: number;
     maxAmount?: number;
   }) {
     const currentLocation = useAuthStore.getState().currentLocation;
+    
+    // Determine location IDs to use
+    const locationIds = filters.locationId 
+      ? (Array.isArray(filters.locationId) ? filters.locationId : [filters.locationId])
+      : [currentLocation];
+    
     let query = supabase
       .from("sale_payment_methods")
       .select(
@@ -121,6 +127,7 @@ export const paymentRepository = {
           discount_amount,
           payment_method,
           receptionist_name,
+          location_id,
           client:clients(first_name,last_name),
           location:locations(name),
           appointment:appointments(
@@ -132,7 +139,6 @@ export const paymentRepository = {
         )
       `
       )
-      .eq("sales.location_id", currentLocation)
       .gte("created_at", filters.fromDate) // start date
       .lte("created_at", filters.toDate) // end date
       .order("created_at", { ascending: false });
@@ -142,10 +148,6 @@ export const paymentRepository = {
       query = query.eq("is_voided", filters.isVoided);
     } else {
       query = query.eq("is_voided", false); // default
-    }
-
-    if (filters.locationId) {
-      query = query.eq("sale.location_id", filters.locationId);
     }
 
     if (filters.teamMemberId) {
@@ -174,7 +176,18 @@ export const paymentRepository = {
       throw error;
     }
 
-    return data;
+    // Filter by location IDs client-side (since we can't filter on nested fields in Supabase)
+    const filteredData = (data || []).filter((payment: any) => 
+      payment.sale?.location_id && locationIds.includes(payment.sale.location_id)
+    );
+
+    console.log("Filtered payments by location:", {
+      locationIds,
+      totalPayments: data?.length || 0,
+      filteredPayments: filteredData.length
+    });
+
+    return filteredData;
   },
   async getSaleById(saleId: number): Promise<SaleBO> {
     const { data, error } = await supabase
@@ -365,10 +378,17 @@ export const paymentRepository = {
   },
   async getSalesPaymentsByDateRange(
     startDate: string,
-    endDate: string
+    endDate: string,
+    locationIds?: string[]
   ): Promise<SalePaymentMethodRange[]> {
     const currentLocation = useAuthStore.getState().currentLocation;
-    if (!currentLocation) return [];
+    
+    // Use provided locationIds or fallback to currentLocation
+    const locationsToFilter = locationIds && locationIds.length > 0 
+      ? locationIds 
+      : [currentLocation];
+    
+    if (!locationsToFilter || locationsToFilter.length === 0) return [];
 
     // Convert start and end dates to full-day ranges
     const startOfDay = new Date(startDate);
@@ -383,7 +403,7 @@ export const paymentRepository = {
     let hasMoreData = true;
 
     while (hasMoreData) {
-      const { data, error } = await supabase
+      let query = supabase
         .from("sale_payment_methods")
         .select(
           `
@@ -402,11 +422,17 @@ export const paymentRepository = {
         `
         )
         .eq("sale.is_voided", false)
-        .eq("sale.location_id", currentLocation)
         .gte("sale.created_at", startOfDay.toISOString())
         .lte("sale.created_at", endOfDay.toISOString())
         .order("created_at", { ascending: true })
         .range(rangeStart, rangeStart + batchSize - 1);
+      
+      // Apply location filter using .in() for multiple locations
+      if (locationsToFilter.length > 0) {
+        query = query.in("sale.location_id", locationsToFilter);
+      }
+      
+      const { data, error } = await query;
 
       if (error) throw new Error(error.message);
 

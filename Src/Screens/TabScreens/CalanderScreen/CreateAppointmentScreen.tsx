@@ -112,6 +112,9 @@ const CreateAppointmentScreen = ({ route }: any) => {
   const [toastType, setToastType] = useState<"success" | "error">("success");
   const [showMenuModal, setShowMenuModal] = useState(false);
   const [isCanceling, setIsCanceling] = useState(false);
+  
+  // Track if any backend changes were made
+  const hasDataChanged = useRef(false);
 
   const { currentLocation, allLocations, allTeamMembers } = useAuthStore();
 
@@ -244,8 +247,6 @@ const CreateAppointmentScreen = ({ route }: any) => {
           return;
         }
 
-        console.log("[CreateAppointment] Fresh appointment from DB:", freshAppointment);
-        console.log("[CreateAppointment] Fresh client:", freshAppointment.clients);
         
         // Set date and time
         if (freshAppointment.appointment_date) {
@@ -261,7 +262,6 @@ const CreateAppointmentScreen = ({ route }: any) => {
         
         // Set client from FRESH database data
         // Supabase returns the related client as a single object when using foreign key
-        console.log("[CreateAppointment] Setting FRESH client:", freshAppointment.clients);
         const clientData = freshAppointment.clients as any;
         if (clientData) {
           setSelectedClient({
@@ -381,6 +381,13 @@ const CreateAppointmentScreen = ({ route }: any) => {
 
   const handleGoBack = () => {
     clearSearch();
+    // Pass dataChanged flag only if backend changes occurred
+    if (hasDataChanged.current) {
+      const parent = navigation.getParent();
+      if (parent) {
+        parent.setParams({ dataChanged: true });
+      }
+    }
     navigation.goBack();
   };
 
@@ -399,13 +406,6 @@ const CreateAppointmentScreen = ({ route }: any) => {
   const currentPageServices = filteredServices.slice(0, servicesPage * 20);
 
   const handleToggleService = async (service: ServiceBO) => {
-    console.log("[CreateAppointment] handleToggleService called");
-    console.log("[CreateAppointment] Mode:", mode);
-    console.log("[CreateAppointment] Service:", service.name, service.id);
-    console.log("[CreateAppointment] appointmentData:", appointmentData);
-    console.log("[CreateAppointment] appointmentData?.appointment?.id:", appointmentData?.appointment?.id);
-    console.log("[CreateAppointment] selectedStaff:", selectedStaff);
-    console.log("[CreateAppointment] currentTime:", currentTime);
     
     const exists = selectedServices.find((s) => s.id === service.id);
     console.log("[CreateAppointment] Service exists in list:", exists ? "YES" : "NO");
@@ -499,6 +499,9 @@ const CreateAppointmentScreen = ({ route }: any) => {
           setToastType("success");
           setShowToast(true);
           
+          // Mark that data has changed
+          hasDataChanged.current = true;
+          
           // Refresh services list
           await fetchAllAppointmentServices(appointmentData.appointment.id);
         } catch (error) {
@@ -542,6 +545,9 @@ const CreateAppointmentScreen = ({ route }: any) => {
         setToastMessage("Service removed successfully");
         setToastType("success");
         setShowToast(true);
+        
+        // Mark that data has changed
+        hasDataChanged.current = true;
         
         // Refresh the services list
         if (appointmentData?.appointment?.id) {
@@ -616,7 +622,14 @@ const CreateAppointmentScreen = ({ route }: any) => {
                   [
                     {
                       text: "OK",
-                      onPress: () => navigation.goBack(),
+                      onPress: () => {
+                        // Navigate back with params using setParams before going back
+                        const parent = navigation.getParent();
+                        if (parent) {
+                          parent.setParams({ dataChanged: true });
+                        }
+                        navigation.goBack();
+                      },
                     },
                   ]
                 );
@@ -662,14 +675,6 @@ const CreateAppointmentScreen = ({ route }: any) => {
 
       if (mode === "edit" && appointmentData) {
         // Edit mode: Update existing appointment
-        console.log("[CreateAppointment] Updating appointment:", appointmentData.appointment.id);
-        console.log("[CreateAppointment] Current state:");
-        console.log("  - Client:", selectedClient);
-        console.log("  - Services:", selectedServices);
-        console.log("  - Staff:", selectedStaff);
-        console.log("  - Location:", selectedLocation);
-        console.log("  - Date:", currentDate);
-        console.log("  - Time:", currentTime);
         
         const updateData = {
           client_id: selectedClient.id,
@@ -729,8 +734,12 @@ const CreateAppointmentScreen = ({ route }: any) => {
         setToastType("success");
         setShowToast(true);
 
-        // Navigate back and refresh calendar
+        // Navigate back and refresh calendar - pass flag to indicate data changed
         setTimeout(() => {
+          const parent = navigation.getParent();
+          if (parent) {
+            parent.setParams({ dataChanged: true });
+          }
           navigation.goBack();
         }, 1500);
 
@@ -766,8 +775,12 @@ const CreateAppointmentScreen = ({ route }: any) => {
           setToastType("success");
           setShowToast(true);
 
-          // Navigate back and refresh calendar
+          // Navigate back and refresh calendar - pass flag to indicate data changed
           setTimeout(() => {
+            const parent = navigation.getParent();
+            if (parent) {
+              parent.setParams({ dataChanged: true });
+            }
             navigation.goBack();
           }, 1500);
         } else {

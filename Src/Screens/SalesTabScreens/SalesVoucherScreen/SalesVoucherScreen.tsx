@@ -20,6 +20,7 @@ import {
   FileText,
   Download,
   FileSpreadsheet,
+  Sliders,
 } from "lucide-react-native";
 import colors from "../../../Constants/colors";
 import {
@@ -28,6 +29,7 @@ import {
 } from "../../../Repository/clientRepository";
 import VoucherCard from "../../../Components/VoucherCard";
 import SelectPeriodModal from "../../../Components/SelectPeriodModal";
+import LocationFilterModal from "../../../Components/LocationFilterModal";
 import BottomSheet, { BottomSheetView } from "@gorhom/bottom-sheet";
 
 const SalesVoucherScreen = () => {
@@ -41,6 +43,7 @@ const SalesVoucherScreen = () => {
     pageFilter,
     updateDateFilter,
     getDateRangeText,
+    allLocations,
     searchQuery,
     setSearchQuery,
     filteredVoucherData,
@@ -51,6 +54,12 @@ const SalesVoucherScreen = () => {
     handleExport,
     isBottomSheetOpen,
     backdropOpacity,
+    showFilterPanel,
+    openFilterPanel,
+    closeFilterPanel,
+    toggleLocationFilter,
+    clearAllFilters,
+    applyFilters,
   } = useSalesVoucherScreenVM();
 
   // Helper function to get usage data for a specific voucher
@@ -72,12 +81,20 @@ const SalesVoucherScreen = () => {
         >
           <ArrowLeft size={20} color={colors.colors.black} />
         </TouchableOpacity>
-        <TouchableOpacity
-          onPress={openExportBottomSheet}
-          style={SalesVoucherScreenStyles.addButton}
-        >
-          <Text style={SalesVoucherScreenStyles.addButtonText}>Export</Text>
-        </TouchableOpacity>
+        <View style={SalesVoucherScreenStyles.headerButtons}>
+          <TouchableOpacity
+            onPress={openExportBottomSheet}
+            style={SalesVoucherScreenStyles.addButton}
+          >
+            <Text style={SalesVoucherScreenStyles.addButtonText}>Export</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={openFilterPanel}
+            style={SalesVoucherScreenStyles.filter}
+          >
+            <Sliders size={22} color={colors.colors.black} strokeWidth={1.7} />
+          </TouchableOpacity>
+        </View>
       </View>
       <View style={SalesVoucherScreenStyles.titleSection}>
         <View style={SalesVoucherScreenStyles.titleRow}>
@@ -166,7 +183,7 @@ const SalesVoucherScreen = () => {
           <Animated.View
             style={[
               SalesVoucherScreenStyles.backdrop,
-              { opacity: backdropOpacity }
+              { opacity: backdropOpacity },
             ]}
           />
         </TouchableWithoutFeedback>
@@ -271,6 +288,18 @@ const SalesVoucherScreen = () => {
           </View>
         </BottomSheetView>
       </BottomSheet>
+
+      {/* Location Filter Modal */}
+      <LocationFilterModal
+        visible={showFilterPanel}
+        onClose={closeFilterPanel}
+        onClear={clearAllFilters}
+        onApply={applyFilters}
+        allLocations={allLocations}
+        pageFilter={pageFilter}
+        toggleLocationFilter={toggleLocationFilter}
+        title="Filter Vouchers"
+      />
     </SafeAreaView>
   );
 };

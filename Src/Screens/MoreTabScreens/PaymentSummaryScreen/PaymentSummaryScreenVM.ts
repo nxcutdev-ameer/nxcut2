@@ -42,7 +42,7 @@ const usePaymentSummaryScreenVM = () => {
     fetchDataForDateRange(startDate, endDate);
   }, [startDate, endDate]);
 
-  const fetchDataForDateRange = async (fromDate: Date, toDate: Date) => {
+  const fetchDataForDateRange = async (fromDate: Date, toDate: Date, locationIds?: string[]) => {
     try {
       setLoading(true);
       const fromDateString = fromDate.toISOString().split("T")[0];
@@ -52,13 +52,16 @@ const usePaymentSummaryScreenVM = () => {
         "[PAYMENT-SUMMARY-VM] Fetching data for range:",
         fromDateString,
         "to",
-        toDateString
+        toDateString,
+        "locationIds:",
+        locationIds
       );
 
       // Fetch payment data for the selected date range
       const paymentsData = await paymentRepository.getSalesPaymentsByDateRange(
         fromDateString,
-        toDateString
+        toDateString,
+        locationIds
       );
       // console.log("[PAYMENT-SUMMARY-VM] Payments data:", paymentsData);
       // Process the data to create payment summary
@@ -2336,8 +2339,8 @@ const usePaymentSummaryScreenVM = () => {
     );
   };
 
-  const fetchPaymentSummary = async () => {
-    await fetchDataForDateRange(startDate, endDate);
+  const fetchPaymentSummary = async (locationIds?: string[]) => {
+    await fetchDataForDateRange(startDate, endDate, locationIds);
   };
 
   const updateDateRange = (fromDate: Date, toDate: Date) => {

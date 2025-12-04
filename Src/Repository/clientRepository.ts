@@ -296,17 +296,16 @@ export const clientRepository = {
         `
         *,
         clients:client_id (id, first_name, last_name),
-        vouchers:voucher_id (name)
+        vouchers:voucher_id (name),
+        sales:purchase_sale_id (location_id)
       `
       )
       .gte("purchase_date", startDate)
       .lte("purchase_date", endDate)
       .order("purchase_date", { ascending: false });
 
-    // Apply location filter only if locationIds are provided
-    if (locationIds && locationIds.length > 0) {
-      query = query.in("location_id", locationIds);
-    }
+    // Note: Cannot filter by sales.location_id directly in Supabase query
+    // Will filter client-side after fetching
     if (client_name) {
       query = query.or(
         `clients.first_name.ilike.%${client_name}%,clients.last_name.ilike.%${client_name}%`
@@ -325,9 +324,9 @@ export const clientRepository = {
       throw error;
     }
 
-    // Flatten the nested structure
-    const flattenedData =
-      data?.map((item) => ({
+    // Flatten the nested structure and get location_id from sales
+    let flattenedData =
+      data?.map((item: any) => ({
         id: item.id,
         client_id: item.client_id,
         client_first_name: item.clients?.first_name ?? "",
@@ -342,8 +341,27 @@ export const clientRepository = {
         purchase_sale_id: item.purchase_sale_id,
         discount_percentage: item.discount_percentage,
         status: item.status,
-        location_id: item.location_id ?? null,
+        location_id: item.sales?.location_id ?? null,
       })) ?? [];
+
+    // Apply location filter client-side ONLY if locationIds are explicitly provided
+    // This prevents filtering when undefined is passed (which would filter out all results)
+    if (locationIds && locationIds.length > 0) {
+      flattenedData = flattenedData.filter((voucher) => {
+        // Include vouchers with matching location_id OR vouchers without location_id
+        // This ensures we don't lose data for vouchers without sales records
+        if (!voucher.location_id) {
+          return false; // Don't show vouchers without location
+        }
+        return locationIds.includes(voucher.location_id);
+      });
+      console.log("Filtered vouchers by location:", {
+        locationIds,
+        totalVouchers: data?.length || 0,
+        filteredVouchers: flattenedData.length,
+        vouchersWithoutLocation: (data?.length || 0) - flattenedData.length
+      });
+    }
 
     return flattenedData;
   },

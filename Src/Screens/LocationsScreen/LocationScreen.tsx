@@ -61,16 +61,24 @@ const LocationScreen = () => {
               activeOpacity={0.8}
             >
               {imageUrl ? (
-                <ImageBackground
-                  source={{ uri: imageUrl }}
-                  style={LocationScreenStyles.locationImageBackground}
-                  imageStyle={LocationScreenStyles.locationImage}
-                  resizeMode="cover"
-                >
-                  <LinearGradient
-                    colors={["transparent", "rgba(0,0,0,0.7)"]}
-                    style={LocationScreenStyles.imageGradient}
+                <View style={LocationScreenStyles.locationImageBackground}>
+                  <ImageBackground
+                    source={{ uri: imageUrl }}
+                    style={{ flex: 1 }}
+                    imageStyle={LocationScreenStyles.locationImage}
+                    resizeMode="cover"
                   >
+                    {/* Fade effect from top - makes image slightly faded at the top */}
+                    <LinearGradient
+                      colors={["rgba(255, 255, 255, 0.88)", "rgba(255, 255, 255, 0.25)", "transparent"]}
+                      locations={[0, 0.35, 0.65]}
+                      style={LocationScreenStyles.topFadeOverlay}
+                    />
+                    {/* Bottom gradient for text readability */}
+                    <LinearGradient
+                      colors={["transparent", "rgba(0,0,0,0.75)"]}
+                      style={LocationScreenStyles.imageGradient}
+                    >
                     <View style={LocationScreenStyles.locationNameContainer}>
                       <View style={LocationScreenStyles.locationInfo}>
                         <Text style={LocationScreenStyles.LocationText}>
@@ -91,7 +99,8 @@ const LocationScreen = () => {
                       )}
                     </View>
                   </LinearGradient>
-                </ImageBackground>
+                  </ImageBackground>
+                </View>
               ) : (
                 <View
                   style={[
