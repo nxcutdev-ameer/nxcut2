@@ -71,6 +71,11 @@ export interface SaleTipBO {
   sales: SalesBO;
   team_members: TeamMemberBO;
 }
+export interface TeamMemberTipSummaryBO {
+  staff_id: string; 
+  team_member: string; 
+  collected_tips: number;
+}
 export const teamRepository = {
   async getTeamMembersByLocation(
     locationIds?: string[]
@@ -107,12 +112,14 @@ export const teamRepository = {
     try {
       const query = supabase
         .from("sale_tips")
-        .select(`
+        .select(
+          `
           *,
           team_members(*),
           sales(*,sale_payment_methods(*)),
           payment_methods(id, name)
-        `)
+        `
+        )
         .eq("is_voided", false)
         .gte("created_at", startDate)
         .lte("created_at", endDate)
@@ -127,13 +134,13 @@ export const teamRepository = {
 
       // Apply location filter after fetching (filtering on nested relationship)
       if (locationIds && locationIds.length > 0) {
-        const filteredData = (data as SaleTipBO[])?.filter((tip) => 
+        const filteredData = (data as SaleTipBO[])?.filter((tip) =>
           locationIds.includes(tip.sales?.location_id)
         );
         console.log("Filtered sales tips by location:", {
           locationIds,
           totalTips: data?.length || 0,
-          filteredTips: filteredData?.length || 0
+          filteredTips: filteredData?.length || 0,
         });
         return filteredData || [];
       }
@@ -141,6 +148,35 @@ export const teamRepository = {
       return (data as SaleTipBO[]) || [];
     } catch (err) {
       console.error("Unexpected error in getSalesTips:", err);
+      return [];
+    }
+  },
+  async getTipsSummary(
+    startDate: string,
+    endDate: string,
+    locationIds?: string[]
+  ): Promise<
+    {
+      staff_id: string;
+      team_member: string;
+      collected_tips: number;
+    }[]
+  > {
+    try {
+      const { data, error } = await supabase.rpc("get_tips_summary", {
+        start_date: startDate,
+        end_date: endDate,
+        location_ids: locationIds ?? null,
+      });
+
+      if (error) {
+        console.error("Error fetching tips summary:", error.message);
+        return [];
+      }
+
+      return data || [];
+    } catch (err) {
+      console.error("Unexpected error in getTipsSummary:", err);
       return [];
     }
   },

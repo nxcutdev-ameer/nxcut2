@@ -10,13 +10,15 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import { colors } from '../../../Constants/colors';
 import { fontEq, getHeightEquivalent, getWidthEquivalent } from '../../../Utils/helpers';
-import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
+
+type IconName = React.ComponentProps<typeof Icon>['name'];
 
 interface PaymentMethod {
   id: string;
   title: string;
   subtitle: string;
-  icon: string;
+  icon: IconName;
 }
 
 interface CheckoutScreenProps {

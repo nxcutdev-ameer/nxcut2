@@ -1,91 +1,61 @@
 import React from "react";
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from "react-native";
-import { SaleTipBO } from "../Repository/teamRepository";
+import { View, Text, StyleSheet, ScrollView } from "react-native";
+import { TeamMemberTipSummaryBO } from "../Repository/teamRepository";
 import colors from "../Constants/colors";
 import {
   fontEq,
   getHeightEquivalent,
   getWidthEquivalent,
 } from "../Utils/helpers";
-import { useNavigation } from "@react-navigation/native";
-import { RootStackParamList } from "../Navigations/RootStackNavigator";
-import { StackNavigationProp } from "@react-navigation/stack";
-
-type NavigationProp = StackNavigationProp<RootStackParamList>;
 
 interface TipsTableProps {
-  tips: SaleTipBO[];
+  tips: TeamMemberTipSummaryBO[];
 }
 
 const TipsTable: React.FC<TipsTableProps> = ({ tips }) => {
-  const navigation = useNavigation<NavigationProp>();
 
-  const formatDateTime = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString("en-GB", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
-
-  const formatPaymentMethod = (method: string | null | undefined) => {
-    if (!method) return "N/A";
-    return method.charAt(0).toUpperCase() + method.slice(1);
-  };
-
-  const handleRowPress = (tip: SaleTipBO) => {
-    if (tip.sale_id) {
-      navigation.navigate("TransactionDetailsScreen", {
-        saleId: tip.sale_id,
-        fallbackTransaction: tip.sales || undefined,
-      });
-    }
-  };
 
   const columns = [
-    { key: "tipId", title: "Tip ID", width: 100 },
-    { key: "tipAmount", title: "Tip Amount", width: 120 },
-    { key: "staffName", title: "Staff Name", width: 150 },
-    { key: "paymentMethod", title: "Payment Method", width: 130 },
-    { key: "saleTotal", title: "Sale Total", width: 120 },
-    { key: "dateTime", title: "Date & Time", width: 180 },
+    { key: "staffName", title: "Team member", width: getWidthEquivalent(150) },
+    {
+      key: "tipsCollected",
+      title: "Tips collected",
+      width: getWidthEquivalent(150),
+    },
   ];
 
-  const renderRow = (tip: SaleTipBO, index: number) => {
+  const renderRow = (tip: TeamMemberTipSummaryBO, index: number) => {
     const rowData = {
-      tipId: tip.sale_id?.toString() || "N/A",
-      tipAmount: `AED ${(tip.amount || 0).toLocaleString("en-US", { minimumFractionDigits: 2 })}`,
-      staffName: `${tip.team_members?.first_name || ''} ${tip.team_members?.last_name || ''}`.trim() || "N/A",
-      paymentMethod: formatPaymentMethod(tip.payment_method_tip),
-      saleTotal: `AED ${(tip.sales?.total_amount || 0).toLocaleString("en-US", { minimumFractionDigits: 2 })}`,
-      dateTime: formatDateTime(tip.created_at || ''),
+      staffName:
+        `${tip.team_member} `,
+      tipsCollected: `AED ${(tip.collected_tips || 0).toLocaleString("en-US", {
+        minimumFractionDigits: 2,
+      })}`,
     };
 
+    const isFirstRow = index === 0;
+
     return (
-      <TouchableOpacity 
-        key={tip.id || index} 
-        onPress={() => handleRowPress(tip)}
-        activeOpacity={0.7}
+      <View
+        key={tip.staff_id || index}
+        style={[
+          styles.row,
+        ]}
       >
-        <View style={[styles.row, index % 2 === 0 && styles.evenRow]}>
-          {columns.map((column) => (
-            <View key={column.key} style={[styles.cell, { width: column.width }]}>
-              <Text 
-                style={[
-                  styles.cellText, 
-                  column.key === "tipId" && styles.clickableText
-                ]} 
-                numberOfLines={2}
-              >
-                {rowData[column.key as keyof typeof rowData]}
-              </Text>
-            </View>
-          ))}
-        </View>
-      </TouchableOpacity>
+        {columns.map((column) => (
+          <View key={column.key} style={[styles.cell, { width: column.width }]}>
+            <Text 
+              style={[
+                styles.cellText, 
+                isFirstRow && styles.totalCellText
+              ]} 
+              numberOfLines={2}
+            >
+              {rowData[column.key as keyof typeof rowData]}
+            </Text>
+          </View>
+        ))}
+      </View>
     );
   };
 
@@ -161,9 +131,6 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: colors.colors.border + "30",
   },
-  evenRow: {
-    backgroundColor: colors.colors.background + "50",
-  },
   cell: {
     justifyContent: "center",
     paddingHorizontal: getWidthEquivalent(8),
@@ -175,10 +142,10 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontWeight: "500",
   },
-  clickableText: {
-    color: colors.colors.primary,
-    textDecorationLine: "underline",
+  totalCellText: {
+    fontSize: fontEq(12),
     fontWeight: "600",
+    color: colors.colors.primary,
   },
   emptyContainer: {
     paddingVertical: getHeightEquivalent(40),

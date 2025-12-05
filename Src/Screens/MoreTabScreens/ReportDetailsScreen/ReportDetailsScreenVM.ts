@@ -1,16 +1,13 @@
-import { View, Text } from "react-native";
-import React, { useEffect, useState } from "react";
+import { useState } from "react";
 import { reportsRepository } from "../../../Repository/reportsRepository";
 import { useAuthStore } from "../../../Store/useAuthStore";
-import { Session } from "@supabase/supabase-js";
 import {
   BadgeDollarSign,
   ChartColumn,
   FileText,
   ShoppingCart,
-  Users,
+  HandHeart,
 } from "lucide-react-native";
-import { supabase } from "../../../Utils/supabase";
 import { NavigationProp, useNavigation } from "@react-navigation/native";
 
 const useReportDetailsScreenVM = () => {
@@ -68,6 +65,17 @@ const useReportDetailsScreenVM = () => {
     //   isFavourite: true,
     // },
     {
+      id: 1,
+      type: "Team",
+      title: "Preformance Dashboard",
+      description: "Dashboard of your business performance.",
+      icon: ChartColumn,
+      onPress: () => {
+        navigation.navigate("PerfromanceDashboardScreen");
+      },
+      isFavourite: true,
+    },
+    {
       id: 2,
       type: "Finance",
       title: "Finance Summary",
@@ -81,17 +89,6 @@ const useReportDetailsScreenVM = () => {
     {
       id: 3,
       type: "Finance",
-      title: "Payments Summary",
-      description: "Payments split by payment method",
-      icon: FileText,
-      onPress: () => {
-        navigation.navigate("PaymentSummaryScreen");
-      },
-      isFavourite: true,
-    },
-    {
-      id: 4,
-      type: "Finance",
       title: "Payments transactions",
       description: "Detailed view of all payment transactions",
       icon: FileText,
@@ -100,18 +97,17 @@ const useReportDetailsScreenVM = () => {
       },
       isFavourite: true,
     },
-    // {
-    //   id: 5,
-    //   type: "Sales",
-    //   title: "Sales Log",
-    //   description:
-    //     "Detailed sales transactions with discounts and payment methods.",
-    //   icon: BadgeDollarSign,
-    //   onPress: () => {
-    //     navigation.navigate("SalesLogScreen");
-    //   },
-    //   isFavourite: true,
-    // },
+    {
+      id: 4,
+      type: "Finance",
+      title: "Payments Summary",
+      description: "Payments split by payment method",
+      icon: FileText,
+      onPress: () => {
+        navigation.navigate("PaymentSummaryScreen");
+      },
+      isFavourite: true,
+    },
     // {
     //   id: 6,
     //   type: "Team",
@@ -124,13 +120,13 @@ const useReportDetailsScreenVM = () => {
     //   isFavourite: true,
     // },
     {
-      id: 7,
+      id: 6,
       type: "Team",
-      title: "Preformance Dashboard",
-      description: "Dashboard of your business performance.",
-      icon: ChartColumn,
+      title: "Tips summary",
+      description: "Analysis of gratuity income.",
+      icon: HandHeart,
       onPress: () => {
-        navigation.navigate("PerfromanceDashboardScreen");
+        navigation.navigate("TipsSummary");
       },
       isFavourite: true,
     },

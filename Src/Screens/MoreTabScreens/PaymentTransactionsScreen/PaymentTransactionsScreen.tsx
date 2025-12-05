@@ -1,10 +1,7 @@
 import React, {
-  FC,
-  ReactElement,
   useCallback,
   useEffect,
   useMemo,
-  useRef,
   useState,
 } from "react";
 import {
@@ -15,7 +12,6 @@ import {
   StyleSheet,
   ScrollView,
   Alert,
-  Linking,
   Modal,
 } from "react-native";
 import { useReportStore } from "../../../Store/useReportsStore";
@@ -35,15 +31,12 @@ import {
   FileText,
   Sliders,
   SlidersVertical,
-  Star,
   X,
 } from "lucide-react-native";
 import { NavigationProp, useNavigation } from "@react-navigation/native";
 import SelectPeriodModal from "../../../Components/SelectPeriodModal";
 import LocationFilterModal from "../../../Components/LocationFilterModal";
 import LottieView from "lottie-react-native";
-import { BottomSheetModal, BottomSheetBackdrop } from "@gorhom/bottom-sheet";
-import { paymentRepository } from "../../../Repository/paymentsRepository";
 import * as FileSystem from "expo-file-system/legacy";
 import * as Sharing from "expo-sharing";
 import * as Print from "expo-print";
@@ -574,6 +567,118 @@ export const PaymentTransactionsScreen = () => {
     []
   );
 
+  // Calculate totals
+  const totals = useMemo(() => {
+    const totalAmount = paymentTransactions.reduce((sum, item) => {
+      const amount = parseFloat(String(item.amount || 0));
+      return sum + (isNaN(amount) ? 0 : amount);
+    }, 0);
+    
+    const transactionCount = paymentTransactions.length;
+    
+    return {
+      totalAmount,
+      transactionCount,
+    };
+  }, [paymentTransactions]);
+
+  // Render total row
+  const renderTotalRow = useMemo(
+    () => (
+      <View style={[styles.totalRow, { minWidth: tableContentWidth }]}>
+        <View
+          style={[
+            styles.cellContainer,
+            styles.totalCell,
+            { width: columnWidths.saleNo },
+          ]}
+        >
+          <Text style={styles.totalCellText}>Total</Text>
+        </View>
+        <View
+          style={[
+            styles.cellContainer,
+            styles.totalCell,
+            { width: columnWidths.paymentDate },
+          ]}
+        >
+          <Text style={styles.totalCellText}>-</Text>
+        </View>
+        <View
+          style={[
+            styles.cellContainer,
+            styles.totalCell,
+            { width: columnWidths.saleDate },
+          ]}
+        >
+          <Text style={styles.totalCellText}>-</Text>
+        </View>
+        <View
+          style={[
+            styles.cellContainer,
+            styles.totalCell,
+            { width: columnWidths.client },
+          ]}
+        >
+          <Text style={styles.totalCellText}>-</Text>
+        </View>
+        <View
+          style={[
+            styles.cellContainer,
+            styles.totalCell,
+            { width: columnWidths.location },
+          ]}
+        >
+          <Text style={styles.totalCellText}>-</Text>
+        </View>
+        <View
+          style={[
+            styles.cellContainer,
+            styles.totalCell,
+            { width: columnWidths.teamMember },
+          ]}
+        >
+          <Text style={styles.totalCellText}>-</Text>
+        </View>
+        <View
+          style={[
+            styles.cellContainer,
+            styles.totalCell,
+            { width: columnWidths.transactionType },
+          ]}
+        >
+          <Text style={styles.totalCellText}>-</Text>
+        </View>
+        <View
+          style={[
+            styles.cellContainer,
+            styles.totalCell,
+            { width: columnWidths.paymentMethod },
+          ]}
+        >
+          <Text style={styles.totalCellText}>
+            {totals.transactionCount} transactions
+          </Text>
+        </View>
+        <View
+          style={[
+            styles.cellContainer,
+            styles.totalCell,
+            { width: columnWidths.amount },
+          ]}
+        >
+          <Text style={styles.totalCellText}>
+            AED {totals.totalAmount.toLocaleString("en-US", {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            })}
+          </Text>
+        </View>
+      </View>
+    ),
+    [columnWidths, tableContentWidth, totals]
+  );
+
   return (
     <SafeAreaView edges={["top", "left", "right"]} style={styles.container}>
       {showMonthFilter && (
@@ -656,6 +761,9 @@ export const PaymentTransactionsScreen = () => {
           <View style={[styles.tableWrapper, { width: tableContentWidth }]}>
             {/* Table Header */}
             {tableHeader}
+
+            {/* Total Row */}
+            {!loading && paymentTransactions.length > 0 && renderTotalRow}
 
             {/* Table Body with Vertical Scroll */}
             <View style={styles.tableBody}>
@@ -996,6 +1104,27 @@ const styles = StyleSheet.create({
     borderBottomColor: colors.gray[200],
     minHeight: 50,
     alignItems: "stretch",
+  },
+  totalRow: {
+    flexDirection: "row",
+    paddingVertical: 5,
+    paddingHorizontal: 0,
+    borderBottomWidth: 2,
+    borderBottomColor: colors.primary + "30",
+    minHeight: 54,
+    alignItems: "stretch",
+  },
+  totalCell: {
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 8,
+  },
+  totalCellText: {
+    color: colors.primary,
+    fontSize: fontEq(12),
+    fontWeight: "700",
+    textAlign: "center",
+    lineHeight: 20,
   },
   tableCell: {
     color: colors.text,

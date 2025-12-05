@@ -142,7 +142,7 @@ const PaymentProcessingScreen = () => {
 
   const renderFailedState = () => (
     <View style={PaymentProcessingScreenStyles.statusContainer}>
-      <XCircle size={64} color={colors.error} />
+      <XCircle size={64} color={colors.danger} />
       <Text style={PaymentProcessingScreenStyles.statusTitle}>
         Payment Failed
       </Text>

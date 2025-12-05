@@ -9,9 +9,9 @@ import {
   ScrollView,
 } from "react-native";
 import React from "react";
-import useSalesTipsScreenVM from "./SalesTipsScreenVM";
+import useTipsSummaryScreenVM from "./TipsSummaryVM";
 import { SafeAreaView } from "react-native-safe-area-context";
-import SalesTipsScreenStyles from "./SalesTipsScreenStyles";
+import TipSummaryScreenStyles from "./TipsSummaryStyles";
 import {
   ArrowLeft,
   DollarSign,
@@ -23,7 +23,7 @@ import {
   Sliders,
 } from "lucide-react-native";
 import colors from "../../../Constants/colors";
-import TipsTable from "../../../Components/TipsTable";
+import TipsSummaryTable from "../../../Components/TipsSummaryTable";
 import SelectPeriodModal from "../../../Components/SelectPeriodModal";
 import LocationFilterModal from "../../../Components/LocationFilterModal";
 import BottomSheet, { BottomSheetView } from "@gorhom/bottom-sheet";
@@ -31,7 +31,6 @@ import BottomSheet, { BottomSheetView } from "@gorhom/bottom-sheet";
 const SalesTipsScreen = () => {
   const {
     navigation,
-    salesTips,
     loading,
     showDateFilter,
     setShowDateFilter,
@@ -55,55 +54,55 @@ const SalesTipsScreen = () => {
     toggleLocationFilter,
     clearAllFilters,
     applyFilters,
-  } = useSalesTipsScreenVM();
+  } = useTipsSummaryScreenVM();
 
   return (
     <SafeAreaView
       edges={["left", "right", "top"]}
-      style={SalesTipsScreenStyles.mainContainer}
+      style={TipSummaryScreenStyles.mainContainer}
     >
       {/* Fixed Header */}
-      <View style={SalesTipsScreenStyles.headerContainer}>
+      <View style={TipSummaryScreenStyles.headerContainer}>
         <TouchableOpacity
           onPress={() => navigation.goBack()}
-          style={SalesTipsScreenStyles.backArrow}
+          style={TipSummaryScreenStyles.backArrow}
         >
           <ArrowLeft size={20} color={colors.colors.text} />
         </TouchableOpacity>
-       <View style={SalesTipsScreenStyles.headerButtons}>
-        <TouchableOpacity
-          onPress={openExportBottomSheet}
-          style={SalesTipsScreenStyles.addButton}
-        >
-          <Text style={SalesTipsScreenStyles.addButtonText}>Export</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          onPress={openFilterPanel}
-          style={SalesTipsScreenStyles.filter}
-        >
-          <Sliders size={22} color={colors.colors.black} strokeWidth={1.7} />
-        </TouchableOpacity>
+        <View style={TipSummaryScreenStyles.headerButtons}>
+          <TouchableOpacity
+            onPress={openExportBottomSheet}
+            style={TipSummaryScreenStyles.addButton}
+          >
+            <Text style={TipSummaryScreenStyles.addButtonText}>Export</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={openFilterPanel}
+            style={TipSummaryScreenStyles.filter}
+          >
+            <Sliders size={22} color={colors.colors.black} strokeWidth={1.7} />
+          </TouchableOpacity>
         </View>
       </View>
-      <View style={SalesTipsScreenStyles.titleSection}>
-        <View style={SalesTipsScreenStyles.titleRow}>
-          <Text style={SalesTipsScreenStyles.title}>Sales Tips</Text>
-          <View style={SalesTipsScreenStyles.countBadge}>
-            <Text style={SalesTipsScreenStyles.countText}>
+      <View style={TipSummaryScreenStyles.titleSection}>
+        <View style={TipSummaryScreenStyles.titleRow}>
+          <Text style={TipSummaryScreenStyles.title}>Tips Summary</Text>
+          <View style={TipSummaryScreenStyles.countBadge}>
+            <Text style={TipSummaryScreenStyles.countText}>
               {filteredTipsData.length}
             </Text>
           </View>
         </View>
-        <Text style={SalesTipsScreenStyles.subtitle}>
-          View and filter tips received by your staff members. Learn more
+        <Text style={TipSummaryScreenStyles.subtitle}>
+          Analysis of gratuity income.
         </Text>
 
         {/* Search Bar */}
-        <View style={SalesTipsScreenStyles.searchContainer}>
+        <View style={TipSummaryScreenStyles.searchContainer}>
           <Search size={18} color={colors.colors.textSecondary} />
           <TextInput
-            style={SalesTipsScreenStyles.searchInput}
-            placeholder="Search by staff name, tip ID, or payment method..."
+            style={TipSummaryScreenStyles.searchInput}
+            placeholder="Search by staff name, tips collected..."
             placeholderTextColor={colors.colors.textSecondary}
             value={searchQuery}
             onChangeText={setSearchQuery}
@@ -113,20 +112,20 @@ const SalesTipsScreen = () => {
         {/* Date Range Filter Button */}
         <TouchableOpacity
           onPress={() => setShowDateFilter(true)}
-          style={SalesTipsScreenStyles.dateRangeButton}
+          style={TipSummaryScreenStyles.dateRangeButton}
         >
           <Calendar size={18} color={colors.colors.black} />
-          <Text style={SalesTipsScreenStyles.dateRangeText}>
+          <Text style={TipSummaryScreenStyles.dateRangeText}>
             {" "}
             {getDateRangeText()}
           </Text>
         </TouchableOpacity>
       </View>
-      <View style={SalesTipsScreenStyles.tableContainer}>
+      <View style={TipSummaryScreenStyles.tableContainer}>
         {loading ? (
-          <View style={SalesTipsScreenStyles.loadingContainer}>
+          <View style={TipSummaryScreenStyles.loadingContainer}>
             <ActivityIndicator size="large" color={colors.colors.primary} />
-            <Text style={SalesTipsScreenStyles.loadingText}>
+            <Text style={TipSummaryScreenStyles.loadingText}>
               Loading tips...
             </Text>
           </View>
@@ -135,19 +134,21 @@ const SalesTipsScreen = () => {
             horizontal
             bounces={false}
             showsHorizontalScrollIndicator={true}
-            style={SalesTipsScreenStyles.horizontalScroll}
+            style={TipSummaryScreenStyles.horizontalScroll}
           >
-            <TipsTable tips={filteredTipsData} />
+             <View style={TipSummaryScreenStyles.TableContainer}>
+            <TipsSummaryTable tips={filteredTipsData} />
+            </View>
           </ScrollView>
         ) : (
-          <View style={SalesTipsScreenStyles.emptyState}>
+          <View style={TipSummaryScreenStyles.emptyState}>
             <DollarSign size={64} color={colors.colors.textSecondary} />
-            <Text style={SalesTipsScreenStyles.emptyTitle}>
+            <Text style={TipSummaryScreenStyles.emptyTitle}>
               {searchQuery.trim()
                 ? "No tips match your search"
                 : "No tips found"}
             </Text>
-            <Text style={SalesTipsScreenStyles.emptySubtitle}>
+            <Text style={TipSummaryScreenStyles.emptySubtitle}>
               {searchQuery.trim()
                 ? "Try adjusting your search terms or date range"
                 : "Tips received by staff members will appear here"}
@@ -170,7 +171,7 @@ const SalesTipsScreen = () => {
         <TouchableWithoutFeedback onPress={closeExportBottomSheet}>
           <Animated.View
             style={[
-              SalesTipsScreenStyles.backdrop,
+              TipSummaryScreenStyles.backdrop,
               { opacity: backdropOpacity },
             ]}
           />
@@ -196,31 +197,33 @@ const SalesTipsScreen = () => {
           borderTopRightRadius: 20,
         }}
       >
-        <BottomSheetView style={SalesTipsScreenStyles.bottomSheetContainer}>
-          <Text style={SalesTipsScreenStyles.bottomSheetTitle}>
+        <BottomSheetView style={TipSummaryScreenStyles.bottomSheetContainer}>
+          <Text style={TipSummaryScreenStyles.bottomSheetTitle}>
             Export Tips Report
           </Text>
-          <Text style={SalesTipsScreenStyles.bottomSheetSubtitle}>
+          <Text style={TipSummaryScreenStyles.bottomSheetSubtitle}>
             Choose your preferred format to download the tips data
           </Text>
 
-          <View style={SalesTipsScreenStyles.exportOptionsContainer}>
+          <View style={TipSummaryScreenStyles.exportOptionsContainer}>
             {/* PDF Option */}
             <TouchableOpacity
-              style={SalesTipsScreenStyles.exportOption}
+              style={TipSummaryScreenStyles.exportOption}
               onPress={() => handleExport("PDF")}
             >
               <View
                 style={[
-                  SalesTipsScreenStyles.exportIconContainer,
+                  TipSummaryScreenStyles.exportIconContainer,
                   { backgroundColor: "#FEF2F2" },
                 ]}
               >
                 <FileText size={24} color="#EF4444" />
               </View>
-              <View style={SalesTipsScreenStyles.exportOptionText}>
-                <Text style={SalesTipsScreenStyles.exportOptionTitle}>PDF</Text>
-                <Text style={SalesTipsScreenStyles.exportOptionDescription}>
+              <View style={TipSummaryScreenStyles.exportOptionText}>
+                <Text style={TipSummaryScreenStyles.exportOptionTitle}>
+                  PDF
+                </Text>
+                <Text style={TipSummaryScreenStyles.exportOptionDescription}>
                   Formatted document ready for print
                 </Text>
               </View>
@@ -228,20 +231,22 @@ const SalesTipsScreen = () => {
 
             {/* CSV Option */}
             <TouchableOpacity
-              style={SalesTipsScreenStyles.exportOption}
+              style={TipSummaryScreenStyles.exportOption}
               onPress={() => handleExport("CSV")}
             >
               <View
                 style={[
-                  SalesTipsScreenStyles.exportIconContainer,
+                  TipSummaryScreenStyles.exportIconContainer,
                   { backgroundColor: "#EFF6FF" },
                 ]}
               >
                 <FileSpreadsheet size={24} color="#3B82F6" />
               </View>
-              <View style={SalesTipsScreenStyles.exportOptionText}>
-                <Text style={SalesTipsScreenStyles.exportOptionTitle}>CSV</Text>
-                <Text style={SalesTipsScreenStyles.exportOptionDescription}>
+              <View style={TipSummaryScreenStyles.exportOptionText}>
+                <Text style={TipSummaryScreenStyles.exportOptionTitle}>
+                  CSV
+                </Text>
+                <Text style={TipSummaryScreenStyles.exportOptionDescription}>
                   Comma-separated values for analysis
                 </Text>
               </View>
@@ -249,22 +254,22 @@ const SalesTipsScreen = () => {
 
             {/* Excel Option */}
             <TouchableOpacity
-              style={SalesTipsScreenStyles.exportOption}
+              style={TipSummaryScreenStyles.exportOption}
               onPress={() => handleExport("Excel")}
             >
               <View
                 style={[
-                  SalesTipsScreenStyles.exportIconContainer,
+                  TipSummaryScreenStyles.exportIconContainer,
                   { backgroundColor: "#F0FDF4" },
                 ]}
               >
                 <Download size={24} color="#22C55E" />
               </View>
-              <View style={SalesTipsScreenStyles.exportOptionText}>
-                <Text style={SalesTipsScreenStyles.exportOptionTitle}>
+              <View style={TipSummaryScreenStyles.exportOptionText}>
+                <Text style={TipSummaryScreenStyles.exportOptionTitle}>
                   Excel
                 </Text>
-                <Text style={SalesTipsScreenStyles.exportOptionDescription}>
+                <Text style={TipSummaryScreenStyles.exportOptionDescription}>
                   Spreadsheet format for calculations
                 </Text>
               </View>
@@ -282,7 +287,7 @@ const SalesTipsScreen = () => {
         allLocations={allLocations}
         pageFilter={pageFilter}
         toggleLocationFilter={toggleLocationFilter}
-        title="Filter Sales Tips"
+        title="Filter Tips Summary"
       />
     </SafeAreaView>
   );

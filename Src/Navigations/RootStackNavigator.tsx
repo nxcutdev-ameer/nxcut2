@@ -36,6 +36,7 @@ import AddClientScreen from "../Screens/TabScreens/ClientScreen/AddClientScreen"
 import PaymentMethodsScreen from "../Screens/MoreTabScreens/PaymentMethodsScreen/PaymentMethodsScreen";
 import AddPaymentMethodScreen from "../Screens/MoreTabScreens/AddPaymentMethodScreen/AddPaymentMethodScreen";
 import CheckoutScreen from "../Screens/TabScreens/CalanderScreen/CheckoutScreen";
+import TipsSummary from "../Screens/MoreTabScreens/TipsSummary/TipsSummary";
 
 export type RootStackParamList = {
   SplashScreen: undefined;
@@ -60,6 +61,7 @@ export type RootStackParamList = {
   SalesLogScreen: undefined;
   TeamPerformanceScreen: undefined;
   PerfromanceDashboardScreen: undefined;
+  TipsSummary: undefined;
   SalesProductScreen: undefined;
   SalesVoucherScreen: undefined;
   SalesTipsScreen: undefined;
@@ -144,6 +146,7 @@ const RootStackNavigator = () => {
             name="PerfromanceDashboardScreen"
             component={PerfromanceDashboardScreen}
           />
+          <Stack.Screen name="TipsSummary" component={TipsSummary} />
           <Stack.Screen
             name="SalesProductScreen"
             component={SalesProductScreen}
@@ -194,10 +197,7 @@ const RootStackNavigator = () => {
             //   animation: "slide_from_right",
             // }}
           />
-          <Stack.Screen
-            name="CheckoutScreen"
-            component={CheckoutScreen}
-          />
+          <Stack.Screen name="CheckoutScreen" component={CheckoutScreen} />
         </Stack.Navigator>
       </NavigationContainer>
     </GestureHandlerRootView>
