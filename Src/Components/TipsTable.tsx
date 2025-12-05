@@ -39,7 +39,7 @@ const TipsTable: React.FC<TipsTableProps> = ({ tips }) => {
   const handleRowPress = (tip: SaleTipBO) => {
     if (tip.sale_id) {
       navigation.navigate("TransactionDetailsScreen", {
-        saleId: tip.sale_id,
+        saleId: tip.sale_id.toString(),
         fallbackTransaction: tip.sales || undefined,
       });
     }
