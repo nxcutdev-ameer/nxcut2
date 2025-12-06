@@ -37,10 +37,6 @@ interface DraggableAppointmentProps {
   totalStaffColumns?: number;
   dimmed?: boolean;
   disableInteractions?: boolean;
-  horizontalScrollRef?: React.RefObject<any>;
-  screenWidth?: number;
-  currentScrollX?: number;
-  threeColumnWidth?: number;
 }
 
 const DraggableAppointment: React.FC<DraggableAppointmentProps> = ({
@@ -66,10 +62,6 @@ const DraggableAppointment: React.FC<DraggableAppointmentProps> = ({
   totalStaffColumns = 1,
   dimmed = false,
   disableInteractions = false,
-  horizontalScrollRef,
-  screenWidth,
-  currentScrollX,
-  threeColumnWidth,
 }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [committedPosition, setCommittedPosition] = useState({ x: 0, y: 0 });
@@ -92,13 +84,6 @@ const DraggableAppointment: React.FC<DraggableAppointmentProps> = ({
   const lastSnappedSlotRef = useRef<number | null>(null);
   const disableInteractionsRef = useRef(disableInteractions);
   const wasEditingRef = useRef(isEditing);
-  const autoScrollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const lastAutoScrollTimeRef = useRef<number>(0);
-  const isAutoScrollingRef = useRef<boolean>(false);
-  const scrollStartOffsetRef = useRef<number>(0);
-  const cumulativeScrollOffsetRef = useRef<number>(0);
-  const lastKnownScrollXRef = useRef<number>(0);
-  const targetScrollXRef = useRef<number>(0); // Track intended scroll position
 
   const pan = useRef(new Animated.ValueXY()).current;
   const resetTriggerRef = useRef<number | undefined>(resetTrigger);
@@ -134,10 +119,6 @@ const DraggableAppointment: React.FC<DraggableAppointmentProps> = ({
       if (intentionalTouchTimeoutRef.current) {
         clearTimeout(intentionalTouchTimeoutRef.current);
         intentionalTouchTimeoutRef.current = null;
-      }
-      if (autoScrollIntervalRef.current) {
-        clearInterval(autoScrollIntervalRef.current);
-        autoScrollIntervalRef.current = null;
       }
     };
   }, []);
@@ -348,105 +329,6 @@ const DraggableAppointment: React.FC<DraggableAppointmentProps> = ({
     lastSnappedSlotRef.current = currentSlotIndex;
   }, [committedPosition.y, isDragging]);
 
-  // Track scroll changes and adjust appointment position
-  useEffect(() => {
-    if (isDragging && currentScrollX !== undefined) {
-      const scrollDelta = currentScrollX - lastKnownScrollXRef.current;
-      if (scrollDelta !== 0) {
-        // Adjust the pan position to compensate for scroll
-        cumulativeScrollOffsetRef.current += scrollDelta;
-        lastKnownScrollXRef.current = currentScrollX;
-      }
-    }
-  }, [currentScrollX, isDragging]);
-
-  // Auto-scroll helper function - snaps to three columns at a time
-  const handleAutoScroll = (pageX: number, gestureState: PanResponderGestureState) => {
-    if (!horizontalScrollRef?.current || !screenWidth || !threeColumnWidth || currentScrollX === undefined) {
-      return;
-    }
-
-    const EDGE_THRESHOLD = 80; // Distance from edge to trigger scroll
-
-    // Calculate position relative to screen
-    const relativeX = pageX;
-
-    // Check if near right edge
-    const isNearRightEdge = relativeX > screenWidth - EDGE_THRESHOLD;
-    // Check if near left edge
-    const isNearLeftEdge = relativeX < EDGE_THRESHOLD;
-
-    // Clear existing interval to prevent multiple triggers
-    if (autoScrollIntervalRef.current) {
-      clearInterval(autoScrollIntervalRef.current);
-      autoScrollIntervalRef.current = null;
-    }
-
-    if (isNearRightEdge) {
-      // Scroll right by three columns - use targetScrollXRef for accurate tracking
-      const currentScroll = targetScrollXRef.current || currentScrollX || 0;
-      const currentPage = Math.round(currentScroll / threeColumnWidth);
-      const nextPage = currentPage + 1;
-      const targetScroll = nextPage * threeColumnWidth;
-      
-      // Trigger scroll once with shorter throttle for faster continuous scrolling
-      const now = Date.now();
-      if (now - lastAutoScrollTimeRef.current > 250 && !isAutoScrollingRef.current) { // 250ms throttle
-        lastAutoScrollTimeRef.current = now;
-        isAutoScrollingRef.current = true;
-        
-        // Update target position immediately
-        targetScrollXRef.current = targetScroll;
-        
-        horizontalScrollRef.current.scrollTo({
-          x: targetScroll,
-          y: 0,
-          animated: true,
-        });
-        
-        // Reset flag quickly to allow next scroll
-        setTimeout(() => {
-          isAutoScrollingRef.current = false;
-        }, 180); // Quick reset for continuous scrolling
-      }
-    } else if (isNearLeftEdge && (targetScrollXRef.current > 0 || (currentScrollX || 0) > 0)) {
-      // Scroll left by three columns - use targetScrollXRef for accurate tracking
-      const currentScroll = targetScrollXRef.current || currentScrollX || 0;
-      const currentPage = Math.round(currentScroll / threeColumnWidth);
-      const prevPage = Math.max(0, currentPage - 1);
-      const targetScroll = prevPage * threeColumnWidth;
-      
-      // Trigger scroll once with shorter throttle for faster continuous scrolling
-      const now = Date.now();
-      if (now - lastAutoScrollTimeRef.current > 250 && !isAutoScrollingRef.current) { // 250ms throttle
-        lastAutoScrollTimeRef.current = now;
-        isAutoScrollingRef.current = true;
-        
-        // Update target position immediately
-        targetScrollXRef.current = targetScroll;
-        
-        horizontalScrollRef.current.scrollTo({
-          x: targetScroll,
-          y: 0,
-          animated: true,
-        });
-        
-        // Reset flag quickly to allow next scroll
-        setTimeout(() => {
-          isAutoScrollingRef.current = false;
-        }, 180); // Quick reset for continuous scrolling
-      }
-    }
-  };
-
-  // Stop auto-scroll helper
-  const stopAutoScroll = () => {
-    if (autoScrollIntervalRef.current) {
-      clearInterval(autoScrollIntervalRef.current);
-      autoScrollIntervalRef.current = null;
-    }
-  };
-
   // Main appointment tap/drag handler
   // Recreate PanResponder when isEditing changes to capture updated closure values
   const panResponder = useMemo(
@@ -463,11 +345,6 @@ const DraggableAppointment: React.FC<DraggableAppointmentProps> = ({
       onShouldBlockNativeResponder: () => true,
       onPanResponderGrant: (evt: GestureResponderEvent) => {
         evt.stopPropagation();
-        
-        // Reset scroll tracking when starting new drag
-        cumulativeScrollOffsetRef.current = 0;
-        lastKnownScrollXRef.current = currentScrollX || 0;
-        targetScrollXRef.current = currentScrollX || 0;
 
         // For paid appointments, require intentional touch (600ms hold without movement)
         if (event.data.appointment.status === "paid") {
@@ -526,7 +403,7 @@ const DraggableAppointment: React.FC<DraggableAppointmentProps> = ({
         const currentY = initialTopRef.current + currentCommitted.y;
         lastSnappedSlotRef.current = getTimeSlotIndex(currentY);
       },
-      onPanResponderMove: (evt: GestureResponderEvent, gestureState: PanResponderGestureState) => {
+      onPanResponderMove: (_evt: GestureResponderEvent, gestureState: PanResponderGestureState) => {
         // Prevent any dragging for paid appointments
         if (event.data.appointment.status === "paid") {
           const distanceMoved = Math.max(
@@ -595,12 +472,6 @@ const DraggableAppointment: React.FC<DraggableAppointmentProps> = ({
         // Only process drag in dragging mode
         if (!isDragging && !hasMoved.current) return;
 
-        // Handle auto-scroll when dragging near edges
-        if (isDragging || hasMoved.current) {
-          const touchX = evt.nativeEvent.pageX;
-          handleAutoScroll(touchX, gestureState);
-        }
-
         const currentCommitted = committedPositionRef.current;
         const baseY = initialTopRef.current + currentCommitted.y;
         const desiredY = baseY + gestureState.dy;
@@ -623,9 +494,7 @@ const DraggableAppointment: React.FC<DraggableAppointmentProps> = ({
         const maxOffsetX =
           (totalStaffColumnsValue - columnIndexValue - 1) * effectiveColumnWidth;
 
-        // Apply scroll compensation to keep appointment with finger during auto-scroll
-        const scrollCompensation = cumulativeScrollOffsetRef.current;
-        const proposedOffsetX = currentCommitted.x + gestureState.dx + scrollCompensation;
+        const proposedOffsetX = currentCommitted.x + gestureState.dx;
         const clampedOffsetX = clamp(proposedOffsetX, minOffsetX, maxOffsetX);
         const snappedColumn = Math.round(clampedOffsetX / effectiveColumnWidth);
         const totalOffsetX = snappedColumn * effectiveColumnWidth;
@@ -652,22 +521,6 @@ const DraggableAppointment: React.FC<DraggableAppointmentProps> = ({
         pan.setValue({ x: translateX, y: translateY });
       },
       onPanResponderRelease: (_evt: GestureResponderEvent, gesture: PanResponderGestureState) => {
-        // Stop auto-scroll when releasing
-        stopAutoScroll();
-        isAutoScrollingRef.current = false;
-        
-        // Apply final scroll compensation to committed position
-        const scrollCompensation = cumulativeScrollOffsetRef.current;
-        const finalX = committedPositionRef.current.x + scrollCompensation;
-        committedPositionRef.current = {
-          ...committedPositionRef.current,
-          x: finalX,
-        };
-        
-        // Reset scroll tracking
-        cumulativeScrollOffsetRef.current = 0;
-        targetScrollXRef.current = 0;
-
         // For paid appointments - only allow intentional touch (600ms hold without movement)
         if (event.data.appointment.status === "paid") {
           onScrollEnable?.(true);
@@ -810,8 +663,6 @@ const DraggableAppointment: React.FC<DraggableAppointmentProps> = ({
         // Backend update will happen here, but UI is already updated
       },
       onPanResponderTerminate: () => {
-        stopAutoScroll();
-        isAutoScrollingRef.current = false;
         dragEnabledRef.current = canDrag;
         onScrollEnable?.(true);
         pan.setValue({ x: 0, y: 0 });

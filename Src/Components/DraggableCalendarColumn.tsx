@@ -64,6 +64,10 @@ interface DraggableCalendarColumnProps {
   totalStaffColumns: number;
   globalSlotLock?: React.MutableRefObject<boolean>;
   globalLastPressTime?: React.MutableRefObject<number>;
+  horizontalScrollRef?: React.RefObject<any>;
+  screenWidth?: number;
+  currentScrollX?: number;
+  threeColumnWidth?: number;
 }
 
 const DraggableCalendarColumn: React.FC<DraggableCalendarColumnProps> = ({
@@ -85,6 +89,10 @@ const DraggableCalendarColumn: React.FC<DraggableCalendarColumnProps> = ({
   totalStaffColumns,
   globalSlotLock,
   globalLastPressTime,
+  horizontalScrollRef,
+  screenWidth,
+  currentScrollX,
+  threeColumnWidth,
 }) => {
   const navigation = useNavigation<any>();
   const [selectedSlot, setSelectedSlot] = useState<{
@@ -687,6 +695,10 @@ const DraggableCalendarColumn: React.FC<DraggableCalendarColumnProps> = ({
               isEditing={isEditing}
               resetTrigger={resetTrigger}
               disableInteractions={interactionsDisabled}
+              horizontalScrollRef={horizontalScrollRef}
+              screenWidth={screenWidth}
+              currentScrollX={currentScrollX}
+              threeColumnWidth={threeColumnWidth}
               onPress={
                 interactionsDisabled
                   ? undefined
