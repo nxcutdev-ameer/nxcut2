@@ -33,10 +33,11 @@ import {
 } from "lucide-react-native";
 import Modal from "react-native-modal";
 import {
+  SCREEN_WIDTH,
+  SCREEN_HEIGHT,
   fontEq,
   getHeightEquivalent,
   getWidthEquivalent,
-  SCREEN_WIDTH,
 } from "../../../Utils/helpers";
 import useCalanderScreenVM from "./CalanderScreenVM";
 import { colors } from "../../../Constants/colors";
@@ -233,6 +234,22 @@ const CalanderScreen = () => {
   const navigation: any = useNavigation();
   const route = useRoute();
   const insets = useSafeAreaInsets();
+  
+  // ============================================================================
+  // FEATURE FLAG: INTEGRATED STAFF HEADER
+  // ============================================================================
+  // Set to TRUE: Staff headers become part of the calendar's scrollable content.
+  //   - Staff headers scroll with the calendar columns (no sync needed)
+  //   - Eliminates the separate staff header ScrollView
+  //   - Cleaner scrolling experience
+  //
+  // Set to FALSE: Reverts to original implementation with separate staff header
+  //   - Staff header remains fixed at top (separate ScrollView)
+  //   - Requires sync logic between staff header and calendar columns
+  //   - Original design maintained
+  // ============================================================================
+  const USE_INTEGRATED_STAFF_HEADER = true;
+  
   // State for carousel pagination
   const [currentStaffIndex, setCurrentStaffIndex] = useState(0);
   const scrollViewRef = useRef<ScrollView>(null);
@@ -245,9 +262,12 @@ const CalanderScreen = () => {
   const [scrollEnabled, setScrollEnabled] = useState(true);
   const savedHorizontalScrollPosition = useRef(0);
   const lastHorizontalScrollX = useRef(0);
+  const isProgrammaticScroll = useRef(false); // Track programmatic scrolls (auto-scroll)
   const [editingState, setEditingState] = useState<EditingState | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const overlayOpacity = useRef(new Animated.Value(0)).current;
+  const [currentScrollX, setCurrentScrollX] = useState(0);
+  const [currentScrollY, setCurrentScrollY] = useState(0);
 
   const hasPendingChanges = useMemo(() => {
     if (!editingState) {
@@ -949,12 +969,12 @@ const CalanderScreen = () => {
         >
           {/* Header Section: TimeGutterHeader (LEFT) spanning both rows + Date & Staff Headers (RIGHT) stacked */}
           <View style={{ flexDirection: "row", width: "100%" }}>
-            {/* LEFT: Time Gutter Header - Spans both Date and Staff header */}
+            {/* LEFT: Time Gutter Header - Always spans full height to align with time slots */}
             <TimeGutterHeader headerHeight={getHeightEquivalent(135)} />
 
             {/* RIGHT: Stacked Headers Container */}
             <View style={{ flex: 1, flexDirection: "column" }}>
-              {/* Top: Date Header */}
+              {/* Top: Date Header with spacer when using integrated staff header */}
               <View style={CalanderScreenStyles.newHeaderContainer}>
                 {/* Center - Date */}
                 <Pressable
@@ -1008,8 +1028,8 @@ const CalanderScreen = () => {
                 </View>
               </View>
 
-              {/* Staff Header */}
-              {calanderData.length > 0 && (
+              {/* Staff Header - Only show if NOT using integrated approach */}
+              {!USE_INTEGRATED_STAFF_HEADER && calanderData.length > 0 && (
                 <ScrollView
                   ref={staffHeaderScrollRef}
                   scrollEnabled={true}
@@ -1097,6 +1117,104 @@ const CalanderScreen = () => {
                   ))}
                 </ScrollView>
               )}
+
+              {/* INTEGRATED Staff Header - Static header below date header */}
+              {USE_INTEGRATED_STAFF_HEADER && calanderData.length > 0 && (
+                <View style={{ flexDirection: "row", width: "100%" }}>
+                  {/* RIGHT: Scrollable staff headers */}
+                  <ScrollView
+                    ref={staffHeaderScrollRef}
+                    scrollEnabled={true}
+                    horizontal={true}
+                    bounces={false}
+                    showsHorizontalScrollIndicator={false}
+                    showsVerticalScrollIndicator={false}
+                    scrollEventThrottle={16}
+                    snapToInterval={threeColumnWidth}
+                    snapToAlignment="start"
+                    decelerationRate="fast"
+                    onScroll={(event) => {
+                      // Skip sync if programmatic scroll (auto-scroll)
+                      if (isProgrammaticScroll.current) {
+                        return;
+                      }
+                      
+                      // Sync calendar columns when staff header is scrolled
+                      if (isScrollingFromCalendar.current) {
+                        return; // Don't process this event
+                      }
+                      const offsetX = event.nativeEvent.contentOffset.x;
+
+                      // Save scroll position
+                      lastHorizontalScrollX.current = offsetX;
+                      savedHorizontalScrollPosition.current = offsetX;
+
+                      if (horizontalScrollRef.current) {
+                        isScrollingFromStaffHeader.current = true;
+                        horizontalScrollRef.current.scrollTo({
+                          x: offsetX,
+                          y: 0,
+                          animated: false, // Instant sync for solid block feel
+                        });
+                        // Reset flag after next tick to allow scroll event to process
+                        setTimeout(() => {
+                          isScrollingFromStaffHeader.current = false;
+                        }, 50);
+                      }
+                    }}
+                    style={{
+                      height: getHeightEquivalent(85),
+                      backgroundColor: colors.white,
+                      flex: 1,
+                    }}
+                    contentContainerStyle={{
+                      flexDirection: "row",
+                      borderBottomWidth: 1,
+                      borderBottomColor: colors.border,
+                    }}
+                  >
+                    {/* Staff headers - all have equal width */}
+                    {calanderData.map((staff, index) => (
+                      <Fragment key={index}>
+                        {/* Add separator width for columns after the first one */}
+                        {index > 0 && (
+                          <View
+                            style={{
+                              width: 1,
+                              height: "100%",
+                              backgroundColor: "transparent",
+                            }}
+                          />
+                        )}
+                        <View
+                          style={{
+                            width: getColumnWidth(index),
+                            height: "100%",
+                            backgroundColor: colors.white,
+                            justifyContent: "center",
+                            alignItems: "center",
+                          }}
+                        >
+                          <View style={CalanderScreenStyles.staffImageContainer}>
+                            <Text
+                              style={{
+                                color: colors.primary,
+                                fontWeight: "bold",
+                                fontSize: fontEq(10),
+                              }}
+                            >
+                              {staff?.staffName?.charAt(0).toUpperCase() || "S"}
+                            </Text>
+                          </View>
+                          <Text style={CalanderScreenStyles.staffName}>
+                            {staff?.staffName || "Staff"}
+                          </Text>
+                        </View>
+                      </Fragment>
+                    ))}
+                  </ScrollView>
+                </View>
+              )}
             </View>
           </View>
         </View>
@@ -1107,12 +1225,16 @@ const CalanderScreen = () => {
             bounces={false}
             showsVerticalScrollIndicator={false}
             scrollEnabled={scrollEnabled}
-            scrollEventThrottle={1}
+            scrollEventThrottle={16}
             decelerationRate="fast"
             directionalLockEnabled={true}
             removeClippedSubviews={false}
+            onScroll={(event) => {
+              setCurrentScrollY(event.nativeEvent.contentOffset.y);
+            }}
             style={{ flex: 1 }}
           >
+            {/* INTEGRATED VERTICAL SCROLL: Time gutter and calendar scroll together */}
             <View style={{ flexDirection: "row" }}>
               {/* Fixed Time Gutter Column with Red Line */}
               <View style={{ width: getWidthEquivalent(40) }}>
@@ -1161,20 +1283,17 @@ const CalanderScreen = () => {
                         >
                           <Text
                             style={{
-                              fontSize: fontEq(8),
+                              fontSize: fontEq(10),
                               fontWeight: "700",
                               color: "#D32F2F",
+                              fontFamily: "Helvetica",
                             }}
                           >
-                            {currentTime
-                              .getHours()
+                            {((currentTime.getHours() % 12) || 12)
                               .toString()
-                              .padStart(2, "0")}
+                              .padStart(2)}
                             :
-                            {currentTime
-                              .getMinutes()
-                              .toString()
-                              .padStart(2, "0")}
+                            {currentTime.getMinutes().toString().padStart(2,"0")}
                           </Text>
                         </View>
                         {/* Red line in TimeGutter */}
@@ -1213,21 +1332,28 @@ const CalanderScreen = () => {
                 bounces={false}
                 showsHorizontalScrollIndicator={false}
                 scrollEnabled={scrollEnabled}
-                scrollEventThrottle={8}
+                scrollEventThrottle={16}
                 directionalLockEnabled={true}
                 snapToInterval={threeColumnWidth}
                 snapToAlignment="start"
                 decelerationRate="fast"
                 onScrollBeginDrag={handleHorizontalScrollBegin}
                 onScroll={(event) => {
-                  // Sync staff header horizontal scroll - INSTANT SYNC
-                  if (isScrollingFromStaffHeader.current) {
-                    isScrollingFromStaffHeader.current = false;
+                  // Skip sync if programmatic scroll (auto-scroll)
+                  if (isProgrammaticScroll.current) {
                     return;
+                  }
+                  
+                  // Sync staff header horizontal scroll
+                  if (isScrollingFromStaffHeader.current) {
+                    return; // Don't process this event
                   }
                   const offsetX = event.nativeEvent.contentOffset.x;
 
-                  // Remove threshold check for instant sync - always sync position
+                  // Track current scroll position for auto-scroll functionality
+                  setCurrentScrollX(offsetX);
+
+                  // Save scroll position
                   lastHorizontalScrollX.current = offsetX;
                   savedHorizontalScrollPosition.current = offsetX;
 
@@ -1236,12 +1362,12 @@ const CalanderScreen = () => {
                     staffHeaderScrollRef.current.scrollTo({
                       x: offsetX,
                       y: 0,
-                      animated: false, // No animation for instant sync
+                      animated: false,
                     });
-                    // Reset flag immediately after sync
+                    // Reset flag after next tick to allow scroll event to process
                     setTimeout(() => {
                       isScrollingFromCalendar.current = false;
-                    }, 0);
+                    }, 50);
                   }
                 }}
                 // TEMPORARILY DISABLED: Date navigation on horizontal scroll
@@ -1390,6 +1516,14 @@ const CalanderScreen = () => {
                             totalStaffColumns={calanderData.length}
                             globalSlotLock={globalSlotLock}
                             globalLastPressTime={globalLastPressTime}
+                            horizontalScrollRef={horizontalScrollRef}
+                            screenWidth={SCREEN_WIDTH}
+                            currentScrollX={currentScrollX}
+                            threeColumnWidth={threeColumnWidth}
+                            isProgrammaticScrollRef={isProgrammaticScroll}
+                            verticalScrollRef={verticalScrollRef}
+                            screenHeight={SCREEN_HEIGHT}
+                            currentScrollY={currentScrollY}
                           />
                           {index < columnConfigs.length - 1 && (
                             <View

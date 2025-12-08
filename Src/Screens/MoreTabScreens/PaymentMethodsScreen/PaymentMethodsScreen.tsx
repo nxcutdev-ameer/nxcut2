@@ -7,7 +7,10 @@ import {
   ScrollView,
   Alert,
   RefreshControl,
+  StatusBar,
+  ActivityIndicator,
 } from "react-native";
+import Modal from "react-native-modal";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import {
@@ -19,24 +22,19 @@ import {
   Shield,
   Smartphone,
   Landmark,
+  MoreVertical,
+  X,
 } from "lucide-react-native";
+import { LinearGradient } from "expo-linear-gradient";
 import { colors } from "../../../Constants/colors";
 import { PaymentMethodsScreenStyles } from "./PaymentMethodsScreenStyles";
-import { usePaymentMethodsVM } from "./PaymentMethodsScreenVM";
-
-interface PaymentMethod {
-  id: string;
-  type: "card";
-  name: string;
-  lastFour?: string;
-  expiryDate?: string;
-  isDefault: boolean;
-  isActive: boolean;
-}
+import { usePaymentMethodsVM, PaymentMethod } from "./PaymentMethodsScreenVM";
+import { getHeightEquivalent, getWidthEquivalent } from "../../../Utils/helpers";
 
 const PaymentMethodsScreen = () => {
   const navigation = useNavigation();
   const [refreshing, setRefreshing] = useState(false);
+  const [showMenuModal, setShowMenuModal] = useState(false);
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
   
   const {
@@ -68,6 +66,9 @@ const PaymentMethodsScreen = () => {
     setRefreshing(false);
   };
 
+  const handleUpdatePaymentMethod = () => {
+   // navigation.navigate("UpdatePaymentMethodScreen" as never);
+  };
   const handleAddPaymentMethod = () => {
     navigation.navigate("AddPaymentMethodScreen" as never);
   };
@@ -106,13 +107,13 @@ const PaymentMethodsScreen = () => {
   const getPaymentMethodIcon = (type: string) => {
     switch (type) {
       case "card":
-        return <CreditCard size={24} color={colors.primary} />;
+        return <CreditCard size={24} color={colors.black} />;
       case "wallet":
-        return <Smartphone size={24} color={colors.primary} />;
+        return <Smartphone size={24} color={colors.black} />;
       case "bank":
-        return <Landmark size={24} color={colors.primary} />;
+        return <Landmark size={24} color={colors.black} />;
       default:
-        return <CreditCard size={24} color={colors.primary} />;
+        return <CreditCard size={24} color={colors.black} />;
     }
   };
 
@@ -140,47 +141,70 @@ const PaymentMethodsScreen = () => {
           </View>
         </View>
         <View style={PaymentMethodsScreenStyles.paymentMethodActions}>
-          {method.isDefault && (
+          {/* {method.isDefault && (
             <View style={PaymentMethodsScreenStyles.defaultBadge}>
               <Shield size={16} color={colors.white} />
               <Text style={PaymentMethodsScreenStyles.defaultBadgeText}>
                 Default
               </Text>
             </View>
-          )}
-          <TouchableOpacity
-            style={PaymentMethodsScreenStyles.actionButton}
-            onPress={() => handleSetDefault(method.id)}
-            disabled={method.isDefault}
-          >
-            <Edit size={20} color={colors.textSecondary} />
-          </TouchableOpacity>
-          <TouchableOpacity
+          )} */}
+                <TouchableOpacity
+                  style={{
+                    width: 48,
+                    height: 48,
+                    borderRadius: 24,
+                    backgroundColor: colors.white,
+                    borderColor: colors.gray[300],
+                   // borderWidth: 1,
+                    justifyContent: "center",
+                    alignItems: "center",
+                  }}
+                  onPress={() => setShowMenuModal(true)}
+                >
+                  <MoreVertical size={20} color={colors.text} />
+                </TouchableOpacity>
+          {/* <TouchableOpacity
             style={PaymentMethodsScreenStyles.actionButton}
             onPress={() => handleDeletePaymentMethod(method.id)}
           >
-            <Trash2 size={20} color={colors.error} />
-          </TouchableOpacity>
+            <Trash2 size={20} color={colors.danger} />
+          </TouchableOpacity> */}
         </View>
       </View>
     </View>
   );
 
   return (
-    <SafeAreaView style={PaymentMethodsScreenStyles.mainContainer}>
-      {/* Header */}
-      <View style={PaymentMethodsScreenStyles.header}>
-        <TouchableOpacity
-          style={PaymentMethodsScreenStyles.backButton}
-          onPress={() => navigation.goBack()}
-        >
-          <ChevronLeft size={24} color={colors.white} />
-        </TouchableOpacity>
-        <Text style={PaymentMethodsScreenStyles.headerTitle}>
-          Payment Methods
-        </Text>
-        <View style={PaymentMethodsScreenStyles.headerSpacer} />
-      </View>
+    <View style={PaymentMethodsScreenStyles.mainContainer}>
+      <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
+      
+      {/* Header with Gradient */}
+      <LinearGradient
+        colors={[
+          colors.gradient.start,
+          colors.gradient.middle,
+          colors.gradient.end,
+        ]}
+        start={{ x: 0, y: 1 }}
+        end={{ x: 1, y: 0 }}
+        style={PaymentMethodsScreenStyles.gradientHeader}
+      >
+        <SafeAreaView edges={['top']}>
+          <View style={PaymentMethodsScreenStyles.header}>
+            <TouchableOpacity
+              style={PaymentMethodsScreenStyles.backButton}
+              onPress={() => navigation.goBack()}
+            >
+              <ChevronLeft size={24} color={colors.white} />
+            </TouchableOpacity>
+            <Text style={PaymentMethodsScreenStyles.headerTitle}>
+              Payment Methods
+            </Text>
+            <View style={PaymentMethodsScreenStyles.headerSpacer} />
+          </View>
+        </SafeAreaView>
+      </LinearGradient>
 
       {/* Content */}
       <ScrollView
@@ -195,7 +219,7 @@ const PaymentMethodsScreen = () => {
           onPress={handleAddPaymentMethod}
         >
           <View style={PaymentMethodsScreenStyles.addButtonIcon}>
-            <Plus size={24} color={colors.white} />
+            <Plus size={24} color={colors.black} />
           </View>
           <Text style={PaymentMethodsScreenStyles.addButtonText}>
             Add Payment Method
@@ -220,14 +244,69 @@ const PaymentMethodsScreen = () => {
         </View>
 
         {/* Security Notice */}
-        <View style={PaymentMethodsScreenStyles.securityNotice}>
+        {/* <View style={PaymentMethodsScreenStyles.securityNotice}>
           <Shield size={20} color={colors.primary} />
           <Text style={PaymentMethodsScreenStyles.securityNoticeText}>
             Your payment information is encrypted and secure
           </Text>
-        </View>
+        </View> */}
       </ScrollView>
-    </SafeAreaView>
+         {/* Menu Modal */}
+      <Modal
+        isVisible={showMenuModal}
+        onBackdropPress={() => setShowMenuModal(false)}
+        onSwipeComplete={() => setShowMenuModal(false)}
+        swipeDirection="down"
+        style={{ justifyContent: "flex-end", margin: 0 }}
+        animationIn="slideInUp"
+        animationOut="slideOutDown"
+      >
+        <View
+          style={{
+            backgroundColor: colors.white,
+            borderTopLeftRadius: 20,
+            borderTopRightRadius: 20,
+            paddingTop: 12,
+            paddingBottom: 34,
+          }}
+        >
+          {/* Drag Indicator */}
+          <View
+            style={{
+              width: 40,
+              height: 4,
+              backgroundColor: colors.gray[300],
+              borderRadius: 2,
+              alignSelf: "center",
+              marginBottom: 20,
+            }}
+          />
+
+          {/* Update Button */}
+          <TouchableOpacity
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              paddingVertical: getHeightEquivalent(26),
+              paddingHorizontal: getWidthEquivalent(20),
+              backgroundColor: colors.white,
+            }}
+            onPress={handleUpdatePaymentMethod}
+          >
+                <Text
+                  style={{
+                    marginLeft: getWidthEquivalent(12),
+                    fontSize: getHeightEquivalent(16),
+                    fontWeight: "500",
+                    color: colors.black,
+                  }}
+                >
+                  Update
+                </Text>
+          </TouchableOpacity>
+        </View>
+      </Modal>
+    </View>
   );
 };
 

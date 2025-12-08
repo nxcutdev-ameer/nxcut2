@@ -19,6 +19,7 @@ import {
   Landmark,
   X,
 } from "lucide-react-native";
+import { LinearGradient } from "expo-linear-gradient";
 import { getHeightEquivalent, getWidthEquivalent } from "../../../Utils/helpers";
 import { colors } from "../../../Constants/colors";
 import { RootStackParamList } from "../../../Navigations/RootStackNavigator";
@@ -50,43 +51,60 @@ function WalletScreen() {
   );
 
   return (
-    <SafeAreaView style={WalletScreenStyles.mainContainer}>
-      <StatusBar barStyle="light-content" backgroundColor={colors.primary} />
+    <View style={WalletScreenStyles.mainContainer}>
+      <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
 
-      <View style={WalletScreenStyles.banner}>
-        <Pressable
-          style={({ pressed }) => [
-            WalletScreenStyles.backButton,
-            pressed && WalletScreenStyles.backButtonPressed,
-          ]}
-          onPress={() => navigation.goBack()}
-        >
-          <ChevronLeft size={22} color={colors.white} />
-        </Pressable>
+      <LinearGradient
+        colors={[
+          colors.gradient.start,
+          colors.gradient.middle,
+          colors.gradient.end,
+        ]}
+        start={{ x: 0, y: 1 }}
+        end={{ x: 1, y: 1 }}
+        style={WalletScreenStyles.gradientContainer}
+      >
+        <SafeAreaView style={WalletScreenStyles.safeArea}>
+          <View style={WalletScreenStyles.banner}>
+            <Pressable
+              style={({ pressed }) => [
+                WalletScreenStyles.backButton,
+                pressed && WalletScreenStyles.backButtonPressed,
+              ]}
+              onPress={() => navigation.goBack()}
+            >
+              <ChevronLeft size={22} color={colors.white} />
+            </Pressable>
 
-        <View style={WalletScreenStyles.bannerContent}>
-          <Text style={WalletScreenStyles.bannerLabel}>All accounts</Text>
-          <Text style={WalletScreenStyles.bannerAmount}>AED 0.00</Text>
-          <Pressable
-            onPress={() => setIsActionsModalVisible(true)}
-            style={({ pressed }) => [
-              WalletScreenStyles.walletButton,
-              pressed && WalletScreenStyles.walletButtonPressed,
-            ]}
-          >
-            <View style={WalletScreenStyles.walletButtonContent}>
-              <Text style={WalletScreenStyles.walletButtonText}>Actions</Text>
-              {isActionsModalVisible ? (
-                <ChevronUp size={16} color={colors.white} />
-              ) : (
-                <ChevronDown size={16} color={colors.white} />
-              )}
+            <View style={WalletScreenStyles.bannerContent}>
+              <Text style={WalletScreenStyles.bannerLabel}>All accounts</Text>
+              <View style={WalletScreenStyles.amountContainer}>
+                <Text style={WalletScreenStyles.bannerAmount}>AED 0</Text>
+                <Text style={WalletScreenStyles.bannerAmountDecimal}>.00</Text>
+              </View>
+              <Pressable
+                onPress={() => setIsActionsModalVisible(true)}
+                style={({ pressed }) => [
+                  WalletScreenStyles.walletButton,
+                  pressed && WalletScreenStyles.walletButtonPressed,
+                ]}
+              >
+                <View style={WalletScreenStyles.walletButtonContent}>
+                  <Text style={WalletScreenStyles.walletButtonText}>Actions</Text>
+                  {isActionsModalVisible ? (
+                    <ChevronUp size={16} color={colors.white} />
+                  ) : (
+                    <ChevronDown size={16} color={colors.white} />
+                  )}
+                </View>
+              </Pressable>
             </View>
-          </Pressable>
-        </View>
-      </View>
+          </View>
+        </SafeAreaView>
+      </LinearGradient>
 
-      <View style={WalletScreenStyles.content}>
+      <SafeAreaView style={WalletScreenStyles.contentSafeArea}>
+        <View style={WalletScreenStyles.content}>
         <View style={WalletScreenStyles.card}>
           <Pressable
             style={({ pressed }) => [
@@ -99,7 +117,7 @@ function WalletScreen() {
             <View style={WalletScreenStyles.cardItemContent}>
               <View style={WalletScreenStyles.cardItemLeft}>
                 <View style={WalletScreenStyles.cardIconBadge}>
-                  <CreditCard size={18} color={colors.primary} />
+                  <CreditCard size={20} color={colors.black} />
                 </View>
                 <Text style={WalletScreenStyles.cardItemLabel}>
                   Payment methods
@@ -111,7 +129,7 @@ function WalletScreen() {
 
           <View style={WalletScreenStyles.cardDivider} />
 
-          {/* <Pressable
+           <Pressable
             style={({ pressed }) => [
               WalletScreenStyles.cardItem,
               pressed && WalletScreenStyles.cardItemPressed,
@@ -122,7 +140,7 @@ function WalletScreen() {
             <View style={WalletScreenStyles.cardItemContent}>
               <View style={WalletScreenStyles.cardItemLeft}>
                 <View style={WalletScreenStyles.cardIconBadge}>
-                  <Landmark size={18} color={colors.primary} />
+                  <Landmark size={20} color={colors.black} />
                 </View>
                 <Text style={WalletScreenStyles.cardItemLabel}>
                   Bank account
@@ -130,9 +148,10 @@ function WalletScreen() {
               </View>
               <ChevronRight size={18} color={colors.textSecondary} />
             </View>
-          </Pressable> */}
+          </Pressable> 
         </View>
-      </View>
+        </View>
+      </SafeAreaView>
 
       <Modal
         isVisible={isActionsModalVisible}
@@ -180,14 +199,27 @@ function WalletScreen() {
           </View>
         </TouchableWithoutFeedback>
       </Modal>
-    </SafeAreaView>
+    </View>
   );
 }
 
 const WalletScreenStyles = StyleSheet.create({
   mainContainer: {
     flex: 1,
-    backgroundColor: colors.primary,
+    backgroundColor: colors.white,
+  },
+  gradientContainer: {
+   // borderBottomLeftRadius: getWidthEquivalent(24),
+   // borderBottomRightRadius: getWidthEquivalent(24),
+    shadowColor: colors.primary,
+    shadowOpacity: getHeightEquivalent(0.15),
+    shadowOffset: { width: 0, height: getHeightEquivalent(6) },
+    shadowRadius: getHeightEquivalent(12),
+    height: "40%",
+    elevation: 4,
+    overflow: "hidden",
+  },
+  safeArea: {
     paddingTop: getHeightEquivalent(24),
   },
   banner: {
@@ -196,14 +228,11 @@ const WalletScreenStyles = StyleSheet.create({
     paddingHorizontal: getWidthEquivalent(24),
     paddingVertical: getHeightEquivalent(36),
     gap: getHeightEquivalent(26),
-    backgroundColor: colors.primary,
-    borderBottomLeftRadius: getWidthEquivalent(24),
-    borderBottomRightRadius: getWidthEquivalent(24),
-    shadowColor: colors.primary,
-    shadowOpacity: getHeightEquivalent(0.15),
-    shadowOffset: { width: 0, height: getHeightEquivalent(6) },
-    shadowRadius: getHeightEquivalent(12),
-    elevation: 4,
+  },
+  contentSafeArea: {
+    flex: 1,
+    backgroundColor: "transparent",
+    position: "relative",
   },
   backButton: {
     width: getWidthEquivalent(40),
@@ -227,18 +256,40 @@ const WalletScreenStyles = StyleSheet.create({
     fontWeight: "500",
     color: colors.white,
   },
-  bannerAmount: {
+  amountContainer: {
+    flexDirection: "row",
+    alignItems: "baseline",
     marginTop: getHeightEquivalent(4),
-    fontSize: getHeightEquivalent(26),
+  },
+  bannerAmount: {
+    fontSize: getHeightEquivalent(38),
     fontWeight: "700",
     color: colors.white,
   },
+  bannerAmountDecimal: {
+    fontSize: getHeightEquivalent(24),
+    fontWeight: "600",
+    color: colors.white,
+    opacity: 0.9,
+  },
   content: {
-    flex: 1,
+    position: "absolute",
+    top: getHeightEquivalent(-40),
+    left: getWidthEquivalent(16),
+    right: getWidthEquivalent(16),
+    bottom: 0,
     backgroundColor: colors.white,
-    borderRadius: getWidthEquivalent(24),
-    paddingTop: getHeightEquivalent(12),
+    borderRadius: getWidthEquivalent(10),
+    borderColor: colors.backdrop,
+    borderWidth: 1,
+    height: getHeightEquivalent(200),
+    paddingTop: getHeightEquivalent(20),
     paddingHorizontal: getWidthEquivalent(16),
+    shadowColor: colors.black,
+    shadowOpacity: 0.1,
+    shadowOffset: { width: 0, height: -4 },
+    shadowRadius: 8,
+    elevation: 5,
   },
   walletButton: {
     borderWidth: 1,
@@ -362,7 +413,7 @@ const WalletScreenStyles = StyleSheet.create({
     width: getWidthEquivalent(36),
     height: getWidthEquivalent(36),
     borderRadius: getWidthEquivalent(12),
-    backgroundColor: colors.gray[100],
+    //backgroundColor: colors.gray[100],
     alignItems: "center",
     justifyContent: "center",
   },

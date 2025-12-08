@@ -1,7 +1,7 @@
 import { useState, useCallback } from "react";
 import { Alert } from "react-native";
 
-interface PaymentMethod {
+export interface PaymentMethod {
   id: string;
   type: "card" | "wallet" | "bank";
   name: string;

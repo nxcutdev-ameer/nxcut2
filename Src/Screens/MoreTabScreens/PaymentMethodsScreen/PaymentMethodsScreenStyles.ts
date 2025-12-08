@@ -5,7 +5,14 @@ import { colors } from "../../../Constants/colors";
 export const PaymentMethodsScreenStyles = StyleSheet.create({
   mainContainer: {
     flex: 1,
-    backgroundColor: colors.primary,
+    backgroundColor: colors.white,
+  },
+  gradientHeader: {
+    shadowColor: colors.primary,
+    shadowOpacity: 0.15,
+    shadowOffset: { width: 0, height: 4 },
+    shadowRadius: 8,
+    elevation: 4,
   },
   header: {
     flexDirection: "row",
@@ -13,7 +20,6 @@ export const PaymentMethodsScreenStyles = StyleSheet.create({
     justifyContent: "space-between",
     paddingHorizontal: getWidthEquivalent(20),
     paddingVertical: getHeightEquivalent(16),
-    backgroundColor: colors.primary,
   },
   backButton: {
     width: getWidthEquivalent(40),
@@ -36,15 +42,15 @@ export const PaymentMethodsScreenStyles = StyleSheet.create({
   content: {
     flex: 1,
     backgroundColor: colors.white,
-    borderTopLeftRadius: getWidthEquivalent(24),
-    borderTopRightRadius: getWidthEquivalent(24),
+    //borderTopLeftRadius: getWidthEquivalent(24),
+    //borderTopRightRadius: getWidthEquivalent(24),
     paddingTop: getHeightEquivalent(24),
     paddingHorizontal: getWidthEquivalent(20),
   },
   addButton: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: colors.primary,
+    backgroundColor: colors.white,
     borderRadius: getWidthEquivalent(12),
     paddingVertical: getHeightEquivalent(16),
     paddingHorizontal: getWidthEquivalent(20),
@@ -59,7 +65,7 @@ export const PaymentMethodsScreenStyles = StyleSheet.create({
     width: getWidthEquivalent(40),
     height: getHeightEquivalent(40),
     borderRadius: getWidthEquivalent(20),
-    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    backgroundColor: colors.gray[100],
     alignItems: "center",
     justifyContent: "center",
     marginRight: getWidthEquivalent(12),
@@ -67,7 +73,7 @@ export const PaymentMethodsScreenStyles = StyleSheet.create({
   addButtonText: {
     fontSize: fontEq(16),
     fontWeight: "600",
-    color: colors.white,
+    color: colors.black,
   },
   paymentMethodsList: {
     marginBottom: getHeightEquivalent(24),
@@ -112,11 +118,6 @@ export const PaymentMethodsScreenStyles = StyleSheet.create({
     fontWeight: "600",
     color: colors.text,
     marginBottom: getHeightEquivalent(4),
-  },
-  paymentMethodDetails: {
-    fontSize: fontEq(14),
-    color: colors.textSecondary,
-    marginBottom: getHeightEquivalent(2),
   },
   paymentMethodActions: {
     flexDirection: "row",

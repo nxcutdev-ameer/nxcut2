@@ -177,7 +177,7 @@ export const DashBoardScreenStyles = StyleSheet.create({
     marginTop: getHeightEquivalent(5),
   },
   statusContainer: {
-    width: getWidthEquivalent(120),
+    width: getWidthEquivalent(100),
     height: getHeightEquivalent(30),
     flexDirection: "row",
     position: "absolute",
@@ -187,8 +187,8 @@ export const DashBoardScreenStyles = StyleSheet.create({
   },
   statusBar: {
     height: "100%",
-    paddingHorizontal: getWidthEquivalent(10),
-    paddingVertical: getHeightEquivalent(2),
+    paddingHorizontal: getWidthEquivalent(8),
+   // paddingVertical: getHeightEquivalent(2),
     backgroundColor: paint.primary,
     alignItems: "center",
     justifyContent: "center",
@@ -196,8 +196,8 @@ export const DashBoardScreenStyles = StyleSheet.create({
     //paddingRight: getWidthEquivalent(15),
   },
   statusText: {
-    fontSize: fontEq(12),
-    fontWeight: "600",
+    fontSize: fontEq(10),
+    fontWeight: "500",
     color: paint.white,
   },
   barGraphTitle: {

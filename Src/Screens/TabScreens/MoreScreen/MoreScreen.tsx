@@ -1,5 +1,5 @@
 import React from "react";
-import { Text, View, TouchableOpacity, ScrollView } from "react-native";
+import { Text, View, TouchableOpacity, ScrollView, Pressable } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { colors, theme, shadows } from "../../../Constants/colors";
 
@@ -100,25 +100,30 @@ const MoreScreen = () => {
       </View>
       <ScrollView style={MoreScreenStyles.container}>
         {/* Wallet Card */}
-        <LinearGradient
-          colors={[
-            colors.gradient.start,
-            colors.gradient.middle,
-            colors.gradient.end,
+        <Pressable
+          onPress={() => navigation.navigate("WalletScreen")}
+          style={({ pressed }) => [
+            MoreScreenStyles.walletCardWrapper,
+            pressed && MoreScreenStyles.walletCardPressed,
           ]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={[MoreScreenStyles.walletCard, shadows.medium]}
         >
-          <Text style={MoreScreenStyles.walletLabel}>Business wallet</Text>
-          <Text style={MoreScreenStyles.walletAmount}>AED 0.00</Text>
-          {/* <TouchableOpacity
-            onPress={() => navigation.navigate("WalletScreen")}
-            style={MoreScreenStyles.walletButton}
+          <LinearGradient
+            colors={[
+              colors.gradient.start,
+              colors.gradient.middle,
+              colors.gradient.end,
+            ]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={[MoreScreenStyles.walletCard, shadows.medium]}
           >
-            <Text style={MoreScreenStyles.walletButtonText}>View wallet</Text>
-          </TouchableOpacity> */}
-        </LinearGradient>
+            <Text style={MoreScreenStyles.walletLabel}>Business wallet</Text>
+            <Text style={MoreScreenStyles.walletAmount}>AED 0.00</Text>
+            <View style={MoreScreenStyles.walletButton}>
+              <Text style={MoreScreenStyles.walletButtonText}>View wallet</Text>
+            </View>
+          </LinearGradient>
+        </Pressable>
 
         {/* Menu Grid */}
         <View style={MoreScreenStyles.menuGrid}>

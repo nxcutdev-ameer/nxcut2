@@ -68,6 +68,10 @@ interface DraggableCalendarColumnProps {
   screenWidth?: number;
   currentScrollX?: number;
   threeColumnWidth?: number;
+  isProgrammaticScrollRef?: React.MutableRefObject<boolean>;
+  verticalScrollRef?: React.RefObject<any>;
+  screenHeight?: number;
+  currentScrollY?: number;
 }
 
 const DraggableCalendarColumn: React.FC<DraggableCalendarColumnProps> = ({
@@ -93,6 +97,10 @@ const DraggableCalendarColumn: React.FC<DraggableCalendarColumnProps> = ({
   screenWidth,
   currentScrollX,
   threeColumnWidth,
+  isProgrammaticScrollRef,
+  verticalScrollRef,
+  screenHeight,
+  currentScrollY,
 }) => {
   const navigation = useNavigation<any>();
   const [selectedSlot, setSelectedSlot] = useState<{
@@ -699,6 +707,10 @@ const DraggableCalendarColumn: React.FC<DraggableCalendarColumnProps> = ({
               screenWidth={screenWidth}
               currentScrollX={currentScrollX}
               threeColumnWidth={threeColumnWidth}
+              isProgrammaticScrollRef={isProgrammaticScrollRef}
+              verticalScrollRef={verticalScrollRef}
+              screenHeight={screenHeight}
+              currentScrollY={currentScrollY}
               onPress={
                 interactionsDisabled
                   ? undefined

@@ -287,7 +287,7 @@ const DashBoardScreen = () => {
     const barData = upcomingAppointments.map((item) => ({
       value: item.appointment_count,
       label: item.day_label,
-      frontColor: colors.colors.primary,
+      frontColor: colors.colors.primaryLight,
       spacing: getWidthEquivalent(1),
       labelWidth: getWidthEquivalent(150),
       labelTextStyle: {
@@ -779,6 +779,8 @@ const DashBoardScreen = () => {
                   yAxisColor={colors.colors.gray[300]}
                   noOfSections={4}
                   maxValue={Math.max(...upcomingAppointmentsBarData.map(d => d.value), 10)}
+                  barBorderWidth={1}
+                  barBorderColor={colors.colors.primary}
                   isAnimated
                   animationDuration={800}
                   height={getHeightEquivalent(200)}
@@ -861,7 +863,7 @@ const DashBoardScreen = () => {
                         </Text>
                       </View>
                       <TouchableOpacity>
-                        <Ellipsis size={24} color={colors.colors.text} />
+                        <Ellipsis size={20} color={colors.colors.black} />
                       </TouchableOpacity>
                     </View>
                   </View>

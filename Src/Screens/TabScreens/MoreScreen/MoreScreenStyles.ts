@@ -56,11 +56,17 @@ export const MoreScreenStyles = StyleSheet.create({
   },
 
   // Wallet Card
+  walletCardWrapper: {
+    marginBottom: theme.spacing.lg,
+  },
+  walletCardPressed: {
+    opacity: 0.9,
+    transform: [{ scale: 0.98 }],
+  },
   walletCard: {
     backgroundColor: colors.gradient.start,
     borderRadius: theme.borderRadius.large,
     padding: theme.spacing.lg,
-    marginBottom: theme.spacing.lg,
     overflow: "hidden",
     height: getHeightEquivalent(150),
   },

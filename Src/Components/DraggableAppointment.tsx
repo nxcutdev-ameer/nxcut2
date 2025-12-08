@@ -40,7 +40,11 @@ interface DraggableAppointmentProps {
   horizontalScrollRef?: React.RefObject<any>;
   screenWidth?: number;
   currentScrollX?: number;
+  currentScrollY?: number;
   threeColumnWidth?: number;
+  isProgrammaticScrollRef?: React.MutableRefObject<boolean>;
+  verticalScrollRef?: React.RefObject<any>;
+  screenHeight?: number;
 }
 
 const DraggableAppointment: React.FC<DraggableAppointmentProps> = ({
@@ -70,6 +74,10 @@ const DraggableAppointment: React.FC<DraggableAppointmentProps> = ({
   screenWidth,
   currentScrollX,
   threeColumnWidth,
+  isProgrammaticScrollRef,
+  verticalScrollRef,
+  screenHeight,
+  currentScrollY,
 }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [committedPosition, setCommittedPosition] = useState({ x: 0, y: 0 });
@@ -348,20 +356,29 @@ const DraggableAppointment: React.FC<DraggableAppointmentProps> = ({
     lastSnappedSlotRef.current = currentSlotIndex;
   }, [committedPosition.y, isDragging]);
 
-  // Track scroll changes and adjust appointment position
+  // Track scroll position for auto-scroll compensation
+  const scrollOffsetRef = useRef<number>(0);
+  const dragStartScrollRef = useRef<number>(0);
+
+  // Effect to track scroll changes during drag
   useEffect(() => {
     if (isDragging && currentScrollX !== undefined) {
-      const scrollDelta = currentScrollX - lastKnownScrollXRef.current;
-      if (scrollDelta !== 0) {
-        // Adjust the pan position to compensate for scroll
-        cumulativeScrollOffsetRef.current += scrollDelta;
-        lastKnownScrollXRef.current = currentScrollX;
-      }
+      // Calculate how much the view has scrolled since drag started
+      const scrollDelta = currentScrollX - dragStartScrollRef.current;
+      scrollOffsetRef.current = scrollDelta;
+    } else if (!isDragging) {
+      // Reset on drag end
+      scrollOffsetRef.current = 0;
     }
   }, [currentScrollX, isDragging]);
 
-  // Auto-scroll helper function - snaps to three columns at a time
-  const handleAutoScroll = (pageX: number, gestureState: PanResponderGestureState) => {
+  // Auto-scroll refs for vertical
+  const autoScrollVerticalIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const lastAutoScrollVerticalTimeRef = useRef<number>(0);
+  const isAutoScrollingVerticalRef = useRef<boolean>(false);
+
+  // Auto-scroll helper function - horizontal and vertical
+  const handleAutoScroll = (pageX: number, pageY: number, gestureState: PanResponderGestureState) => {
     if (!horizontalScrollRef?.current || !screenWidth || !threeColumnWidth || currentScrollX === undefined) {
       return;
     }
@@ -383,20 +400,24 @@ const DraggableAppointment: React.FC<DraggableAppointmentProps> = ({
     }
 
     if (isNearRightEdge) {
-      // Scroll right by three columns - use targetScrollXRef for accurate tracking
+      // Scroll right by ONE column for controlled movement
       const currentScroll = targetScrollXRef.current || currentScrollX || 0;
-      const currentPage = Math.round(currentScroll / threeColumnWidth);
-      const nextPage = currentPage + 1;
-      const targetScroll = nextPage * threeColumnWidth;
+      const columnWidth = threeColumnWidth / 3; // Single column width
+      const targetScroll = currentScroll + columnWidth;
       
-      // Trigger scroll once with shorter throttle for faster continuous scrolling
+      // Slower throttle for more controlled scrolling
       const now = Date.now();
-      if (now - lastAutoScrollTimeRef.current > 250 && !isAutoScrollingRef.current) { // 250ms throttle
+      if (now - lastAutoScrollTimeRef.current > 400 && !isAutoScrollingRef.current) { // 400ms throttle
         lastAutoScrollTimeRef.current = now;
         isAutoScrollingRef.current = true;
         
         // Update target position immediately
         targetScrollXRef.current = targetScroll;
+        
+        // Set programmatic scroll flag to prevent sync loop
+        if (isProgrammaticScrollRef) {
+          isProgrammaticScrollRef.current = true;
+        }
         
         horizontalScrollRef.current.scrollTo({
           x: targetScroll,
@@ -404,26 +425,33 @@ const DraggableAppointment: React.FC<DraggableAppointmentProps> = ({
           animated: true,
         });
         
-        // Reset flag quickly to allow next scroll
+        // Reset flags after animation completes
         setTimeout(() => {
           isAutoScrollingRef.current = false;
-        }, 180); // Quick reset for continuous scrolling
+          if (isProgrammaticScrollRef) {
+            isProgrammaticScrollRef.current = false;
+          }
+        }, 350); // Wait for animation to complete
       }
     } else if (isNearLeftEdge && (targetScrollXRef.current > 0 || (currentScrollX || 0) > 0)) {
-      // Scroll left by three columns - use targetScrollXRef for accurate tracking
+      // Scroll left by ONE column for controlled movement
       const currentScroll = targetScrollXRef.current || currentScrollX || 0;
-      const currentPage = Math.round(currentScroll / threeColumnWidth);
-      const prevPage = Math.max(0, currentPage - 1);
-      const targetScroll = prevPage * threeColumnWidth;
+      const columnWidth = threeColumnWidth / 3; // Single column width
+      const targetScroll = Math.max(0, currentScroll - columnWidth);
       
-      // Trigger scroll once with shorter throttle for faster continuous scrolling
+      // Slower throttle for more controlled scrolling
       const now = Date.now();
-      if (now - lastAutoScrollTimeRef.current > 250 && !isAutoScrollingRef.current) { // 250ms throttle
+      if (now - lastAutoScrollTimeRef.current > 400 && !isAutoScrollingRef.current) { // 400ms throttle
         lastAutoScrollTimeRef.current = now;
         isAutoScrollingRef.current = true;
         
         // Update target position immediately
         targetScrollXRef.current = targetScroll;
+        
+        // Set programmatic scroll flag to prevent sync loop
+        if (isProgrammaticScrollRef) {
+          isProgrammaticScrollRef.current = true;
+        }
         
         horizontalScrollRef.current.scrollTo({
           x: targetScroll,
@@ -431,10 +459,81 @@ const DraggableAppointment: React.FC<DraggableAppointmentProps> = ({
           animated: true,
         });
         
-        // Reset flag quickly to allow next scroll
+        // Reset flags after animation completes
         setTimeout(() => {
           isAutoScrollingRef.current = false;
-        }, 180); // Quick reset for continuous scrolling
+          if (isProgrammaticScrollRef) {
+            isProgrammaticScrollRef.current = false;
+          }
+        }, 350); // Wait for animation to complete
+      }
+    }
+
+    // VERTICAL AUTO-SCROLL
+    if (verticalScrollRef?.current && screenHeight && currentScrollY !== undefined) {
+      const EDGE_THRESHOLD = 80; // Distance from edge to trigger scroll
+      const SCROLL_AMOUNT = 100; // Pixels to scroll per trigger
+
+      // Check if near top or bottom edge
+      const isNearTopEdge = pageY < EDGE_THRESHOLD;
+      const isNearBottomEdge = pageY > screenHeight - EDGE_THRESHOLD;
+
+      if (isNearBottomEdge) {
+        // Scroll down
+        const now = Date.now();
+        if (now - lastAutoScrollVerticalTimeRef.current > 250 && !isAutoScrollingVerticalRef.current) {
+          lastAutoScrollVerticalTimeRef.current = now;
+          isAutoScrollingVerticalRef.current = true;
+
+          const targetScroll = currentScrollY + SCROLL_AMOUNT;
+
+          // Set programmatic scroll flag
+          if (isProgrammaticScrollRef) {
+            isProgrammaticScrollRef.current = true;
+          }
+
+          verticalScrollRef.current.scrollTo({
+            x: 0,
+            y: targetScroll,
+            animated: true,
+          });
+
+          // Reset flags
+          setTimeout(() => {
+            isAutoScrollingVerticalRef.current = false;
+            if (isProgrammaticScrollRef) {
+              isProgrammaticScrollRef.current = false;
+            }
+          }, 350);
+        }
+      } else if (isNearTopEdge && currentScrollY > 0) {
+        // Scroll up
+        const now = Date.now();
+        if (now - lastAutoScrollVerticalTimeRef.current > 250 && !isAutoScrollingVerticalRef.current) {
+          lastAutoScrollVerticalTimeRef.current = now;
+          isAutoScrollingVerticalRef.current = true;
+
+          const targetScroll = Math.max(0, currentScrollY - SCROLL_AMOUNT);
+
+          // Set programmatic scroll flag
+          if (isProgrammaticScrollRef) {
+            isProgrammaticScrollRef.current = true;
+          }
+
+          verticalScrollRef.current.scrollTo({
+            x: 0,
+            y: targetScroll,
+            animated: true,
+          });
+
+          // Reset flags
+          setTimeout(() => {
+            isAutoScrollingVerticalRef.current = false;
+            if (isProgrammaticScrollRef) {
+              isProgrammaticScrollRef.current = false;
+            }
+          }, 350);
+        }
       }
     }
   };
@@ -444,6 +543,10 @@ const DraggableAppointment: React.FC<DraggableAppointmentProps> = ({
     if (autoScrollIntervalRef.current) {
       clearInterval(autoScrollIntervalRef.current);
       autoScrollIntervalRef.current = null;
+    }
+    if (autoScrollVerticalIntervalRef.current) {
+      clearInterval(autoScrollVerticalIntervalRef.current);
+      autoScrollVerticalIntervalRef.current = null;
     }
   };
 
@@ -466,8 +569,10 @@ const DraggableAppointment: React.FC<DraggableAppointmentProps> = ({
         
         // Reset scroll tracking when starting new drag
         cumulativeScrollOffsetRef.current = 0;
+        // Initialize drag tracking
         lastKnownScrollXRef.current = currentScrollX || 0;
         targetScrollXRef.current = currentScrollX || 0;
+        dragStartScrollRef.current = currentScrollX || 0; // Capture start scroll for compensation
 
         // For paid appointments, require intentional touch (600ms hold without movement)
         if (event.data.appointment.status === "paid") {
@@ -598,13 +703,16 @@ const DraggableAppointment: React.FC<DraggableAppointmentProps> = ({
         // Handle auto-scroll when dragging near edges
         if (isDragging || hasMoved.current) {
           const touchX = evt.nativeEvent.pageX;
-          handleAutoScroll(touchX, gestureState);
+          const touchY = evt.nativeEvent.pageY;
+          handleAutoScroll(touchX, touchY, gestureState);
         }
 
         const currentCommitted = committedPositionRef.current;
         const baseY = initialTopRef.current + currentCommitted.y;
         const desiredY = baseY + gestureState.dy;
         const clampedY = clamp(desiredY, 0, maxStartY);
+        
+        // Snap to time slots during drag for discrete jumps (magnetic grid feel)
         const snappedYDuringDrag = snapToTimeSlot(clampedY);
         const translateY = snappedYDuringDrag - baseY;
 
@@ -618,37 +726,49 @@ const DraggableAppointment: React.FC<DraggableAppointmentProps> = ({
         const columnIndexValue = columnIndexRef.current;
         const totalStaffColumnsValue = totalStaffColumnsRef.current;
         // Prevent dragging to the left of the first column (index 0)
-        // minOffsetX is 0 if already in first column, otherwise allows moving left to first column
         const minOffsetX = -columnIndexValue * effectiveColumnWidth;
         const maxOffsetX =
           (totalStaffColumnsValue - columnIndexValue - 1) * effectiveColumnWidth;
 
-        // Apply scroll compensation to keep appointment with finger during auto-scroll
-        const scrollCompensation = cumulativeScrollOffsetRef.current;
-        const proposedOffsetX = currentCommitted.x + gestureState.dx + scrollCompensation;
+        // Calculate proposed position from gesture
+        const proposedOffsetX = currentCommitted.x + gestureState.dx;
         const clampedOffsetX = clamp(proposedOffsetX, minOffsetX, maxOffsetX);
-        const snappedColumn = Math.round(clampedOffsetX / effectiveColumnWidth);
+        
+        // Ultra-responsive column snapping - 15% threshold
+        // Direct calculation, no complex compensation
+        const columnFloat = clampedOffsetX / effectiveColumnWidth;
+        const baseColumn = Math.floor(columnFloat);
+        const fraction = columnFloat - baseColumn;
+        
+        // Very low threshold - snap quickly to follow finger
+        const targetColumn = fraction >= 0.15 ? baseColumn + 1 : baseColumn;
+        
+        // Clamp to valid column range
+        const minColumn = -columnIndexValue;
+        const maxColumn = totalStaffColumnsValue - columnIndexValue - 1;
+        const snappedColumn = Math.max(minColumn, Math.min(maxColumn, targetColumn));
+        
         const totalOffsetX = snappedColumn * effectiveColumnWidth;
         const translateX = totalOffsetX - currentCommitted.x;
 
+        // Haptic feedback on column change
         if (snappedColumn !== lastSnappedColumnRef.current) {
           lastSnappedColumnRef.current = snappedColumn;
           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
         }
 
-        // Trigger haptic feedback when entering a new time slot
+        // Enhanced haptic feedback when entering a new time slot
         const currentY = baseY + translateY;
         const currentSlot = getTimeSlotIndex(currentY);
-
         const previousSlot = lastSnappedSlotRef.current;
 
         if (currentSlot !== previousSlot) {
           lastSnappedSlotRef.current = currentSlot;
-          // Light haptic feedback when crossing into new slot
-          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          // Medium haptic feedback (stronger than before) when crossing time slots
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
         }
 
-        // Update animated values
+        // Update animated values - snaps to grid for magnetic feel
         pan.setValue({ x: translateX, y: translateY });
       },
       onPanResponderRelease: (_evt: GestureResponderEvent, gesture: PanResponderGestureState) => {
@@ -861,36 +981,9 @@ const DraggableAppointment: React.FC<DraggableAppointmentProps> = ({
       <View style={styles.contentContainer}>
         <Text
           style={[
-            styles.clientName,
-            event.data.appointment.status === "scheduled" && {
-              color: colors.gray[600],
-            },
-            isSmall && { fontSize: fontEq(11) },
-          ]}
-          numberOfLines={1}
-          ellipsizeMode="tail"
-        >
-          {event.data.appointment.client.first_name}{" "}
-          {event.data.appointment.client.last_name}
-        </Text>
-        <Text
-          style={[
-            styles.serviceName,
-            event.data.appointment.status === "scheduled" && {
-              color: colors.gray[500],
-            },
-            isSmall && { fontSize: fontEq(9), marginBottom: 0 },
-          ]}
-          numberOfLines={1}
-          ellipsizeMode="tail"
-        >
-          {event.data.service.name}
-        </Text>
-        <Text
-          style={[
             styles.timeText,
             event.data.appointment.status === "scheduled" && {
-              color: colors.gray[500],
+              color: colors.black,
             },
             isSmall && { fontSize: fontEq(8) },
           ]}
@@ -900,12 +993,41 @@ const DraggableAppointment: React.FC<DraggableAppointmentProps> = ({
           {displayStart.toLocaleTimeString([], {
             hour: "2-digit",
             minute: "2-digit",
+            hour12: false,
           })}{" "}
           -{" "}
           {displayEnd.toLocaleTimeString([], {
             hour: "2-digit",
             minute: "2-digit",
+            hour12: false,
           })}
+        </Text>
+        <Text
+          style={[
+            styles.clientName,
+            event.data.appointment.status === "scheduled" && {
+              color: colors.black,
+            },
+            isSmall && { fontSize: fontEq(11) },
+          ]}
+          numberOfLines={2}
+          ellipsizeMode="tail"
+        >
+          {event.data.appointment.client.first_name}{" "}
+          {event.data.appointment.client.last_name}
+        </Text>
+        <Text
+          style={[
+            styles.serviceName,
+            event.data.appointment.status === "scheduled" && {
+              color: colors.black,
+            },
+            isSmall && { fontSize: fontEq(9), marginBottom: 0 },
+          ]}
+          numberOfLines={2}
+          ellipsizeMode="tail"
+        >
+          {event.data.service.name}
         </Text>
       </View>
     );
@@ -949,7 +1071,7 @@ const DraggableAppointment: React.FC<DraggableAppointmentProps> = ({
 const styles = StyleSheet.create({
   appointmentContainer: {
     position: "absolute",
-    borderRadius: 6,
+    borderRadius: 4,
     borderLeftWidth: 4,
     borderLeftColor: colors.primary,
     paddingHorizontal: getWidthEquivalent(6),
@@ -974,15 +1096,16 @@ const styles = StyleSheet.create({
   serviceName: {
     fontSize: fontEq(10),
     fontWeight: "500",
-    color: colors.textSecondary,
+    color: colors.black,
     marginBottom: getHeightEquivalent(2),
     includeFontPadding: false,
   },
   timeText: {
-    fontSize: fontEq(9),
-    fontWeight: "500",
-    color: colors.textSecondary,
+    fontSize: fontEq(12),
+    fontWeight: "400",
+    color: colors.black,
     includeFontPadding: false,
+    fontFamily: "Helvetica",
   },
   dragIndicator: {
     position: "absolute",
