@@ -1,5 +1,5 @@
 import {} from "react-native";
-import React, { use, useEffect, useMemo, useState } from "react";
+import React, { use, useEffect, useMemo, useState, useCallback } from "react";
 import {
   AppointmentCalanderBO,
   appointmentsRepository,
@@ -23,7 +23,7 @@ const useCalanderScreenVM = () => {
     useAppointmentStore();
   const { isFromLogin, setIsFromLogin, user, allLocations, allTeamMembers, currentLocation } = useAuthStore();
   const [hasInitialLoad, setHasInitialLoad] = useState(false);
-  const { toast, showComingSoon, hideToast } = useToast();
+  const { toast, showToast, showComingSoon, hideToast } = useToast();
 
   // Initialize filter with currentLocation from LocationScreen if available
   const getInitialLocationFilter = () => {
@@ -223,7 +223,7 @@ const useCalanderScreenVM = () => {
   };
 
   // Update appointment time after drag/resize - Optimistic UI pattern
-  const updateAppointmentTime = async (
+  const updateAppointmentTime = useCallback(async (
     appointmentServiceId: string,
     newStartTime: Date,
     newEndTime: Date,
@@ -293,13 +293,14 @@ const useCalanderScreenVM = () => {
       }
       return false;
     }
-  };
+  }, [currentDate, pageFilter, fetchCalanderAppointmentsData]);
 
   return {
     currentDate,
     updateCurrentDate,
     calanderData,
     toast,
+    showToast,
     showComingSoon,
     hideToast,
     user,

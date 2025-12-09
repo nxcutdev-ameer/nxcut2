@@ -72,6 +72,9 @@ interface DraggableCalendarColumnProps {
   verticalScrollRef?: React.RefObject<any>;
   screenHeight?: number;
   currentScrollY?: number;
+  verticalScrollTopOffset?: number;
+  staffHeaderScrollRef?: React.RefObject<any>;
+  activeScrollDriverRef?: React.MutableRefObject<any>;
 }
 
 const DraggableCalendarColumn: React.FC<DraggableCalendarColumnProps> = ({
@@ -101,6 +104,9 @@ const DraggableCalendarColumn: React.FC<DraggableCalendarColumnProps> = ({
   verticalScrollRef,
   screenHeight,
   currentScrollY,
+  verticalScrollTopOffset,
+  staffHeaderScrollRef,
+  activeScrollDriverRef,
 }) => {
   const navigation = useNavigation<any>();
   const [selectedSlot, setSelectedSlot] = useState<{
@@ -711,6 +717,9 @@ const DraggableCalendarColumn: React.FC<DraggableCalendarColumnProps> = ({
               verticalScrollRef={verticalScrollRef}
               screenHeight={screenHeight}
               currentScrollY={currentScrollY}
+              verticalScrollTopOffset={verticalScrollTopOffset}
+              staffHeaderScrollRef={staffHeaderScrollRef}
+              activeScrollDriverRef={activeScrollDriverRef}
               onPress={
                 interactionsDisabled
                   ? undefined

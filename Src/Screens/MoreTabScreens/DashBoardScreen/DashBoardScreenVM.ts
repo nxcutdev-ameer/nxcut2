@@ -511,43 +511,46 @@ const useDashBoardScreenVM = (dateRange?: {
     // Create date range based on dateRange prop or fallback to lineGraphFilter
     const result: LinePoint[] = [];
 
+    // Determine start date and total days
+    let start: Date;
+    let totalDays: number;
+
     if (dateRange) {
-      // Use custom date range from date picker
-      const start = new Date(dateRange.startDate);
+      start = new Date(dateRange.startDate);
       const end = new Date(dateRange.endDate);
-      const totalDays = getInclusiveDayCount(start, end);
-
-      for (let i = 0; i < totalDays; i++) {
-        const date = new Date(start);
-        date.setDate(start.getDate() + i);
-        const key = date.toISOString().split("T")[0];
-        const count = grouped[key] ? grouped[key].size : 0;
-
-        result.push({
-          value: count,
-          label: date.toLocaleDateString("en-US", {
-            month: "short",
-            day: "numeric",
-          }),
-        });
-      }
+      totalDays = getInclusiveDayCount(start, end);
     } else {
-      // Fallback to lineGraphFilter for initial load
-      const endDate = new Date();
-      for (let i = lineGraphFilter - 1; i >= 0; i--) {
-        const date = new Date();
-        date.setDate(endDate.getDate() - i);
-        const key = date.toISOString().split("T")[0];
-        const count = grouped[key] ? grouped[key].size : 0;
+      // Fallback: Last N days (lineGraphFilter)
+      const end = new Date();
+      start = new Date();
+      start.setDate(end.getDate() - (lineGraphFilter - 1));
+      totalDays = lineGraphFilter;
+    }
 
-        result.push({
-          value: count,
-          label: date.toLocaleDateString("en-US", {
-            month: "short",
-            day: "numeric",
-          }),
-        });
+    // Iterate in 7-day steps (Weekly Aggregation)
+    for (let i = 0; i < totalDays; i += 7) {
+      const weekStart = new Date(start);
+      weekStart.setDate(start.getDate() + i);
+      
+      let weeklyCount = 0;
+
+      // Sum for the next 7 days (or until totalDays exhausted)
+      for (let j = 0; j < 7 && (i + j) < totalDays; j++) {
+        const current = new Date(weekStart);
+        current.setDate(weekStart.getDate() + j);
+        const key = current.toISOString().split("T")[0];
+        if (grouped[key]) {
+            weeklyCount += grouped[key].size;
+        }
       }
+
+      result.push({
+        value: weeklyCount,
+        label: weekStart.toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+        }),
+      });
     }
 
     return result;
@@ -579,43 +582,44 @@ const useDashBoardScreenVM = (dateRange?: {
     // Create date range based on dateRange prop or fallback to lineGraphFilter
     const result: LinePoint[] = [];
 
+    // Determine start date and total days
+    let start: Date;
+    let totalDays: number;
+
     if (dateRange) {
-      // Use custom date range from date picker
-      const start = new Date(dateRange.startDate);
+      start = new Date(dateRange.startDate);
       const end = new Date(dateRange.endDate);
-      const totalDays = getInclusiveDayCount(start, end);
-
-      for (let i = 0; i < totalDays; i++) {
-        const date = new Date(start);
-        date.setDate(start.getDate() + i);
-        const key = date.toISOString().split("T")[0];
-        const salesCount = grouped[key] || 0;
-
-        result.push({
-          value: salesCount,
-          label: date.toLocaleDateString("en-US", {
-            month: "short",
-            day: "numeric",
-          }),
-        });
-      }
+      totalDays = getInclusiveDayCount(start, end);
     } else {
-      // Fallback to lineGraphFilter for initial load
-      const endDate = new Date();
-      for (let i = lineGraphFilter - 1; i >= 0; i--) {
-        const date = new Date();
-        date.setDate(endDate.getDate() - i);
-        const key = date.toISOString().split("T")[0];
-        const salesCount = grouped[key] || 0;
+      // Fallback: Last N days (lineGraphFilter)
+      const end = new Date();
+      start = new Date();
+      start.setDate(end.getDate() - (lineGraphFilter - 1));
+      totalDays = lineGraphFilter;
+    }
 
-        result.push({
-          value: salesCount,
-          label: date.toLocaleDateString("en-US", {
-            month: "short",
-            day: "numeric",
-          }),
-        });
+    // Iterate in 7-day steps (Weekly Aggregation)
+    for (let i = 0; i < totalDays; i += 7) {
+      const weekStart = new Date(start);
+      weekStart.setDate(start.getDate() + i);
+      
+      let weeklyCount = 0;
+
+      // Sum for the next 7 days (or until totalDays exhausted)
+      for (let j = 0; j < 7 && (i + j) < totalDays; j++) {
+        const current = new Date(weekStart);
+        current.setDate(weekStart.getDate() + j);
+        const key = current.toISOString().split("T")[0];
+        weeklyCount += (grouped[key] || 0);
       }
+
+      result.push({
+        value: weeklyCount,
+        label: weekStart.toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+        }),
+      });
     }
 
     return result;

@@ -299,9 +299,9 @@ const DashBoardScreen = () => {
       },
     }));
     
-    console.log('[DashBoardScreen] 📊 Bar chart data prepared:', barData);
-    console.log('[DashBoardScreen] 🏷️ Labels:', barData.map(d => d.label).join(', '));
-    console.log('[DashBoardScreen] 📈 Values:', barData.map(d => d.value).join(', '));
+    // console.log('[DashBoardScreen] 📊 Bar chart data prepared:', barData);
+    // console.log('[DashBoardScreen] 🏷️ Labels:', barData.map(d => d.label).join(', '));
+    // console.log('[DashBoardScreen] 📈 Values:', barData.map(d => d.value).join(', '));
     
     return barData;
   }, [upcomingAppointments]);
@@ -316,12 +316,12 @@ const DashBoardScreen = () => {
         console.error('[DashBoardScreen] Error fetching upcoming appointments:', error);
         setUpcomingAppointments([]);
       } else {
-        console.log('[DashBoardScreen] ✅ Upcoming appointments data:', data);
-        console.log('[DashBoardScreen] 📊 Number of days:', data?.length);
+        // console.log('[DashBoardScreen] ✅ Upcoming appointments data:', data);
+        // console.log('[DashBoardScreen] 📊 Number of days:', data?.length);
         if (data && Array.isArray(data)) {
-          data.forEach((item: {day_label: string; appointment_count: number}, index: number) => {
-            console.log(`  Day ${index + 1}: ${item.day_label} - ${item.appointment_count} appointments`);
-          });
+          // data.forEach((item: {day_label: string; appointment_count: number}, index: number) => {
+          //   console.log(`  Day ${index + 1}: ${item.day_label} - ${item.appointment_count} appointments`);
+          // });
         }
         setUpcomingAppointments(data || []);
       }
@@ -399,7 +399,7 @@ const DashBoardScreen = () => {
           style={DashBoardScreenStyles.backButton}
         >
           <ChevronLeft size={20} color={colors.colors.black} />
-          <Text style={DashBoardScreenStyles.backText}>Back</Text>
+          <Text style={DashBoardScreenStyles.title}>DashBoard</Text>
         </TouchableOpacity>
       </View>
       <ScrollView
@@ -408,7 +408,7 @@ const DashBoardScreen = () => {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
       >
-        <Text style={DashBoardScreenStyles.title}>DashBoard</Text>
+       
 
         <View style={DashBoardScreenStyles.sectionContainer}>
           <Text style={DashBoardScreenStyles.sectionTitle}>Recent Sales</Text>

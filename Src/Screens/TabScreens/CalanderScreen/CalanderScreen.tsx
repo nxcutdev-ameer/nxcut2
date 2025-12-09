@@ -50,6 +50,7 @@ import DateModal from "../../../Components/DateModal";
 //   BottomSheetBackdrop,
 // } from "@gorhom/bottom-sheet";
 import { AppointmentCalanderBO } from "../../../Repository/appointmentsRepository";
+import { useCalendarEditingStore } from "../../../Store/useCalendarEditingStore";
 
 type EditingState = {
   appointmentId: string;
@@ -79,7 +80,7 @@ const savingOverlayStyles = StyleSheet.create({
     top: 0,
     left: 0,
     right: 0,
-    bottom: getHeightEquivalent(100), // Trim from bottom to not cover tab navigator
+    bottom: getHeightEquivalent(100),
     backgroundColor: colors.white,
     justifyContent: "center",
     alignItems: "center",
@@ -217,6 +218,7 @@ const CalanderScreen = () => {
     updateCurrentDate,
     calanderData,
     toast,
+    showToast,
     hideToast,
     user,
     pageFilter,
@@ -257,9 +259,27 @@ const CalanderScreen = () => {
   const calendarVerticalScrollRef = useRef<ScrollView>(null);
   const horizontalScrollRef = useRef<ScrollView>(null);
   const staffHeaderScrollRef = useRef<ScrollView>(null);
-  const isScrollingFromStaffHeader = useRef(false);
-  const isScrollingFromCalendar = useRef(false);
+  
+  // ACTIVE SCROLL DRIVER PATTERN
+  // Determines which component is currently driving the scroll to prevent feedback loops
+  // 'calendar' = User dragging calendar
+  // 'header' = User dragging header
+
+
+
+
+  // 'auto' = Auto-scroll during drag
+  // null = Idle
+  type ScrollDriver = 'calendar' | 'header' | 'auto' | null;
+  const activeScrollDriver = useRef<ScrollDriver>(null);
+  
   const [scrollEnabled, setScrollEnabled] = useState(true);
+  
+  // Footer Store Actions (Selected individually to avoid re-renders on state changes)
+  const showEditingFooter = useCalendarEditingStore(state => state.showEditingFooter);
+  const hideEditingFooter = useCalendarEditingStore(state => state.hideEditingFooter);
+  const setFooterIsSaving = useCalendarEditingStore(state => state.setIsSaving);
+  const updateCallbacks = useCalendarEditingStore(state => state.updateCallbacks);
   const savedHorizontalScrollPosition = useRef(0);
   const lastHorizontalScrollX = useRef(0);
   const isProgrammaticScroll = useRef(false); // Track programmatic scrolls (auto-scroll)
@@ -299,6 +319,12 @@ const CalanderScreen = () => {
           resetKey: Date.now(),
           appointmentSnapshot: appointment,
         };
+      });
+      
+      // Show global footer
+      showEditingFooter({
+        onSave: handleSaveEditing,
+        onCancel: handleCancelEditing
       });
     },
     []
@@ -355,25 +381,10 @@ const CalanderScreen = () => {
   );
 
   const handleCancelEditing = useCallback(() => {
-    setEditingState((current) => {
-      if (!current) {
-        return null;
-      }
-
-      return {
-        ...current,
-        pendingStart: current.originalStart,
-        pendingEnd: current.originalEnd,
-        pendingStaffId: current.originalStaffId,
-        resetKey: current.resetKey + 1,
-      };
-    });
-
-    setTimeout(() => {
-      setEditingState(null);
-      setScrollEnabled(true);
-    }, 0);
-  }, []);
+    setEditingState(null);
+    setScrollEnabled(true);
+    hideEditingFooter();
+  }, [hideEditingFooter]);
 
   const handleSaveEditing = useCallback(async () => {
     if (!editingState || isSaving) {
@@ -393,39 +404,37 @@ const CalanderScreen = () => {
         originalEnd,
       } = editingState;
 
-      const hasTimeChange =
-        pendingStart.getTime() !== originalStart.getTime() ||
-        pendingEnd.getTime() !== originalEnd.getTime();
-      const hasStaffChange = pendingStaffId !== originalStaffId;
+      const success = await updateAppointmentTime(
+        editingState.appointmentId,
+        new Date(editingState.pendingStart),
+        new Date(editingState.pendingEnd),
+        editingState.pendingStaffId
+      );
 
-      if (hasTimeChange || hasStaffChange) {
-        const success = await updateAppointmentTime(
-          appointmentId,
-          pendingStart,
-          pendingEnd,
-          hasStaffChange ? pendingStaffId : undefined
-        );
-
-        if (!success) {
-          Alert.alert(
-            "Save failed",
-            "We couldn't update this appointment. Please try again."
-          );
-          return;
-        }
+      if (success) {
+        setEditingState(null);
+        hideEditingFooter();
+        showToast("Appointment updated successfully", "success");
+      } else {
+        showToast("Failed to update appointment", "error");
       }
     } catch (error) {
-      console.error("[CalanderScreen] Failed to save appointment changes:", error);
-      Alert.alert(
-        "Save failed",
-        "Something went wrong while saving. Please try again."
-      );
+      console.error("Save error:", error);
+      showToast("An error occurred while saving", "error");
     } finally {
       setIsSaving(false);
-      setScrollEnabled(true);
-      setEditingState(null);
     }
   }, [editingState, isSaving, updateAppointmentTime]);
+
+  // Sync store callbacks when editing state changes to avoid stale closures
+  useEffect(() => {
+    if (editingState) {
+        updateCallbacks({
+            onSave: handleSaveEditing,
+            onCancel: handleCancelEditing
+        });
+    }
+  }, [editingState, handleSaveEditing, handleCancelEditing]);
 
   // Simple modal state for DateModal
   const [isDateModalVisible, setIsDateModalVisible] = useState(false);
@@ -630,113 +639,6 @@ const CalanderScreen = () => {
   const handleHorizontalScrollBegin = (event: any) => {
     scrollStartX.current = event.nativeEvent.contentOffset.x;
   };
-
-  // TEMPORARILY DISABLED: Date navigation on horizontal scroll
-  // Delete this entire function block to remove date navigation on scroll
-  // const handleHorizontalScrollEnd = (event: any) => {
-  //   // Ignore scroll events when returning from another screen (prevents back swipe from triggering)
-  //   if (ignoreScrollEvents.current) {
-  //     return;
-  //   }
-  //   
-  //   // Prevent multiple triggers while date is changing
-  //   if (isNavigatingDate.current) {
-  //     return;
-  //   }
-
-  //   const { contentOffset, contentSize, layoutMeasurement } = event.nativeEvent;
-  //   const scrollX = contentOffset.x;
-  //   const scrollWidth = contentSize.width;
-  //   const viewWidth = layoutMeasurement.width;
-
-  //   // Calculate scroll direction
-  //   const scrollDirection = scrollX < scrollStartX.current ? 'left' : 'right';
-
-  //   // Threshold - User must be very close to edge (within 0.5px) to trigger navigation
-  //   const edgeThreshold = 0.5;
-
-  //   // Natural behavior: Scroll left to see previous day, scroll right to see next day
-  //   // When at LEFT edge (scrollX = 0)
-  //   if (scrollX <= edgeThreshold && scrollDirection === 'left') {
-  //     // Only trigger if we haven't just navigated in the same direction
-  //     if (lastScrollDirection.current !== 'left') {
-  //       lastScrollDirection.current = 'left';
-  //       isNavigatingDate.current = true;
-  //       
-  //       const previousDay = new Date(currentDate);
-  //       previousDay.setDate(previousDay.getDate() - 1);
-  //       updateCurrentDate(previousDay);
-  //       
-  //       // Reset flags after delay
-  //       setTimeout(() => {
-  //         isNavigatingDate.current = false;
-  //         lastScrollDirection.current = null;
-  //       }, 1500);
-  //     }
-  //   }
-  //   // When at RIGHT edge (scrollX at max)
-  //   else if (scrollX + viewWidth >= scrollWidth - edgeThreshold && scrollDirection === 'right') {
-  //     // Only trigger if we haven't just navigated in the same direction
-  //     if (lastScrollDirection.current !== 'right') {
-  //       lastScrollDirection.current = 'right';
-  //       isNavigatingDate.current = true;
-  //       
-  //       const nextDay = new Date(currentDate);
-  //       nextDay.setDate(nextDay.getDate() + 1);
-  //       updateCurrentDate(nextDay);
-  //       
-  //       // Reset flags after delay
-  //       setTimeout(() => {
-  //         isNavigatingDate.current = false;
-  //         lastScrollDirection.current = null;
-  //       }, 1500);
-  //     }
-  //   } else {
-  //     // Reset direction if not at edge
-  //     lastScrollDirection.current = null;
-  //   }
-  // };
-  
-  // REVERT: Uncomment to restore BottomSheet callbacks
-  // // Bottom sheet callbacks
-  // const handleSheetChanges = useCallback((index: number) => {
-  //   console.log("Bottom sheet index changed to:", index);
-  //   if (index === -1) {
-  //     setIsBottomSheetOpen(false);
-  //   }
-  // }, []);
-  //
-  // const renderBackdrop = useCallback(
-  //   (props: any) => (
-  //     <BottomSheetBackdrop
-  //       {...props}
-  //       disappearsOnIndex={-1}
-  //       appearsOnIndex={0}
-  //       opacity={0.5}
-  //       onPress={() => bottomSheetRef.current?.close()}
-  //     />
-  //   ),
-  //   []
-  // );
-  //
-  // // Handle date selection from calendar
-  // const handleDateSelect = (day: any) => {
-  //   const selectedDate = new Date(day.dateString);
-  //   updateCurrentDate(selectedDate);
-  //   bottomSheetRef.current?.close();
-  //   setIsBottomSheetOpen(false);
-  // };
-  //
-  // // Format date for calendar
-  // const getMarkedDates = () => {
-  //   const dateString = currentDate.toISOString().split("T")[0];
-  //   return {
-  //     [dateString]: {
-  //       selected: true,
-  //       selectedColor: colors.primary,
-  //     },
-  //   };
-  // };
 
   const timeColumnWidth = useMemo(() => getWidthEquivalent(60), []);
 
@@ -1043,8 +945,7 @@ const CalanderScreen = () => {
                   decelerationRate="fast"
                   onScroll={(event) => {
                     // Sync calendar columns when staff header is scrolled - INSTANT SYNC
-                    if (isScrollingFromCalendar.current) {
-                      isScrollingFromCalendar.current = false;
+                    if (activeScrollDriver.current !== 'header') {
                       return;
                     }
                     const offsetX = event.nativeEvent.contentOffset.x;
@@ -1054,16 +955,11 @@ const CalanderScreen = () => {
                     savedHorizontalScrollPosition.current = offsetX;
 
                     if (horizontalScrollRef.current) {
-                      isScrollingFromStaffHeader.current = true;
                       horizontalScrollRef.current.scrollTo({
                         x: offsetX,
                         y: 0,
                         animated: false, // No animation for instant sync
                       });
-                      // Reset flag immediately after sync
-                      setTimeout(() => {
-                        isScrollingFromStaffHeader.current = false;
-                      }, 0);
                     }
                   }}
                   style={{
@@ -1133,16 +1029,31 @@ const CalanderScreen = () => {
                     snapToInterval={threeColumnWidth}
                     snapToAlignment="start"
                     decelerationRate="fast"
+                    onScrollBeginDrag={() => {
+                      activeScrollDriver.current = 'header';
+                    }}
+                    onScrollEndDrag={() => {
+                      // Only clear if not momentum scrolling
+                      // We'll let onMomentumScrollEnd clear it if momentum exists
+                      // But for safety, we can rely on the drag begin of the other view to take over
+                      setTimeout(() => {
+                         if (activeScrollDriver.current === 'header') {
+                             activeScrollDriver.current = null;
+                         }
+                      }, 100);
+                    }}
+                    onMomentumScrollBegin={() => {
+                      activeScrollDriver.current = 'header';
+                    }}
+                    onMomentumScrollEnd={() => {
+                      activeScrollDriver.current = null;
+                    }}
                     onScroll={(event) => {
-                      // Skip sync if programmatic scroll (auto-scroll)
-                      if (isProgrammaticScroll.current) {
+                      // Only sync if WE are the driver
+                      if (activeScrollDriver.current !== 'header') {
                         return;
                       }
-                      
-                      // Sync calendar columns when staff header is scrolled
-                      if (isScrollingFromCalendar.current) {
-                        return; // Don't process this event
-                      }
+
                       const offsetX = event.nativeEvent.contentOffset.x;
 
                       // Save scroll position
@@ -1150,16 +1061,11 @@ const CalanderScreen = () => {
                       savedHorizontalScrollPosition.current = offsetX;
 
                       if (horizontalScrollRef.current) {
-                        isScrollingFromStaffHeader.current = true;
                         horizontalScrollRef.current.scrollTo({
                           x: offsetX,
                           y: 0,
-                          animated: false, // Instant sync for solid block feel
+                          animated: false, // Instant sync
                         });
-                        // Reset flag after next tick to allow scroll event to process
-                        setTimeout(() => {
-                          isScrollingFromStaffHeader.current = false;
-                        }, 50);
                       }
                     }}
                     style={{
@@ -1267,7 +1173,7 @@ const CalanderScreen = () => {
                             width: getWidthEquivalent(40),
                             height: getHeightEquivalent(20),
                             borderRadius: getWidthEquivalent(10),
-                            borderWidth: 1.5,
+                            borderWidth: 2,
                             borderColor: "#D32F2F",
                             backgroundColor: colors.white,
                             alignItems: "center",
@@ -1324,7 +1230,7 @@ const CalanderScreen = () => {
                 </View>
               </View>
 
-              {/* Calendar Columns - Now scrolls together with time gutter */}
+              {/* Calendar Columns - scrolls together with time gutter */}
               <View style={{ flex: 1 }}>
               <ScrollView
                 ref={horizontalScrollRef}
@@ -1337,17 +1243,29 @@ const CalanderScreen = () => {
                 snapToInterval={threeColumnWidth}
                 snapToAlignment="start"
                 decelerationRate="fast"
-                onScrollBeginDrag={handleHorizontalScrollBegin}
+                onScrollBeginDrag={(event) => {
+                  activeScrollDriver.current = 'calendar';
+                  handleHorizontalScrollBegin(event);
+                }}
+                onScrollEndDrag={() => {
+                   setTimeout(() => {
+                        if (activeScrollDriver.current === 'calendar') {
+                            activeScrollDriver.current = null;
+                        }
+                   }, 100);
+                }}
+                onMomentumScrollBegin={() => {
+                  activeScrollDriver.current = 'calendar';
+                }}
+                onMomentumScrollEnd={() => {
+                  activeScrollDriver.current = null;
+                }}
                 onScroll={(event) => {
-                  // Skip sync if programmatic scroll (auto-scroll)
-                  if (isProgrammaticScroll.current) {
+                  // Only sync if WE are the driver
+                  if (activeScrollDriver.current !== 'calendar') {
                     return;
                   }
                   
-                  // Sync staff header horizontal scroll
-                  if (isScrollingFromStaffHeader.current) {
-                    return; // Don't process this event
-                  }
                   const offsetX = event.nativeEvent.contentOffset.x;
 
                   // Track current scroll position for auto-scroll functionality
@@ -1358,21 +1276,13 @@ const CalanderScreen = () => {
                   savedHorizontalScrollPosition.current = offsetX;
 
                   if (staffHeaderScrollRef.current) {
-                    isScrollingFromCalendar.current = true;
                     staffHeaderScrollRef.current.scrollTo({
                       x: offsetX,
                       y: 0,
                       animated: false,
                     });
-                    // Reset flag after next tick to allow scroll event to process
-                    setTimeout(() => {
-                      isScrollingFromCalendar.current = false;
-                    }, 50);
                   }
                 }}
-                // TEMPORARILY DISABLED: Date navigation on horizontal scroll
-                // onScrollEndDrag={handleHorizontalScrollEnd}
-                // onMomentumScrollEnd={handleHorizontalScrollEnd}
                 contentContainerStyle={{
                   flexDirection: "column",
                 }}
@@ -1410,8 +1320,7 @@ const CalanderScreen = () => {
                         }}
                       />
                     );
-                  })()}
-                  
+                  })()}                 
                   {/* Calendar columns container */}
                   <View style={{ flexDirection: "row" }}>
                     {columnConfigs.map(({ item, index, columnWidth }) => {
@@ -1522,8 +1431,13 @@ const CalanderScreen = () => {
                             threeColumnWidth={threeColumnWidth}
                             isProgrammaticScrollRef={isProgrammaticScroll}
                             verticalScrollRef={verticalScrollRef}
-                            screenHeight={SCREEN_HEIGHT}
+                            screenHeight={Dimensions.get("window").height}
                             currentScrollY={currentScrollY}
+                            verticalScrollTopOffset={
+                              getHeightEquivalent(135) + insets.top // TimeGutter header height + top inset
+                            }
+                            staffHeaderScrollRef={staffHeaderScrollRef}
+                            activeScrollDriverRef={activeScrollDriver}
                           />
                           {index < columnConfigs.length - 1 && (
                             <View
@@ -1547,50 +1461,7 @@ const CalanderScreen = () => {
           </ScrollView>
         </View>
 
-        {editingState && (
-          <View style={CalanderScreenStyles.editingFooter}>
-            <TouchableOpacity
-              style={[
-                CalanderScreenStyles.editingButton,
-                CalanderScreenStyles.editingCancelButton,
-              ]}
-              onPress={handleCancelEditing}
-              disabled={isSaving}
-              activeOpacity={0.4}
-            >
-              <Text
-                style={[
-                  CalanderScreenStyles.editingButtonText,
-                  CalanderScreenStyles.editingCancelText,
-                ]}
-              >
-                Cancel
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[
-                CalanderScreenStyles.editingButton,
-                CalanderScreenStyles.editingSaveButton,
-              ]}
-              onPress={handleSaveEditing}
-              disabled={isSaving}
-              activeOpacity={0.4}
-            >
-              {isSaving ? (
-                <ActivityIndicator size="small" color={colors.white} />
-              ) : (
-                <Text
-                  style={[
-                    CalanderScreenStyles.editingButtonText,
-                    CalanderScreenStyles.editingSaveText,
-                  ]}
-                >
-                  Save
-                </Text>
-              )}
-            </TouchableOpacity>
-          </View>
-        )}
+
 
         <CustomToast
           message={toast.message}
@@ -1600,7 +1471,7 @@ const CalanderScreen = () => {
         />
 
         {/* Date Picker Bottom Sheet */}
-        {/* NEW: DateModal Component (Like Daily Sales) */}
+        {/* NEW: DateModal Component */}
         <DateModal
           isVisible={isDateModalVisible}
           onClose={() => setIsDateModalVisible(false)}
