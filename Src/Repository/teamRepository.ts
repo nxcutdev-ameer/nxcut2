@@ -180,4 +180,26 @@ export const teamRepository = {
       return [];
     }
   },
+
+  async updateTeamMemberOrder(
+    staffId: string,
+    newOrder: number
+  ): Promise<boolean> {
+    try {
+      const { error } = await supabase
+        .from("team_members")
+        .update({ order: newOrder })
+        .eq("id", staffId);
+
+      if (error) {
+        console.error("Error updating team member order:", error.message);
+        return false;
+      }
+
+      return true;
+    } catch (err) {
+      console.error("Unexpected error in updateTeamMemberOrder:", err);
+      return false;
+    }
+  },
 };

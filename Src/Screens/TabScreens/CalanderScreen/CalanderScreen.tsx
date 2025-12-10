@@ -30,6 +30,8 @@ import {
   Bell,
   X,
   Check,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react-native";
 import Modal from "react-native-modal";
 import {
@@ -410,6 +412,14 @@ const CalanderScreen = () => {
   // Simple modal state for DateModal
   const [isDateModalVisible, setIsDateModalVisible] = useState(false);
   
+  // State for staff order edit modal
+  const [isOrderModalVisible, setIsOrderModalVisible] = useState(false);
+  const [selectedStaff, setSelectedStaff] = useState<{
+    staffId: string;
+    staffName: string;
+    currentOrder: number;
+  } | null>(null);
+  
   // Prevent multiple date changes from scroll
   const isNavigatingDate = useRef(false);
   const lastScrollDirection = useRef<'left' | 'right' | null>(null);
@@ -599,6 +609,43 @@ const CalanderScreen = () => {
     console.log("Date selected:", date);
     updateCurrentDate(date);
     setIsDateModalVisible(false);
+  };
+
+  // Handler to open order edit modal
+  const handleStaffOrderPress = (staffId: string, staffName: string, currentOrder: number) => {
+    setSelectedStaff({ staffId, staffName, currentOrder });
+    setIsOrderModalVisible(true);
+  };
+
+  // Handler to update staff order
+  const handleUpdateStaffOrder = async (direction: 'increase' | 'decrease') => {
+    if (!selectedStaff) return;
+
+    const newOrder = direction === 'increase' 
+      ? selectedStaff.currentOrder + 1 
+      : Math.max(0, selectedStaff.currentOrder - 1);
+
+    // Import the teamRepository
+    const { teamRepository } = await import('../../../Repository/teamRepository');
+    
+    const success = await teamRepository.updateTeamMemberOrder(
+      selectedStaff.staffId,
+      newOrder
+    );
+
+    if (success) {
+      showToast(`Order updated to ${newOrder}`, "success");
+      setSelectedStaff({ ...selectedStaff, currentOrder: newOrder });
+      
+      // Refresh calendar data to reflect new order
+      const locationIds = pageFilter.location_ids.length > 0 
+        ? pageFilter.location_ids 
+        : allLocations.map((loc) => loc.id);
+      const dateString = currentDate.toISOString().split('T')[0];
+      fetchCalanderAppointmentsData(dateString, locationIds);
+    } else {
+      showToast("Failed to update order", "error");
+    }
   };
 
   // Global lock for slot presses across ALL columns
@@ -824,12 +871,12 @@ const CalanderScreen = () => {
         <View
           style={{
             backgroundColor: colors.white,
-            shadowColor: "#00000079",
-            shadowOffset: { width: 0, height: 2 }, // downward shadow
-            shadowOpacity: 0.35,
-            shadowRadius: 4,
-            elevation: 4, // Android shadow
-            zIndex: 1,
+            // shadowColor: "#00000079",
+            // shadowOffset: { width: 0, height: 2 }, // downward shadow
+            // shadowOpacity: 0.35,
+            // shadowRadius: 4,
+            // elevation: 4, // Android shadow
+            // zIndex: 1,
             paddingTop: insets.top,
           }}
         >
@@ -915,7 +962,6 @@ const CalanderScreen = () => {
               <View style={{ width: getWidthEquivalent(40) }}>
                 {/* TimeGutterHeader for staff row */}
                 <TimeGutterHeader headerHeight={getHeightEquivalent(85)} />
-                
                 <View style={{ position: "relative" }}>
                   {/* Current Time Indicator - Ellipse and Line */}
                   {(() => {
@@ -1018,6 +1064,9 @@ const CalanderScreen = () => {
                 onScrollBeginDrag={(event) => {
                   handleHorizontalScrollBegin(event);
                 }}
+                onScroll={(event) => {
+                  setCurrentScrollX(event.nativeEvent.contentOffset.x);
+                }}
                 contentContainerStyle={{
                   flexDirection: "column",
                 }}
@@ -1028,6 +1077,12 @@ const CalanderScreen = () => {
                   borderBottomWidth: 1,
                   borderBottomColor: colors.border,
                   backgroundColor: colors.white,
+                  shadowColor: "#00000079",
+                  shadowOffset: { width: 0, height: 2 },
+                  shadowOpacity: 0.35,
+                  shadowRadius: 4,
+                  elevation: 4,
+                  zIndex: 2,
                 }}>
                   {/* Staff headers - all have equal width */}
                   {calanderData.map((staff, index) => (
@@ -1062,9 +1117,21 @@ const CalanderScreen = () => {
                             {staff?.staffName?.charAt(0).toUpperCase() || "S"}
                           </Text>
                         </View>
-                        <Text style={CalanderScreenStyles.staffName}>
-                          {staff?.staffName || "Staff"}
-                        </Text>
+                        <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+                          <Text style={CalanderScreenStyles.staffName}>
+                            {staff?.staffName || "Staff"}
+                          </Text>
+                          <TouchableOpacity
+                            onPress={() => handleStaffOrderPress(
+                              staff.staffId,
+                              staff.staffName,
+                              staff.order
+                            )}
+                            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                          >
+                            <ChevronDown size={14} color={colors.textSecondary} strokeWidth={2} />
+                          </TouchableOpacity>
+                        </View>
                       </View>
                     </Fragment>
                   ))}
@@ -1337,6 +1404,158 @@ const CalanderScreen = () => {
           pageFilter={pageFilter}
           toggleLocationFilter={toggleLocationFilter}
         />
+        
+        {/* Staff Order Edit Modal */}
+        <Modal
+          isVisible={isOrderModalVisible}
+          onBackdropPress={() => setIsOrderModalVisible(false)}
+          onBackButtonPress={() => setIsOrderModalVisible(false)}
+          animationIn="fadeIn"
+          animationOut="fadeOut"
+          backdropOpacity={0.5}
+          style={{ margin: 0, justifyContent: "center", alignItems: "center" }}
+        >
+          <View
+            style={{
+              backgroundColor: colors.white,
+              borderRadius: 12,
+              padding: 20,
+              width: getWidthEquivalent(300),
+              maxWidth: "90%",
+            }}
+          >
+            <Text
+              style={{
+                fontSize: fontEq(18),
+                fontWeight: "600",
+                color: colors.text,
+                marginBottom: 8,
+                textAlign: "center",
+              }}
+            >
+              Edit Shift Order
+            </Text>
+            <Text
+              style={{
+                fontSize: fontEq(14),
+                color: colors.textSecondary,
+                marginBottom: 20,
+                textAlign: "center",
+              }}
+            >
+              {selectedStaff?.staffName}
+            </Text>
+
+            {/* Current Order Display */}
+            <View
+              style={{
+                backgroundColor: colors.gray[50],
+                padding: 16,
+                borderRadius: 8,
+                marginBottom: 20,
+                alignItems: "center",
+              }}
+            >
+              <Text
+                style={{
+                  fontSize: fontEq(12),
+                  color: colors.textSecondary,
+                  marginBottom: 4,
+                }}
+              >
+                Current Order
+              </Text>
+              <Text
+                style={{
+                  fontSize: fontEq(24),
+                  fontWeight: "bold",
+                  color: colors.primary,
+                }}
+              >
+                {selectedStaff?.currentOrder || 0}
+              </Text>
+            </View>
+
+            {/* Order Control Buttons */}
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "space-between",
+                gap: 12,
+                marginBottom: 20,
+              }}
+            >
+              <TouchableOpacity
+                onPress={() => handleUpdateStaffOrder('decrease')}
+                style={{
+                  flex: 1,
+                  flexDirection: "row",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  backgroundColor: colors.gray[100],
+                  paddingVertical: 12,
+                  borderRadius: 8,
+                  gap: 8,
+                }}
+              >
+                <ChevronLeft size={20} color={colors.text} strokeWidth={2.5} />
+                <Text
+                  style={{
+                    fontSize: fontEq(14),
+                    fontWeight: "600",
+                    color: colors.text,
+                  }}
+                >
+                  Decrease
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                onPress={() => handleUpdateStaffOrder('increase')}
+                style={{
+                  flex: 1,
+                  flexDirection: "row",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  backgroundColor: colors.primary,
+                  paddingVertical: 12,
+                  borderRadius: 8,
+                  gap: 8,
+                }}
+              >
+                <Text
+                  style={{
+                    fontSize: fontEq(14),
+                    fontWeight: "600",
+                    color: colors.white,
+                  }}
+                >
+                  Increase
+                </Text>
+                <ChevronRight size={20} color={colors.white} strokeWidth={2.5} />
+              </TouchableOpacity>
+            </View>
+
+            {/* Close Button */}
+            <TouchableOpacity
+              onPress={() => setIsOrderModalVisible(false)}
+              style={{
+                paddingVertical: 12,
+                alignItems: "center",
+              }}
+            >
+              <Text
+                style={{
+                  fontSize: fontEq(14),
+                  fontWeight: "500",
+                  color: colors.textSecondary,
+                }}
+              >
+                Close
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </Modal>
       </SafeAreaView>
 
       {/* Saving Overlay Modal */}

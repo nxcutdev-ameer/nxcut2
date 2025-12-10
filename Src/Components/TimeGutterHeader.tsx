@@ -1,6 +1,6 @@
 import React from 'react';
-import { View, StyleSheet, StatusBar, Platform } from 'react-native';
-import { getWidthEquivalent, getHeightEquivalent } from '../Utils/helpers';
+import { View, StyleSheet } from 'react-native';
+import { getWidthEquivalent } from '../Utils/helpers';
 import { colors } from '../Constants/colors';
 
 interface TimeGutterHeaderProps {
@@ -17,18 +17,17 @@ const styles = StyleSheet.create({
   headerSpacing: {
     width: getWidthEquivalent(40),
     backgroundColor: colors.white,
-    // borderRightWidth: 1,
-    // borderRightColor: '#E0E0E0',
-     borderBottomWidth: 1,
-     borderBottomColor: colors.border,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 2,
-      height: 0,
-    },
-    // shadowOpacity: 0.1,
-    // shadowRadius: 3,
-    // elevation: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+    // shadowColor: '#00000079',
+    // shadowOffset: {
+    //   width: 0,
+    //   height: 2,
+    // },
+    // shadowOpacity: 0.35,
+    // shadowRadius: 4,
+    // elevation: 4,
+    // zIndex: 2,
   },
 });
 

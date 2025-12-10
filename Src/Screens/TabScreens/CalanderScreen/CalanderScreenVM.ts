@@ -10,6 +10,7 @@ import { useToast } from "../../../Hooks/useToast";
 interface StaffCalendar {
   staffName: string;
   staffId: string;
+  order: number;
   staffAppointments: {
     title: string;
     start: Date;
@@ -120,6 +121,7 @@ const useCalanderScreenVM = () => {
         staffName,
         staffId,
         staffAppointments: [],
+        order: staff.order || 0, // Store order for sorting
       };
     });
 
@@ -164,10 +166,11 @@ const useCalanderScreenVM = () => {
       grouped[staffId].staffAppointments.push(appointmentEvent);
     });
 
-    // Convert grouped object to array and sort by staffName A → Z
-    return Object.values(grouped).sort((a, b) =>
-      a.staffName.localeCompare(b.staffName)
-    );
+    // Convert grouped object to array and sort by order field from Supabase
+    return Object.values(grouped).sort((a, b) => {
+      // Sort by order field (ascending: lower order numbers appear first)
+      return a.order - b.order;
+    });
   }
   const updateCurrentDate = (value?: Date | "prev" | "next") => {
     if (value instanceof Date) {
