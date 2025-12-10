@@ -237,41 +237,12 @@ const CalanderScreen = () => {
   const route = useRoute();
   const insets = useSafeAreaInsets();
   
-  // ============================================================================
-  // FEATURE FLAG: INTEGRATED STAFF HEADER
-  // ============================================================================
-  // Set to TRUE: Staff headers become part of the calendar's scrollable content.
-  //   - Staff headers scroll with the calendar columns (no sync needed)
-  //   - Eliminates the separate staff header ScrollView
-  //   - Cleaner scrolling experience
-  //
-  // Set to FALSE: Reverts to original implementation with separate staff header
-  //   - Staff header remains fixed at top (separate ScrollView)
-  //   - Requires sync logic between staff header and calendar columns
-  //   - Original design maintained
-  // ============================================================================
-  const USE_INTEGRATED_STAFF_HEADER = true;
-  
   // State for carousel pagination
   const [currentStaffIndex, setCurrentStaffIndex] = useState(0);
   const scrollViewRef = useRef<ScrollView>(null);
   const verticalScrollRef = useRef<ScrollView>(null);
   const calendarVerticalScrollRef = useRef<ScrollView>(null);
   const horizontalScrollRef = useRef<ScrollView>(null);
-  const staffHeaderScrollRef = useRef<ScrollView>(null);
-  
-  // ACTIVE SCROLL DRIVER PATTERN
-  // Determines which component is currently driving the scroll to prevent feedback loops
-  // 'calendar' = User dragging calendar
-  // 'header' = User dragging header
-
-
-
-
-  // 'auto' = Auto-scroll during drag
-  // null = Idle
-  type ScrollDriver = 'calendar' | 'header' | 'auto' | null;
-  const activeScrollDriver = useRef<ScrollDriver>(null);
   
   const [scrollEnabled, setScrollEnabled] = useState(true);
   
@@ -698,13 +669,6 @@ const CalanderScreen = () => {
             animated: false,
           });
         }
-        if (staffHeaderScrollRef.current) {
-          staffHeaderScrollRef.current.scrollTo({
-            x: savedHorizontalScrollPosition.current,
-            y: 0,
-            animated: false,
-          });
-        }
       }, 50);
     }
   }, [scrollEnabled]);
@@ -869,258 +833,63 @@ const CalanderScreen = () => {
             paddingTop: insets.top,
           }}
         >
-          {/* Header Section: TimeGutterHeader (LEFT) spanning both rows + Date & Staff Headers (RIGHT) stacked */}
+          {/* Header Section: Date Header only - Staff headers integrated with calendar */}
           <View style={{ flexDirection: "row", width: "100%" }}>
-            {/* LEFT: Time Gutter Header - Always spans full height to align with time slots */}
-            <TimeGutterHeader headerHeight={getHeightEquivalent(135)} />
+            {/* LEFT: Time Gutter Header spacer */}
+            <View style={{ width: getWidthEquivalent(40) }} />
+            
+            {/* RIGHT: Date Header */}
+            <View style={[CalanderScreenStyles.newHeaderContainer, { flex: 1 }]}>
+              {/* Center - Date */}
+              <Pressable
+                onPress={handleDatePress}
+                style={({ pressed }) => [
+                  CalanderScreenStyles.dateContainer,
+                  {
+                    backgroundColor: pressed
+                      ? colors.gray[100]
+                      : "transparent", // gray when pressed
+                    borderRadius: 50, // rounded corners
+                  },
+                ]}
+              >
+                <Text style={CalanderScreenStyles.dateText}>
+                  {formatDate(currentDate)}
+                </Text>
+                <ChevronDown size={20} color={colors.text} />
+              </Pressable>
 
-            {/* RIGHT: Stacked Headers Container */}
-            <View style={{ flex: 1, flexDirection: "column" }}>
-              {/* Top: Date Header with spacer when using integrated staff header */}
-              <View style={CalanderScreenStyles.newHeaderContainer}>
-                {/* Center - Date */}
-                <Pressable
-                  onPress={handleDatePress}
-                  style={({ pressed }) => [
-                    CalanderScreenStyles.dateContainer,
-                    {
-                      backgroundColor: pressed
-                        ? colors.gray[100]
-                        : "transparent", // gray when pressed
-                      borderRadius: 50, // rounded corners
-                    },
-                  ]}
+              {/* Right Side - Filter, Notification, Profile */}
+              <View style={CalanderScreenStyles.rightHeaderContainer}>
+                <TouchableOpacity
+                  onPress={handleFilterPress}
+                  style={CalanderScreenStyles.headerButton}
                 >
-                  <Text style={CalanderScreenStyles.dateText}>
-                    {formatDate(currentDate)}
+                  <SlidersVertical
+                    size={24}
+                    color={colors.black}
+                    strokeWidth={1.7}
+                  />
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  onPress={handleNotificationPress}
+                  style={CalanderScreenStyles.headerButton}
+                >
+                  <Bell size={24} color={colors.black} strokeWidth={1.7} />
+                  {/* Notification badge */}
+                  <View style={CalanderScreenStyles.notificationBadge} />
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  onPress={handleProfilePress}
+                  style={CalanderScreenStyles.profileButton}
+                >
+                  <Text style={CalanderScreenStyles.profileInitials}>
+                    {getUserInitials()}
                   </Text>
-                  <ChevronDown size={20} color={colors.text} />
-                </Pressable>
-
-                {/* Right Side - Filter, Notification, Profile */}
-                <View style={CalanderScreenStyles.rightHeaderContainer}>
-                  <TouchableOpacity
-                    onPress={handleFilterPress}
-                    style={CalanderScreenStyles.headerButton}
-                  >
-                    <SlidersVertical
-                      size={24}
-                      color={colors.black}
-                      strokeWidth={1.7}
-                    />
-                  </TouchableOpacity>
-
-                  <TouchableOpacity
-                    onPress={handleNotificationPress}
-                    style={CalanderScreenStyles.headerButton}
-                  >
-                    <Bell size={24} color={colors.black} strokeWidth={1.7} />
-                    {/* Notification badge */}
-                    <View style={CalanderScreenStyles.notificationBadge} />
-                  </TouchableOpacity>
-
-                  <TouchableOpacity
-                    onPress={handleProfilePress}
-                    style={CalanderScreenStyles.profileButton}
-                  >
-                    <Text style={CalanderScreenStyles.profileInitials}>
-                      {getUserInitials()}
-                    </Text>
-                  </TouchableOpacity>
-                </View>
+                </TouchableOpacity>
               </View>
-
-              {/* Staff Header - Only show if NOT using integrated approach */}
-              {!USE_INTEGRATED_STAFF_HEADER && calanderData.length > 0 && (
-                <ScrollView
-                  ref={staffHeaderScrollRef}
-                  scrollEnabled={true}
-                  horizontal={true}
-                  bounces={false}
-                  showsHorizontalScrollIndicator={false}
-                  showsVerticalScrollIndicator={false}
-                  scrollEventThrottle={8}
-                  snapToInterval={threeColumnWidth}
-                  snapToAlignment="start"
-                  decelerationRate="fast"
-                  onScroll={(event) => {
-                    // Sync calendar columns when staff header is scrolled - INSTANT SYNC
-                    if (activeScrollDriver.current !== 'header') {
-                      return;
-                    }
-                    const offsetX = event.nativeEvent.contentOffset.x;
-
-                    // Remove threshold check for instant sync - always sync position
-                    lastHorizontalScrollX.current = offsetX;
-                    savedHorizontalScrollPosition.current = offsetX;
-
-                    if (horizontalScrollRef.current) {
-                      horizontalScrollRef.current.scrollTo({
-                        x: offsetX,
-                        y: 0,
-                        animated: false, // No animation for instant sync
-                      });
-                    }
-                  }}
-                  style={{
-                    height: getHeightEquivalent(85),
-                    backgroundColor: colors.white,
-                  }}
-                  contentContainerStyle={{
-                    flexDirection: "row",
-                    borderBottomWidth: 1,
-                    borderBottomColor: colors.border,
-                  }}
-                >
-                  {/* Staff headers - all have equal width */}
-                  {calanderData.map((staff, index) => (
-                    <Fragment key={index}>
-                      {/* Add separator width for columns after the first one */}
-                      {index > 0 && (
-                        <View
-                          style={{
-                            width: 1,
-                            height: "100%",
-                            backgroundColor: "transparent",
-                          }}
-                        />
-                      )}
-                      <View
-                        style={{
-                          width: getColumnWidth(index),
-                          height: "100%",
-                          backgroundColor: colors.white,
-                          justifyContent: "center",
-                          alignItems: "center",
-                        }}
-                      >
-                        <View style={CalanderScreenStyles.staffImageContainer}>
-                          <Text
-                            style={{
-                              color: colors.primary,
-                              fontWeight: "bold",
-                              fontSize: fontEq(10),
-                            }}
-                          >
-                            {staff?.staffName?.charAt(0).toUpperCase() || "S"}
-                          </Text>
-                        </View>
-                        <Text style={CalanderScreenStyles.staffName}>
-                          {staff?.staffName || "Staff"}
-                        </Text>
-                      </View>
-                    </Fragment>
-                  ))}
-                </ScrollView>
-              )}
-
-              {/* INTEGRATED Staff Header - Static header below date header */}
-              {USE_INTEGRATED_STAFF_HEADER && calanderData.length > 0 && (
-                <View style={{ flexDirection: "row", width: "100%" }}>
-                  {/* RIGHT: Scrollable staff headers */}
-                  <ScrollView
-                    ref={staffHeaderScrollRef}
-                    scrollEnabled={true}
-                    horizontal={true}
-                    bounces={false}
-                    showsHorizontalScrollIndicator={false}
-                    showsVerticalScrollIndicator={false}
-                    scrollEventThrottle={16}
-                    snapToInterval={threeColumnWidth}
-                    snapToAlignment="start"
-                    decelerationRate="fast"
-                    onScrollBeginDrag={() => {
-                      activeScrollDriver.current = 'header';
-                    }}
-                    onScrollEndDrag={() => {
-                      // Only clear if not momentum scrolling
-                      // We'll let onMomentumScrollEnd clear it if momentum exists
-                      // But for safety, we can rely on the drag begin of the other view to take over
-                      setTimeout(() => {
-                         if (activeScrollDriver.current === 'header') {
-                             activeScrollDriver.current = null;
-                         }
-                      }, 100);
-                    }}
-                    onMomentumScrollBegin={() => {
-                      activeScrollDriver.current = 'header';
-                    }}
-                    onMomentumScrollEnd={() => {
-                      activeScrollDriver.current = null;
-                    }}
-                    onScroll={(event) => {
-                      // Only sync if WE are the driver
-                      if (activeScrollDriver.current !== 'header') {
-                        return;
-                      }
-
-                      const offsetX = event.nativeEvent.contentOffset.x;
-
-                      // Save scroll position
-                      lastHorizontalScrollX.current = offsetX;
-                      savedHorizontalScrollPosition.current = offsetX;
-
-                      if (horizontalScrollRef.current) {
-                        horizontalScrollRef.current.scrollTo({
-                          x: offsetX,
-                          y: 0,
-                          animated: false, // Instant sync
-                        });
-                      }
-                    }}
-                    style={{
-                      height: getHeightEquivalent(85),
-                      backgroundColor: colors.white,
-                      flex: 1,
-                    }}
-                    contentContainerStyle={{
-                      flexDirection: "row",
-                      borderBottomWidth: 1,
-                      borderBottomColor: colors.border,
-                    }}
-                  >
-                    {/* Staff headers - all have equal width */}
-                    {calanderData.map((staff, index) => (
-                      <Fragment key={index}>
-                        {/* Add separator width for columns after the first one */}
-                        {index > 0 && (
-                          <View
-                            style={{
-                              width: 1,
-                              height: "100%",
-                              backgroundColor: "transparent",
-                            }}
-                          />
-                        )}
-                        <View
-                          style={{
-                            width: getColumnWidth(index),
-                            height: "100%",
-                            backgroundColor: colors.white,
-                            justifyContent: "center",
-                            alignItems: "center",
-                          }}
-                        >
-                          <View style={CalanderScreenStyles.staffImageContainer}>
-                            <Text
-                              style={{
-                                color: colors.primary,
-                                fontWeight: "bold",
-                                fontSize: fontEq(10),
-                              }}
-                            >
-                              {staff?.staffName?.charAt(0).toUpperCase() || "S"}
-                            </Text>
-                          </View>
-                          <Text style={CalanderScreenStyles.staffName}>
-                            {staff?.staffName || "Staff"}
-                          </Text>
-                        </View>
-                      </Fragment>
-                    ))}
-                  </ScrollView>
-                </View>
-              )}
             </View>
           </View>
         </View>
@@ -1142,8 +911,11 @@ const CalanderScreen = () => {
           >
             {/* INTEGRATED VERTICAL SCROLL: Time gutter and calendar scroll together */}
             <View style={{ flexDirection: "row" }}>
-              {/* Fixed Time Gutter Column with Red Line */}
+              {/* Fixed Time Gutter Column with Red Line and Header */}
               <View style={{ width: getWidthEquivalent(40) }}>
+                {/* TimeGutterHeader for staff row */}
+                <TimeGutterHeader headerHeight={getHeightEquivalent(85)} />
+                
                 <View style={{ position: "relative" }}>
                   {/* Current Time Indicator - Ellipse and Line */}
                   {(() => {
@@ -1244,49 +1016,60 @@ const CalanderScreen = () => {
                 snapToAlignment="start"
                 decelerationRate="fast"
                 onScrollBeginDrag={(event) => {
-                  activeScrollDriver.current = 'calendar';
                   handleHorizontalScrollBegin(event);
-                }}
-                onScrollEndDrag={() => {
-                   setTimeout(() => {
-                        if (activeScrollDriver.current === 'calendar') {
-                            activeScrollDriver.current = null;
-                        }
-                   }, 100);
-                }}
-                onMomentumScrollBegin={() => {
-                  activeScrollDriver.current = 'calendar';
-                }}
-                onMomentumScrollEnd={() => {
-                  activeScrollDriver.current = null;
-                }}
-                onScroll={(event) => {
-                  // Only sync if WE are the driver
-                  if (activeScrollDriver.current !== 'calendar') {
-                    return;
-                  }
-                  
-                  const offsetX = event.nativeEvent.contentOffset.x;
-
-                  // Track current scroll position for auto-scroll functionality
-                  setCurrentScrollX(offsetX);
-
-                  // Save scroll position
-                  lastHorizontalScrollX.current = offsetX;
-                  savedHorizontalScrollPosition.current = offsetX;
-
-                  if (staffHeaderScrollRef.current) {
-                    staffHeaderScrollRef.current.scrollTo({
-                      x: offsetX,
-                      y: 0,
-                      animated: false,
-                    });
-                  }
                 }}
                 contentContainerStyle={{
                   flexDirection: "column",
                 }}
               >
+                {/* Staff Header Row - First row in calendar scroll */}
+                <View style={{
+                  flexDirection: "row",
+                  borderBottomWidth: 1,
+                  borderBottomColor: colors.border,
+                  backgroundColor: colors.white,
+                }}>
+                  {/* Staff headers - all have equal width */}
+                  {calanderData.map((staff, index) => (
+                    <Fragment key={index}>
+                      {/* Add separator width for columns after the first one */}
+                      {index > 0 && (
+                        <View
+                          style={{
+                            width: 1,
+                            height: "100%",
+                            backgroundColor: "transparent",
+                          }}
+                        />
+                      )}
+                      <View
+                        style={{
+                          width: getColumnWidth(index),
+                          height: getHeightEquivalent(85),
+                          backgroundColor: colors.white,
+                          justifyContent: "center",
+                          alignItems: "center",
+                        }}
+                      >
+                        <View style={CalanderScreenStyles.staffImageContainer}>
+                          <Text
+                            style={{
+                              color: colors.primary,
+                              fontWeight: "bold",
+                              fontSize: fontEq(10),
+                            }}
+                          >
+                            {staff?.staffName?.charAt(0).toUpperCase() || "S"}
+                          </Text>
+                        </View>
+                        <Text style={CalanderScreenStyles.staffName}>
+                          {staff?.staffName || "Staff"}
+                        </Text>
+                      </View>
+                    </Fragment>
+                  ))}
+                </View>
+
                 <View style={{ position: "relative" }}>
                   {/* Current Time Line - extends across calendar */}
                   {(() => {
@@ -1436,8 +1219,6 @@ const CalanderScreen = () => {
                             verticalScrollTopOffset={
                               getHeightEquivalent(135) + insets.top // TimeGutter header height + top inset
                             }
-                            staffHeaderScrollRef={staffHeaderScrollRef}
-                            activeScrollDriverRef={activeScrollDriver}
                           />
                           {index < columnConfigs.length - 1 && (
                             <View
