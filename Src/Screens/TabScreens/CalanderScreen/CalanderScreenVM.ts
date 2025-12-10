@@ -11,6 +11,7 @@ interface StaffCalendar {
   staffName: string;
   staffId: string;
   order: number;
+  imageUrl: string | null;
   staffAppointments: {
     title: string;
     start: Date;
@@ -122,6 +123,7 @@ const useCalanderScreenVM = () => {
         staffId,
         staffAppointments: [],
         order: staff.order || 0, // Store order for sorting
+        imageUrl: staff.image_url || null, // Store image URL
       };
     });
 

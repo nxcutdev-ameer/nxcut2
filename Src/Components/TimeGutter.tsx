@@ -90,7 +90,7 @@ const styles = StyleSheet.create({
     borderRightColor: colors.backdrop,
     shadowColor: "#000",
     shadowOffset: {
-      width: 2,
+      width: 0.1,
       height: 0,
     },
     shadowOpacity: 0.1,

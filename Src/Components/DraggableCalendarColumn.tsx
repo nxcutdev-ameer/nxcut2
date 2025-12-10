@@ -820,8 +820,10 @@ const styles = StyleSheet.create({
   },
   slotTimeText: {
     fontSize: fontEq(12),
-    fontWeight: "600",
+    fontWeight: "500",
     color: colors.primary,
+    fontFamily: "Helvetica",
+
     backgroundColor: colors.white,
     paddingHorizontal: getWidthEquivalent(8),
     paddingVertical: getHeightEquivalent(2),

@@ -1,6 +1,7 @@
 import React, { useRef, useState, useEffect, useMemo } from "react";
 import { View, Text, StyleSheet, Animated, PanResponder, GestureResponderEvent, PanResponderGestureState } from "react-native";
 import * as Haptics from "expo-haptics";
+import { Tag } from "lucide-react-native";
 import { colors } from "../Constants/colors";
 import { fontEq, getHeightEquivalent, getWidthEquivalent } from "../Utils/helpers";
 import { AppointmentCalanderBO } from "../Repository/appointmentsRepository";
@@ -1083,6 +1084,15 @@ const DraggableAppointment: React.FC<DraggableAppointmentProps> = ({
 
     return (
       <View style={styles.contentContainer}>
+        {/* Tag icon in top right corner */}
+        <View style={styles.tagIconContainer}>
+          <Tag
+            size={isSmall ? 10 : 12}
+            color={event.data.appointment.status === "scheduled" ? colors.black : colors.white}
+            strokeWidth={2}
+          />
+        </View>
+
         <Text
           style={[
             styles.timeText,
@@ -1189,6 +1199,12 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     flex: 1,
+  },
+  tagIconContainer: {
+    position: "absolute",
+    top: getHeightEquivalent(2),
+    right: getWidthEquivalent(2),
+    zIndex: 10,
   },
   clientName: {
     fontSize: fontEq(12),

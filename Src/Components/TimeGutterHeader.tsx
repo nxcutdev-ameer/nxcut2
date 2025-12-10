@@ -19,15 +19,15 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
-    // shadowColor: '#00000079',
-    // shadowOffset: {
-    //   width: 0,
-    //   height: 2,
-    // },
-    // shadowOpacity: 0.35,
-    // shadowRadius: 4,
-    // elevation: 4,
-    // zIndex: 2,
+    shadowColor: '#00000079',
+    shadowOffset: {
+      width: -7,
+      height: 2,
+    },
+    shadowOpacity: 0.35,
+    shadowRadius: 4,
+    elevation: 4,
+    zIndex: 2,
   },
 });
 

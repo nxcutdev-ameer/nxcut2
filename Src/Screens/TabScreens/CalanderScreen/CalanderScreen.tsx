@@ -10,7 +10,17 @@ import {
   Alert,
   StatusBar,
   Pressable,
+  Image,
+  FlatList,
 } from "react-native";
+
+// Reanimated v2 for sticky header
+import Reanimated, {
+  useSharedValue,
+  useAnimatedScrollHandler,
+  useAnimatedStyle,
+  runOnJS,
+} from 'react-native-reanimated';
 import React, {
   useRef,
   useState,
@@ -53,6 +63,7 @@ import DateModal from "../../../Components/DateModal";
 // } from "@gorhom/bottom-sheet";
 import { AppointmentCalanderBO } from "../../../Repository/appointmentsRepository";
 import { useCalendarEditingStore } from "../../../Store/useCalendarEditingStore";
+import { teamRepository } from "../../../Repository/teamRepository";
 
 type EditingState = {
   appointmentId: string;
@@ -238,11 +249,11 @@ const CalanderScreen = () => {
   const navigation: any = useNavigation();
   const route = useRoute();
   const insets = useSafeAreaInsets();
-  
+
   // State for carousel pagination
   const [currentStaffIndex, setCurrentStaffIndex] = useState(0);
   const scrollViewRef = useRef<ScrollView>(null);
-  const verticalScrollRef = useRef<ScrollView>(null);
+  const verticalScrollRef = useRef<any>(null);
   const calendarVerticalScrollRef = useRef<ScrollView>(null);
   const horizontalScrollRef = useRef<ScrollView>(null);
   
@@ -261,6 +272,23 @@ const CalanderScreen = () => {
   const overlayOpacity = useRef(new Animated.Value(0)).current;
   const [currentScrollX, setCurrentScrollX] = useState(0);
   const [currentScrollY, setCurrentScrollY] = useState(0);
+
+  // Sticky staff header - Reanimated shared value
+  const stickyScrollY = useSharedValue(0);
+
+  // Vertical scroll handler (UI-thread)
+  const onVerticalScroll = useAnimatedScrollHandler({
+    onScroll: (e) => {
+      stickyScrollY.value = e.contentOffset.y;
+      runOnJS(setCurrentScrollY)(e.contentOffset.y);
+    },
+  });
+
+  // Animated styles for sticky components
+  const stickyHeaderAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: stickyScrollY.value }],
+    zIndex: 100,
+  }));
 
   const hasPendingChanges = useMemo(() => {
     if (!editingState) {
@@ -419,7 +447,7 @@ const CalanderScreen = () => {
     staffName: string;
     currentOrder: number;
   } | null>(null);
-  
+
   // Prevent multiple date changes from scroll
   const isNavigatingDate = useRef(false);
   const lastScrollDirection = useRef<'left' | 'right' | null>(null);
@@ -624,10 +652,7 @@ const CalanderScreen = () => {
     const newOrder = direction === 'increase' 
       ? selectedStaff.currentOrder + 1 
       : Math.max(0, selectedStaff.currentOrder - 1);
-
-    // Import the teamRepository
-    const { teamRepository } = await import('../../../Repository/teamRepository');
-    
+      
     const success = await teamRepository.updateTeamMemberOrder(
       selectedStaff.staffId,
       newOrder
@@ -942,7 +967,7 @@ const CalanderScreen = () => {
         </View>
         <View style={CalanderScreenStyles.bodyContainer}>
           {/* UNIFIED VERTICAL SCROLL: Time gutter and calendar scroll together */}
-          <ScrollView
+          <Reanimated.ScrollView
             ref={verticalScrollRef}
             bounces={false}
             showsVerticalScrollIndicator={false}
@@ -951,9 +976,7 @@ const CalanderScreen = () => {
             decelerationRate="fast"
             directionalLockEnabled={true}
             removeClippedSubviews={false}
-            onScroll={(event) => {
-              setCurrentScrollY(event.nativeEvent.contentOffset.y);
-            }}
+            onScroll={onVerticalScroll}
             style={{ flex: 1 }}
           >
             {/* INTEGRATED VERTICAL SCROLL: Time gutter and calendar scroll together */}
@@ -961,7 +984,10 @@ const CalanderScreen = () => {
               {/* Fixed Time Gutter Column with Red Line and Header */}
               <View style={{ width: getWidthEquivalent(40) }}>
                 {/* TimeGutterHeader for staff row */}
-                <TimeGutterHeader headerHeight={getHeightEquivalent(85)} />
+                <Reanimated.View style={stickyHeaderAnimatedStyle}>
+                  <TimeGutterHeader headerHeight={getHeightEquivalent(85)} />
+                </Reanimated.View>
+                
                 <View style={{ position: "relative" }}>
                   {/* Current Time Indicator - Ellipse and Line */}
                   {(() => {
@@ -1072,18 +1098,21 @@ const CalanderScreen = () => {
                 }}
               >
                 {/* Staff Header Row - First row in calendar scroll */}
-                <View style={{
-                  flexDirection: "row",
-                  borderBottomWidth: 1,
-                  borderBottomColor: colors.border,
-                  backgroundColor: colors.white,
-                  shadowColor: "#00000079",
-                  shadowOffset: { width: 0, height: 2 },
-                  shadowOpacity: 0.35,
-                  shadowRadius: 4,
-                  elevation: 4,
-                  zIndex: 2,
-                }}>
+                <Reanimated.View style={[
+                  {
+                    flexDirection: "row",
+                    borderBottomWidth: 1,
+                    borderBottomColor: colors.border,
+                    backgroundColor: colors.white,
+                    shadowColor: "#00000079",
+                    shadowOffset: { width: 0, height: 2 },
+                    shadowOpacity: 0.35,
+                    shadowRadius: 4,
+                    elevation: 4,
+                    zIndex: 100,
+                  },
+                  stickyHeaderAnimatedStyle,
+                ]}>
                   {/* Staff headers - all have equal width */}
                   {calanderData.map((staff, index) => (
                     <Fragment key={index}>
@@ -1107,15 +1136,27 @@ const CalanderScreen = () => {
                         }}
                       >
                         <View style={CalanderScreenStyles.staffImageContainer}>
-                          <Text
-                            style={{
-                              color: colors.primary,
-                              fontWeight: "bold",
-                              fontSize: fontEq(10),
-                            }}
-                          >
-                            {staff?.staffName?.charAt(0).toUpperCase() || "S"}
-                          </Text>
+                          {staff?.imageUrl ? (
+                            <Image
+                              source={{ uri: staff.imageUrl }}
+                              style={{
+                                width: "100%",
+                                height: "100%",
+                                borderRadius: 50,
+                              }}
+                              resizeMode="cover"
+                            />
+                          ) : (
+                            <Text
+                              style={{
+                                color: colors.primary,
+                                fontWeight: "bold",
+                                fontSize: fontEq(10),
+                              }}
+                            >
+                              {staff?.staffName?.charAt(0).toUpperCase() || "S"}
+                            </Text>
+                          )}
                         </View>
                         <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
                           <Text style={CalanderScreenStyles.staffName}>
@@ -1135,7 +1176,7 @@ const CalanderScreen = () => {
                       </View>
                     </Fragment>
                   ))}
-                </View>
+                </Reanimated.View>
 
                 <View style={{ position: "relative" }}>
                   {/* Current Time Line - extends across calendar */}
@@ -1306,7 +1347,7 @@ const CalanderScreen = () => {
               </ScrollView>
               </View>
             </View>
-          </ScrollView>
+          </Reanimated.ScrollView>
         </View>
 
 
@@ -1433,7 +1474,7 @@ const CalanderScreen = () => {
                 textAlign: "center",
               }}
             >
-              Edit Shift Order
+              Edit Shift
             </Text>
             <Text
               style={{
@@ -1470,6 +1511,7 @@ const CalanderScreen = () => {
                   fontSize: fontEq(24),
                   fontWeight: "bold",
                   color: colors.primary,
+                  fontFamily: "Helvetica",
                 }}
               >
                 {selectedStaff?.currentOrder || 0}
@@ -1499,15 +1541,6 @@ const CalanderScreen = () => {
                 }}
               >
                 <ChevronLeft size={20} color={colors.text} strokeWidth={2.5} />
-                <Text
-                  style={{
-                    fontSize: fontEq(14),
-                    fontWeight: "600",
-                    color: colors.text,
-                  }}
-                >
-                  Decrease
-                </Text>
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -1517,22 +1550,13 @@ const CalanderScreen = () => {
                   flexDirection: "row",
                   alignItems: "center",
                   justifyContent: "center",
-                  backgroundColor: colors.primary,
+                  backgroundColor: colors.gray[100],
                   paddingVertical: 12,
                   borderRadius: 8,
                   gap: 8,
                 }}
               >
-                <Text
-                  style={{
-                    fontSize: fontEq(14),
-                    fontWeight: "600",
-                    color: colors.white,
-                  }}
-                >
-                  Increase
-                </Text>
-                <ChevronRight size={20} color={colors.white} strokeWidth={2.5} />
+                <ChevronRight size={20} color={colors.text} strokeWidth={2.5} />
               </TouchableOpacity>
             </View>
 
