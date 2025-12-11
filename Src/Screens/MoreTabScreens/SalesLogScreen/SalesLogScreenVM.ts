@@ -12,24 +12,21 @@ const useSalesLogScreenVM = () => {
 
   const [saleLogData, setSaleLogData] = useState<SalesLogBO[]>([]);
   useEffect(() => {
-    fetchFilteredSalesDynamic();
+    fetchFilteredSales();
     console.log("useSalesLogScreenVM", saleLogData);
   }, []);
-  async function fetchFilteredSalesDynamic() {
-    const responce = await paymentRepository.getFilteredSalesDynamic({
-      p_start_date: new Date().toString(),
-      p_end_date: new Date().toString(),
-      // p_limit: 1000,
-      // p_offset: 0,
-      // p_location_ids: ,
-      // p_payment_methods: null,
-      // p_sale_types: null,
-      // p_staff_ids: null,
-    });
-
-    if (responce) {
-      setSaleLogData(responce);
-      console.log("[SALES-LOG-VM]", responce);
+  async function fetchFilteredSales() {
+    try {
+      const range = await paymentRepository.getSalesPaymentsByDateRange(
+        new Date().toISOString(),
+        new Date().toISOString()
+      );
+      // Map to SalesLogBO-like minimal shape if needed, or keep raw
+      // For now, we keep raw into saleLogData with a type cast
+      // If you want exact SalesLogBO rows, swap to the RPC when available.
+      setSaleLogData((range as unknown) as SalesLogBO[]);
+    } catch (e) {
+      console.log("[SALES-LOG-VM] error", e);
     }
   }
 

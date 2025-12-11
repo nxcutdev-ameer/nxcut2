@@ -379,9 +379,13 @@ const DraggableAppointment: React.FC<DraggableAppointmentProps> = ({
     lastSnappedSlotRef.current = currentSlotIndex;
   }, [committedPosition.y, isDragging]);
 
-  // Track scroll position for auto-scroll compensation
+  // Track horizontal scroll position for auto-scroll compensation
   const scrollOffsetRef = useRef<number>(0);
   const dragStartScrollRef = useRef<number>(0);
+
+  // Track vertical scroll position for auto-scroll compensation
+  const verticalScrollOffsetRef = useRef<number>(0);
+  const dragStartScrollYRef = useRef<number>(0);
 
   // Effect to track scroll changes during drag
   useEffect(() => {
@@ -666,6 +670,9 @@ const DraggableAppointment: React.FC<DraggableAppointmentProps> = ({
           dragStartScrollRef.current = currentScroll;
         }
         
+        // Track vertical scroll at drag start for compensation
+        dragStartScrollYRef.current = currentScrollY || 0;
+        
         lastKnownScrollXRef.current = currentScroll;
         targetScrollXRef.current = currentScroll;
         // Width is preserved via dragWidthRef update at component level
@@ -805,7 +812,9 @@ const DraggableAppointment: React.FC<DraggableAppointmentProps> = ({
 
         const currentCommitted = committedPositionRef.current;
         const baseY = initialTopRef.current + currentCommitted.y;
-        const desiredY = baseY + gestureState.dy;
+        // Compensate vertical scroll delta so the card tracks the finger exactly
+        const verticalScrollDelta = (currentScrollY || 0) - (dragStartScrollYRef.current || 0);
+        const desiredY = baseY + gestureState.dy + verticalScrollDelta;
         const clampedY = clamp(desiredY, 0, maxStartY);
         
         // Use raw position for smooth dragging (no snapping)
@@ -833,13 +842,24 @@ const DraggableAppointment: React.FC<DraggableAppointmentProps> = ({
         const proposedOffsetX = currentCommitted.x + gestureState.dx + scrollCompensation;
         const clampedOffsetX = clamp(proposedOffsetX, minOffsetX, maxOffsetX);
         
-        // Ultra-responsive column snapping - 15% threshold
+        // Ultra-responsive column snapping while tracking finger
+        // Use a balanced threshold and add a small hysteresis to reduce flicker
         const columnFloat = clampedOffsetX / effectiveColumnWidth;
         const baseColumn = Math.floor(columnFloat);
         const fraction = columnFloat - baseColumn;
         
-        // Very low threshold - snap quickly to follow finger
-        const targetColumn = fraction >= 0.15 ? baseColumn + 1 : baseColumn;
+        // Hysteresis: once we’ve snapped up, require more to snap back
+        const prevColumn = lastSnappedColumnRef.current;
+        const forwardThreshold = 0.35; // move to next column when > 35%
+        const backThreshold = 0.65;    // move back to previous when < 35% from prev (i.e., > 65% in reverse)
+        let targetColumn = baseColumn;
+        if (fraction >= forwardThreshold) {
+          targetColumn = baseColumn + 1;
+        } else if (fraction < (1 - backThreshold)) {
+          targetColumn = baseColumn;
+        } else {
+          targetColumn = prevColumn;
+        }
         
         // Clamp to valid column range
         const minColumn = -columnIndexValue;
@@ -958,7 +978,9 @@ const DraggableAppointment: React.FC<DraggableAppointmentProps> = ({
 
         const currentCommitted = committedPositionRef.current;
         const baseY = initialTopRef.current + currentCommitted.y;
-        const desiredY = baseY + gesture.dy;
+        // Include vertical scroll delta in drop calculation
+        const verticalScrollDelta = (currentScrollY || 0) - (dragStartScrollYRef.current || 0);
+        const desiredY = baseY + gesture.dy + verticalScrollDelta;
         const clampedY = clamp(desiredY, 0, maxStartY);
         const snappedY = snapToTimeSlot(clampedY);
         const finalOffsetY = snappedY - initialTopRef.current;
@@ -986,7 +1008,7 @@ const DraggableAppointment: React.FC<DraggableAppointmentProps> = ({
         const columnFloat = clampedOffsetX / effectiveColumnWidth;
         const baseColumn = Math.floor(columnFloat);
         const fraction = columnFloat - baseColumn;
-        const targetColumn = fraction >= 0.15 ? baseColumn + 1 : baseColumn;
+        const targetColumn = fraction >= 0.35 ? baseColumn + 1 : baseColumn;
 
         // Clamp to valid column range  
         const minColumn = -columnIndexValue;

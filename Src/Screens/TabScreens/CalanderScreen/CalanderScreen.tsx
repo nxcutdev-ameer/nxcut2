@@ -7,11 +7,9 @@ import {
   Dimensions,
   ActivityIndicator,
   StyleSheet,
-  Alert,
   StatusBar,
   Pressable,
   Image,
-  FlatList,
 } from "react-native";
 
 // Reanimated v2 for sticky header
@@ -255,7 +253,10 @@ const CalanderScreen = () => {
   const scrollViewRef = useRef<ScrollView>(null);
   const verticalScrollRef = useRef<any>(null);
   const calendarVerticalScrollRef = useRef<ScrollView>(null);
-  const horizontalScrollRef = useRef<ScrollView>(null);
+  const horizontalScrollRef = useRef<Reanimated.ScrollView>(null as any);
+  const headerHorizontalRef = useRef<Reanimated.ScrollView>(null as any);
+  const isSyncingHorizontal = useRef(false);
+  const useNativeSticky = true;
   
   const [scrollEnabled, setScrollEnabled] = useState(true);
   
@@ -273,8 +274,9 @@ const CalanderScreen = () => {
   const [currentScrollX, setCurrentScrollX] = useState(0);
   const [currentScrollY, setCurrentScrollY] = useState(0);
 
-  // Sticky staff header - Reanimated shared value
+  // Sticky staff header - Reanimated shared values
   const stickyScrollY = useSharedValue(0);
+  const horizontalScrollX = useSharedValue(0);
 
   // Vertical scroll handler (UI-thread)
   const onVerticalScroll = useAnimatedScrollHandler({
@@ -284,10 +286,28 @@ const CalanderScreen = () => {
     },
   });
 
+  // Horizontal scroll handler (UI-thread)
+  const onHorizontalScroll = useAnimatedScrollHandler({
+    onScroll: (e) => {
+      horizontalScrollX.value = e.contentOffset.x;
+      runOnJS(setCurrentScrollX)(e.contentOffset.x);
+    },
+  });
+
   // Animated styles for sticky components
-  const stickyHeaderAnimatedStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: stickyScrollY.value }],
-    zIndex: 100,
+  const stickyHeaderYAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [
+      { translateY: Math.round(stickyScrollY.value) },
+    ],
+    zIndex: 5000,
+  }));
+
+  const stickyHeaderXYAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [
+      { translateY: stickyScrollY.value },
+      { translateX: -horizontalScrollX.value },
+    ],
+    zIndex: 5000,
   }));
 
   const hasPendingChanges = useMemo(() => {
@@ -972,7 +992,7 @@ const CalanderScreen = () => {
             bounces={false}
             showsVerticalScrollIndicator={false}
             scrollEnabled={scrollEnabled}
-            scrollEventThrottle={16}
+            scrollEventThrottle={1}
             decelerationRate="fast"
             directionalLockEnabled={true}
             removeClippedSubviews={false}
@@ -984,9 +1004,11 @@ const CalanderScreen = () => {
               {/* Fixed Time Gutter Column with Red Line and Header */}
               <View style={{ width: getWidthEquivalent(40) }}>
                 {/* TimeGutterHeader for staff row */}
-                <Reanimated.View style={stickyHeaderAnimatedStyle}>
+                <Reanimated.View style={[stickyHeaderYAnimatedStyle, { position: 'absolute', top: 0, left: 0, right: 0, willChange: 'transform' } as any]}>
                   <TimeGutterHeader headerHeight={getHeightEquivalent(85)} />
                 </Reanimated.View>
+                {/* Spacer for TimeGutterHeader height */}
+                <View style={{ height: getHeightEquivalent(85) }} />
                 
                 <View style={{ position: "relative" }}>
                   {/* Current Time Indicator - Ellipse and Line */}
@@ -1023,18 +1045,18 @@ const CalanderScreen = () => {
                             alignItems: "center",
                             justifyContent: "center",
                             zIndex: 3000,
-                            elevation: 20,
+                            elevation: 0,
                             pointerEvents: "none",
-                            shadowColor: "#000",
-                            shadowOffset: { width: 0, height: 2 },
-                            shadowOpacity: 0.25,
-                            shadowRadius: 3.84,
+                            // shadowColor: "#000",
+                            // shadowOffset: { width: 0, height: 2 },
+                            // shadowOpacity: 0.25,
+                            // shadowRadius: 3.84,
                           }}
                         >
                           <Text
                             style={{
-                              fontSize: fontEq(10),
-                              fontWeight: "700",
+                              fontSize: fontEq(12),
+                              fontWeight: "500",
                               color: "#D32F2F",
                               fontFamily: "Helvetica",
                             }}
@@ -1057,7 +1079,7 @@ const CalanderScreen = () => {
                             backgroundColor: "#D32F2F",
                             zIndex: 2500,
                             pointerEvents: "none",
-                            elevation: 10,
+                            elevation: 0,
                           }}
                         />
                       </>
@@ -1076,13 +1098,13 @@ const CalanderScreen = () => {
 
               {/* Calendar Columns - scrolls together with time gutter */}
               <View style={{ flex: 1 }}>
-              <ScrollView
+              <Reanimated.ScrollView
                 ref={horizontalScrollRef}
                 horizontal
                 bounces={false}
                 showsHorizontalScrollIndicator={false}
                 scrollEnabled={scrollEnabled}
-                scrollEventThrottle={16}
+                scrollEventThrottle={1}
                 directionalLockEnabled={true}
                 snapToInterval={threeColumnWidth}
                 snapToAlignment="start"
@@ -1090,16 +1112,21 @@ const CalanderScreen = () => {
                 onScrollBeginDrag={(event) => {
                   handleHorizontalScrollBegin(event);
                 }}
-                onScroll={(event) => {
-                  setCurrentScrollX(event.nativeEvent.contentOffset.x);
-                }}
+                onScroll={onHorizontalScroll}
                 contentContainerStyle={{
                   flexDirection: "column",
+                  paddingTop: 0,
                 }}
               >
+                {/* Spacer to offset absolute-positioned staff header height */}
+                <View style={{ height: getHeightEquivalent(85) }} />
                 {/* Staff Header Row - First row in calendar scroll */}
                 <Reanimated.View style={[
                   {
+                    position: "absolute",
+                    top: -1, // overlap slightly under the date header to avoid seam
+                    left: 0,
+                    right: 0,
                     flexDirection: "row",
                     borderBottomWidth: 1,
                     borderBottomColor: colors.border,
@@ -1109,9 +1136,8 @@ const CalanderScreen = () => {
                     shadowOpacity: 0.35,
                     shadowRadius: 4,
                     elevation: 4,
-                    zIndex: 100,
                   },
-                  stickyHeaderAnimatedStyle,
+                  [stickyHeaderYAnimatedStyle, { willChange: 'transform' } as any],
                 ]}>
                   {/* Staff headers - all have equal width */}
                   {calanderData.map((staff, index) => (
@@ -1207,7 +1233,7 @@ const CalanderScreen = () => {
                           backgroundColor: "#D32F2F",
                           zIndex: 2500,
                           pointerEvents: "none",
-                          elevation: 10,
+                          elevation: 0,
                         }}
                       />
                     );
@@ -1344,7 +1370,7 @@ const CalanderScreen = () => {
                     })}
                   </View>
                 </View>
-              </ScrollView>
+              </Reanimated.ScrollView>
               </View>
             </View>
           </Reanimated.ScrollView>

@@ -403,14 +403,14 @@ const SelectPeriodModal: React.FC<SelectPeriodModalProps> = ({
           style={[
             StyleSheet.absoluteFillObject,
             {
-              backgroundColor: colors.colors.white,
+              backgroundColor: colors.white,
               justifyContent: "center",
               alignItems: "center",
               zIndex: 9999,
             },
           ]}
         >
-          <ActivityIndicator size="large" color={colors.colors.primary} />
+          <ActivityIndicator size="large" color={colors.primary} />
         </View>
       )}
     </Modal>
