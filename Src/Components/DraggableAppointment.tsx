@@ -114,15 +114,21 @@ const DraggableAppointment: React.FC<DraggableAppointmentProps> = ({
   const lastKnownScrollXRef = useRef<number>(0);
   const targetScrollXRef = useRef<number>(0); // Track intended scroll position
   
-  // Initialize and update dragWidthRef when not dragging to preserve exact width
+  // Initialize and update dragWidthRef to control width during drag/editing
   const currentCalculatedWidth = columnWidth - getWidthEquivalent(4);
   const dragWidthRef = useRef<number>(currentCalculatedWidth);
   
-  // Update dragWidthRef only when not dragging
-  if (!isDragging) {
-    dragWidthRef.current = currentCalculatedWidth;
-  }
-
+  // Keep drag width in sync: full column width while dragging/editing, normal width otherwise
+  useEffect(() => {
+    const effectiveColumnWidth = (dragColumnWidthRef.current ?? columnWidthRef.current) || columnWidth;
+    if (isDragging || isEditing) {
+      dragWidthRef.current = effectiveColumnWidth; // full width while dragging/editing
+    } else {
+      dragWidthRef.current = (columnWidthRef.current || columnWidth) - getWidthEquivalent(4); // default compact width
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isDragging, isEditing, columnWidth]);
+  
   const pan = useRef(new Animated.ValueXY()).current;
   const resetTriggerRef = useRef<number | undefined>(resetTrigger);
 
@@ -849,7 +855,8 @@ const DraggableAppointment: React.FC<DraggableAppointmentProps> = ({
         const isAtEnd = projScrollX >= maxScrollPos - 2;
 
         // Hysteresis: once we’ve snapped up, require more to snap back
-        const prevColumn = lastSnappedColumnRef.current;
+        // Treat prevColumn as absolute to avoid boundary desync
+        const prevColumn = (lastSnappedColumnRef.current ?? 0);
         let forwardThreshold = 0.35; // move to next column when > 35%
         let backThreshold = 0.65;    // move back to previous when < 35% from prev (i.e., > 65% in reverse)
 
@@ -879,6 +886,8 @@ const DraggableAppointment: React.FC<DraggableAppointmentProps> = ({
         const absoluteTargetColumn = columnIndexValue + targetColumn;
         const clampedAbsoluteColumn = Math.max(0, Math.min(totalStaffColumnsValue - 1, absoluteTargetColumn));
         const snappedColumn = clampedAbsoluteColumn - columnIndexValue;
+        // Update absolute snapped column for consistent next-frame behavior
+        lastSnappedColumnRef.current = clampedAbsoluteColumn;
         
         const totalOffsetX = snappedColumn * effectiveColumnWidth;
         const snappedTranslateX = totalOffsetX - currentCommitted.x;
@@ -886,8 +895,9 @@ const DraggableAppointment: React.FC<DraggableAppointmentProps> = ({
         const translateX = snappedTranslateX;
 
         // Haptic feedback on column change
-        if (snappedColumn !== lastSnappedColumnRef.current) {
-          lastSnappedColumnRef.current = snappedColumn;
+        // Haptic feedback on absolute column transitions only
+        if (clampedAbsoluteColumn !== lastSnappedColumnRef.current) {
+          lastSnappedColumnRef.current = clampedAbsoluteColumn;
           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
         }
 
@@ -1033,7 +1043,10 @@ const DraggableAppointment: React.FC<DraggableAppointmentProps> = ({
         // Clamp to valid column range  
         const minColumn = -columnIndexValue;
         const maxColumn = totalStaffColumnsValue - columnIndexValue - 1;
-        const snappedColumn = Math.max(minColumn, Math.min(maxColumn, targetColumn));
+        // Convert to absolute, clamp, then back to relative for drop
+        const absoluteTargetColumn = columnIndexValue + targetColumn;
+        const clampedAbsoluteColumn = Math.max(0, Math.min(totalStaffColumnsValue - 1, absoluteTargetColumn));
+        const snappedColumn = clampedAbsoluteColumn - columnIndexValue;
 
         const columnsMoved = snappedColumn;
         const finalOffsetX = columnsMoved * effectiveColumnWidth;
@@ -1053,6 +1066,14 @@ const DraggableAppointment: React.FC<DraggableAppointmentProps> = ({
 
         // Notify parent immediately so layout (including widths) recalculates while animating
         onDragEnd(newStartTime, finalEndTime, columnsMoved);
+
+        // Update event's staff color immediately for UI feedback if staff changed
+        const newAbsColumn = Math.max(0, Math.min(totalStaffColumnsValue - 1, columnIndexRef.current + columnsMoved));
+        if (newAbsColumn !== columnIndexRef.current && event.data.staff) {
+          // optimistic: if you have a mapping from column index -> staff info, plug it here
+          // For now, keep border and background using existing event.data.staff.calendar_color,
+          // parent should re-render with the updated staff after onDragEnd persists the change.
+        }
 
         // Commit snapped position instantly to avoid any drift
         setCommittedPosition({ x: finalOffsetX, y: 0 });
@@ -1121,12 +1142,12 @@ const DraggableAppointment: React.FC<DraggableAppointmentProps> = ({
     elevation: isDragging ? 8 : 2,
     shadowOpacity: isDragging ? 0.3 : 0.1,
     zIndex: isDragging ? 1000 : 1,
-    borderWidth: isEditing ? 2 : 0,
-    borderColor: isEditing ? "#3C096C" : "transparent",
+    borderWidth: isEditing || isDragging ? 2 : 0,
+    borderColor: isEditing || isDragging ? "#3C096C" : "transparent",
     borderLeftColor:
       event.data.appointment.status === "paid"
-        ? colors.gray[500] // Gray stripe for paid appointments
-        : colors.primary, // Primary color stripe for all other appointments
+        ? colors.gray[500]
+        : colors.primary,
   };
 
   const renderAppointmentContent = () => {
@@ -1137,14 +1158,14 @@ const DraggableAppointment: React.FC<DraggableAppointmentProps> = ({
 
     return (
       <View style={styles.contentContainer}>
-        {/* Tag icon in top right corner */}
+        {/* Tag icon in top right corner
         <View style={styles.tagIconContainer}>
           <Tag
             size={isSmall ? 10 : 12}
             color={event.data.appointment.status === "scheduled" ? colors.black : colors.white}
             strokeWidth={2.5}
           />
-        </View>
+        </View> */}
 
         <Text
           style={[

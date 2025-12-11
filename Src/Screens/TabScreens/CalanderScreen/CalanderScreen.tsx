@@ -53,6 +53,7 @@ import useCalanderScreenVM from "./CalanderScreenVM";
 import { colors } from "../../../Constants/colors";
 import CustomToast from "../../../Components/CustomToast";
 import { useNavigation, useRoute, useFocusEffect } from "@react-navigation/native";
+import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import DateModal from "../../../Components/DateModal";
 
 // import BottomSheet, {
@@ -243,6 +244,17 @@ const CalanderScreen = () => {
     updateAppointmentTime,
     fetchCalanderAppointmentsData,
   } = useCalanderScreenVM();
+  const { isLoading } = useCalanderScreenVM();
+
+  // Ensure overlay appears when navigating back to Calendar tab (focus)
+  useFocusEffect(
+    useCallback(() => {
+      // Force show overlay for UX even if data is cached
+      // setIsFocusLoading(true);
+      // const t = setTimeout(() => setIsFocusLoading(false), 1000);
+      // return () => clearTimeout(t);
+    }, [])
+  );
 
   const navigation: any = useNavigation();
   const route = useRoute();
@@ -270,7 +282,10 @@ const CalanderScreen = () => {
   const isProgrammaticScroll = useRef(false); // Track programmatic scrolls (auto-scroll)
   const [editingState, setEditingState] = useState<EditingState | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [isPreparing, setIsPreparing] = useState(false);
+  const [isFocusLoading, setIsFocusLoading] = useState(false);
   const overlayOpacity = useRef(new Animated.Value(0)).current;
+  const tabBarHeight = useBottomTabBarHeight?.() || 0;
   const [currentScrollX, setCurrentScrollX] = useState(0);
   const [currentScrollY, setCurrentScrollY] = useState(0);
 
@@ -382,6 +397,8 @@ const CalanderScreen = () => {
                 ? {
                     ...current.appointmentSnapshot.data.staff,
                     id: targetStaffId,
+                    // inject target staff color for instant visual feedback
+                    calendar_color: staffColorById[targetStaffId] || current.appointmentSnapshot.data.staff?.calendar_color,
                   }
                 : current.appointmentSnapshot.data.staff,
             },
@@ -732,9 +749,26 @@ const CalanderScreen = () => {
     [calanderData]
   );
 
+  // Map staffId -> calendar_color for instant recoloring during preview
+  // Prefer staff color from any appointment in that staff column; fallback to staff record; finally to primary
+  const staffColorById = useMemo(() => {
+    const map: Record<string, string> = {};
+    for (const s of calanderData) {
+      let color: string | undefined = (s as any)?.calendar_color;
+      // Try derive from any appointment that has a staff color
+      const appts: any[] = (s as any)?.staffAppointments || [];
+      const withColor = appts.find((a: any) => a?.data?.staff?.calendar_color);
+      if (withColor?.data?.staff?.calendar_color) {
+        color = withColor.data.staff.calendar_color as string;
+      }
+      map[s.staffId] = color || colors.primary;
+    }
+    return map;
+  }, [calanderData]);
+
   // Animate overlay appearance and disappearance
   useEffect(() => {
-    if (isSaving) {
+    if (isSaving || isLoading || isFocusLoading) {
       Animated.timing(overlayOpacity, {
         toValue: 1,
         duration: 200,
@@ -747,7 +781,7 @@ const CalanderScreen = () => {
         useNativeDriver: true,
       }).start();
     }
-  }, [isSaving, overlayOpacity]);
+  }, [isSaving, isLoading, isFocusLoading, overlayOpacity]);
 
   // Restore horizontal scroll position when scrollEnabled changes (during drag)
   useEffect(() => {
@@ -1161,29 +1195,51 @@ const CalanderScreen = () => {
                           alignItems: "center",
                         }}
                       >
-                        <View style={CalanderScreenStyles.staffImageContainer}>
-                          {staff?.imageUrl ? (
-                            <Image
-                              source={{ uri: staff.imageUrl }}
-                              style={{
-                                width: "100%",
-                                height: "100%",
-                                borderRadius: 50,
-                              }}
-                              resizeMode="cover"
-                            />
-                          ) : (
-                            <Text
-                              style={{
-                                color: colors.primary,
-                                fontWeight: "bold",
-                                fontSize: fontEq(10),
-                              }}
-                            >
-                              {staff?.staffName?.charAt(0).toUpperCase() || "S"}
-                            </Text>
-                          )}
-                        </View>
+                      <View style={CalanderScreenStyles.staffImageContainer}>
+                            {staff?.imageUrl ? (
+                              <View
+                                style={{
+                                  width: "100%",
+                                  height: "100%",
+                                  borderRadius: 50,
+                                  overflow: "hidden",
+                                  backgroundColor: "white", // ensures transparent areas show as white
+                                }}
+                              >
+                                <Image
+                                  source={{ uri: staff.imageUrl }}
+                                  style={{
+                                    width: "100%",
+                                    height: "100%",
+                                    borderRadius: 50,
+                                  }}
+                                  resizeMode="cover"
+                                />
+                              </View>
+                            ) : (
+                              <View
+                                style={{
+                                  width: "100%",
+                                  height: "100%",
+                                  borderRadius: 50,
+                                  backgroundColor: colors.primaryLight,
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                }}
+                              >
+                                <Text
+                                  style={{
+                                    color: colors.primary,
+                                    fontWeight: "bold",
+                                    fontSize: fontEq(10),
+                                  }}
+                                >
+                                  {staff?.staffName?.charAt(0).toUpperCase() || "S"}
+                                </Text>
+                              </View>
+                            )}
+                          </View>
+
                         <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
                           <Text style={CalanderScreenStyles.staffName}>
                             {staff?.staffName || "Staff"}
@@ -1610,7 +1666,7 @@ const CalanderScreen = () => {
 
       {/* Saving Overlay Modal */}
       <Modal
-        isVisible={isSaving}
+        isVisible={isSaving || isLoading || isFocusLoading}
         animationIn="fadeIn"
         animationOut="fadeOut"
         backdropOpacity={0}
@@ -1620,10 +1676,17 @@ const CalanderScreen = () => {
         statusBarTranslucent={true}
       >
         <Animated.View
-          style={[
-            savingOverlayStyles.overlayContainer,
-            { opacity: overlayOpacity },
-          ]}
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: tabBarHeight, // cover only above the bottom tab bar
+            backgroundColor: colors.white,
+            justifyContent: 'center',
+            alignItems: 'center',
+            opacity: overlayOpacity,
+          }}
         >
           <View style={savingOverlayStyles.spinnerContainer}>
             <ActivityIndicator size="large" color={colors.primary} />

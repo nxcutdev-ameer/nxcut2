@@ -23,6 +23,7 @@ const useCalanderScreenVM = () => {
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
   const { calanderAppointmentsData, fetchCalanderAppointmentsData } =
     useAppointmentStore();
+  const [isLoading, setIsLoading] = useState(false);
   const { isFromLogin, setIsFromLogin, user, allLocations, allTeamMembers, currentLocation } = useAuthStore();
   const [hasInitialLoad, setHasInitialLoad] = useState(false);
   const { toast, showToast, showComingSoon, hideToast } = useToast();
@@ -70,10 +71,17 @@ const useCalanderScreenVM = () => {
         "[CalendarVM] Fetching calendar data for date:",
         currentDate.toISOString()
       );
-      fetchCalanderAppointmentsData(
-        currentDate.toISOString(),
-        pageFilter.location_ids.length > 0 ? pageFilter.location_ids : undefined
-      );
+      (async () => {
+        setIsLoading(true);
+        try {
+          await fetchCalanderAppointmentsData(
+            currentDate.toISOString(),
+            pageFilter.location_ids.length > 0 ? pageFilter.location_ids : undefined
+          );
+        } finally {
+          setIsLoading(false);
+        }
+      })();
     }
   }, [currentDate, isFromLogin]);
 
@@ -304,6 +312,7 @@ const useCalanderScreenVM = () => {
     currentDate,
     updateCurrentDate,
     calanderData,
+    isLoading,
     toast,
     showToast,
     showComingSoon,
