@@ -64,19 +64,16 @@ export async function requestPermissionsAndGetToken(): Promise<string | null> {
   }
 }
 
-export async function registerDevicePushToken(userId: string, token: string) {
+// Register token generically (per device), no user binding
+// Table: device_push_tokens(id uuid pk, expo_push_token text unique, created_at timestamptz)
+export async function registerDevicePushTokenGeneric(token: string) {
   try {
-    // Store or update the token for this user
-    // Table: user_push_tokens(user_id uuid primary key, expo_push_token text, updated_at timestamp)
     const { error } = await supabase
-      .from('user_push_tokens')
-      .upsert(
-        { user_id: userId, expo_push_token: token, updated_at: new Date().toISOString() },
-        { onConflict: 'user_id' }
-      );
+      .from('device_push_tokens')
+      .upsert({ expo_push_token: token }, { onConflict: 'expo_push_token' });
     if (error) throw error;
   } catch (e) {
-    console.log('[Notifications] registerDevicePushToken error', e);
+    console.log('[Notifications] registerDevicePushTokenGeneric error', e);
   }
 }
 

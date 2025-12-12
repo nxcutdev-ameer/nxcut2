@@ -8,7 +8,7 @@ import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { en, registerTranslation } from "react-native-paper-dates";
 import * as SplashScreen from "expo-splash-screen";
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import * as Updates from "expo-updates";
 import { useAuthStore } from "./Src/Store/useAuthStore";
 registerTranslation("en", en);
@@ -27,7 +27,6 @@ export default function App() {
       const {
         initializeNotificationHandler,
         requestPermissionsAndGetToken,
-        registerDevicePushToken,
         addNotificationListeners,
       } = await import('./Src/Services/NotificationService');
       try {
@@ -36,19 +35,16 @@ export default function App() {
 
         // Notifications: set handler and register token
         initializeNotificationHandler();
-        const session = await (await import('./Src/Utils/supabase')).supabase.auth.getSession();
-        const userId = session.data.session?.user?.id;
-        if (userId) {
-          const token = await requestPermissionsAndGetToken();
-          if (token) {
-            await registerDevicePushToken(userId, token);
-          }
-          // Listen for taps on notifications
-          addNotificationListeners((data) => {
-            // TODO: wire navigation if needed
-            // if (data?.appointmentId) navigate...
-          });
+        const token = await requestPermissionsAndGetToken();
+        if (token) {
+          const { registerDevicePushTokenGeneric } = await import('./Src/Services/NotificationService');
+          await registerDevicePushTokenGeneric(token);
         }
+        // Listen for taps on notifications
+        addNotificationListeners((data) => {
+          // TODO: wire navigation if needed
+          // if (data?.appointmentId) navigate...
+        });
 
         // Check for updates (only in production builds, not in Expo Go)
         if (!__DEV__) {
