@@ -95,7 +95,7 @@ const NotificationScreen = () => {
           onPress={() => navigation.goBack()}
           style={styles.backButton}
         >
-          <ArrowLeft size={20} color={colors.colors.text} />
+          <ArrowLeft size={20} color={colors.colors.text}  strokeWidth={1.9}/>
         </TouchableOpacity>
 
         <View style={styles.headerCenter}>
@@ -104,9 +104,9 @@ const NotificationScreen = () => {
           </Text>
         </View>
 
-        {/* <TouchableOpacity style={styles.settingsButton}>
-          <Settings size={24} color={colors.colors.text} />
-        </TouchableOpacity> */}
+        <TouchableOpacity style={styles.settingsButton}>
+          <Settings size={24} color={colors.colors.text} strokeWidth={1.9}/>
+        </TouchableOpacity> 
       </View>
 
       {/* Content */}
@@ -121,7 +121,7 @@ const NotificationScreen = () => {
         ) : (
           <View style={styles.listContainer}>
             {items.map((n) => (
-              <View key={n.id} style={[styles.card, { backgroundColor: colors.colors.surface }] }>
+              <View key={n.id} style={[styles.card, { backgroundColor: colors.colors.white }] }>
                 <View style={styles.cardHeader}>
                   <Text style={[styles.cardTitle, { color: colors.colors.text }]} numberOfLines={1}>
                     {n.title}
@@ -130,7 +130,7 @@ const NotificationScreen = () => {
                     {n.type || "info"}
                   </Text>
                 </View>
-                <Text style={[styles.cardBody, { color: colors.colors.textSecondary }]}>
+                <Text style={[styles.cardBody, { color: colors.colors.black }]}>
                   {n.body}
                 </Text>
                 <Text style={[styles.cardDate, { color: colors.colors.textSecondary }]}>
@@ -165,11 +165,13 @@ const styles = StyleSheet.create({
   },
   headerCenter: {
     flex: 1,
-    alignItems: "center",
+    alignItems: "flex-start",
+    paddingVertical:  getHeightEquivalent(20),
   },
   headerTitle: {
     fontSize: fontEq(20),
-    fontWeight: "700",
+    fontWeight: "600",
+    fontFamily: "Helvetica",
   },
   settingsButton: {
     padding: getWidthEquivalent(8),
@@ -177,6 +179,7 @@ const styles = StyleSheet.create({
   },
   scrollContainer: {
     flex: 1,
+    backgroundColor: colors.colors.background,
   },
   scrollContent: {
     flexGrow: 1,
@@ -187,10 +190,10 @@ const styles = StyleSheet.create({
     gap: getHeightEquivalent(12),
   },
   card: {
-    borderRadius: 12,
+    borderRadius: getWidthEquivalent(8),
     padding: getWidthEquivalent(14),
     borderWidth: 1,
-    borderColor: colors.colors.border,
+    borderColor: colors.colors.gray[300],
   },
   cardHeader: {
     flexDirection: 'row',
@@ -203,6 +206,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     flex: 1,
     marginRight: getWidthEquivalent(8),
+    fontFamily: "Helvetica",
   },
   cardType: {
     fontSize: fontEq(12),
@@ -213,6 +217,7 @@ const styles = StyleSheet.create({
     fontSize: fontEq(14),
     lineHeight: fontEq(20),
     marginBottom: getHeightEquivalent(6),
+    fontFamily: "Helvetica",
   },
   cardDate: {
     fontSize: fontEq(12),

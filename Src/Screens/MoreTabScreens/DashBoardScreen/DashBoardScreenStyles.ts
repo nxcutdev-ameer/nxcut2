@@ -9,7 +9,7 @@ const { colors: paint } = colors;
 export const DashBoardScreenStyles = StyleSheet.create({
   mainContainer: {
     flex: 1,
-    backgroundColor: paint.backgroundSecondary,
+    backgroundColor: paint.background,
   },
   downloadButtonContainer: {
     height: getHeightEquivalent(40),
