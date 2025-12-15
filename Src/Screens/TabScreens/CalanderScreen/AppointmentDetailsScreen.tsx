@@ -34,32 +34,30 @@ import { AppointmentCalanderBO, appointmentsRepository } from "../../../Reposito
 import { supabase } from "../../../Utils/supabase";
 
 interface AppointmentDetailsRouteParams {
-  appointment: AppointmentCalanderBO;
+  appointment?: AppointmentCalanderBO;
+  appointment_id?: string;
+  appointment_service_id?: string;
 }
 
 const AppointmentDetailsScreen = () => {
   type NavigationProp = StackNavigationProp<RootStackParamList>;
   const navigation = useNavigation<NavigationProp>();
   const route = useRoute();
-  const { appointment: initialAppointment } = route.params as AppointmentDetailsRouteParams;
+  const params = (route.params || {}) as AppointmentDetailsRouteParams;
+  const initialAppointment = params.appointment;
   const { allLocations } = useAuthStore();
   const { colors: paint } = colors;
   const [isCanceling, setIsCanceling] = useState(false);
-  const [appointment, setAppointment] = useState<AppointmentCalanderBO>(initialAppointment);
-  const [isLoading, setIsLoading] = useState(false);
+  const [appointment, setAppointment] = useState<AppointmentCalanderBO | null>(initialAppointment ?? null);
+  const [isLoading, setIsLoading] = useState(!initialAppointment);
   
   // Store the appointment service ID separately to avoid closure issues
-  const appointmentServiceId = React.useRef(initialAppointment.id);
+  const appointmentServiceId = React.useRef<string | null>(initialAppointment?.id ?? params.appointment_service_id ?? null);
 
   // Fetch fresh appointment data from the database
   const fetchAppointmentDetails = React.useCallback(async () => {
     try {
       setIsLoading(true);
-      console.log("[AppointmentDetails] Fetching fresh data for appointment service ID:", appointmentServiceId.current);
-      
-      // Use a timestamp to bypass any potential caching
-      const timestamp = Date.now();
-      console.log("[AppointmentDetails] Query timestamp:", timestamp);
       
       const { data, error } = await supabase
         .from("appointment_services")
@@ -156,28 +154,161 @@ const AppointmentDetailsScreen = () => {
       
       setAppointment(freshAppointment);
       console.log("[AppointmentDetails] State updated successfully");
-    } catch (error) {
-      console.error("[AppointmentDetails] Error in fetchAppointmentDetails:", error);
+    } catch (e) {
+      console.error("[AppointmentDetails] Error in fetchAppointmentDetails:", e);
     } finally {
       setIsLoading(false);
     }
   }, []);
 
+  // Load data when only appointment_id or appointment_service_id provided
+  useEffect(() => {
+    const load = async () => {
+      try {
+        if (appointment) return; // already have it
+        setIsLoading(true);
+        if (appointmentServiceId.current) {
+          const { data, error } = await supabase
+            .from("appointment_services")
+            .select(`
+              id,
+              appointment_id,
+              service_id,
+              staff_id,
+              price,
+              start_time,
+              end_time,
+              voucher_discount,
+              created_at,
+              original_staff_id,
+              services (*),
+              staff:team_members!appointment_services_staff_id_fkey (*),
+              appointments!appointment_services_appointment_id_fkey (
+                id,
+                client_id,
+                appointment_date,
+                status,
+                notes,
+                location_id,
+                clients (* )
+              )
+            `)
+            .eq("id", appointmentServiceId.current)
+            .maybeSingle();
+          if (error) throw error;
+          if (data) {
+            const appointmentData = data.appointments as any;
+            const fresh: AppointmentCalanderBO = {
+              id: data.id,
+              appointment_id: data.appointment_id,
+              service_id: data.service_id,
+              staff_id: data.staff_id,
+              created_at: data.created_at,
+              original_staff: null,
+              original_staff_id: data.original_staff_id,
+              appointment: {
+                id: appointmentData.id,
+                client_id: appointmentData.client_id,
+                appointment_date: appointmentData.appointment_date,
+                status: appointmentData.status,
+                notes: appointmentData.notes,
+                location_id: appointmentData.location_id,
+                client: appointmentData.clients,
+              } as any,
+              service: data.services as any,
+              staff: data.staff as any,
+              price: data.price,
+              start_time: data.start_time,
+              end_time: data.end_time,
+              voucher_discount: data.voucher_discount,
+            };
+            setAppointment(fresh);
+          }
+        } else if (params.appointment_id) {
+          const { data, error } = await supabase
+            .from("appointment_services")
+            .select(`
+              id,
+              appointment_id,
+              service_id,
+              staff_id,
+              price,
+              start_time,
+              end_time,
+              voucher_discount,
+              created_at,
+              original_staff_id,
+              services (*),
+              staff:team_members!appointment_services_staff_id_fkey (*),
+              appointments!appointment_services_appointment_id_fkey (
+                id,
+                client_id,
+                appointment_date,
+                status,
+                notes,
+                location_id,
+                clients (* )
+              )
+            `)
+            .eq("appointment_id", params.appointment_id)
+            .limit(1)
+            .maybeSingle();
+          if (error) throw error;
+          if (data) {
+            appointmentServiceId.current = data.id;
+            const appointmentData = data.appointments as any;
+            const fresh: AppointmentCalanderBO = {
+              id: data.id,
+              appointment_id: data.appointment_id,
+              service_id: data.service_id,
+              staff_id: data.staff_id,
+              created_at: data.created_at,
+              original_staff: null,
+              original_staff_id: data.original_staff_id,
+              appointment: {
+                id: appointmentData.id,
+                client_id: appointmentData.client_id,
+                appointment_date: appointmentData.appointment_date,
+                status: appointmentData.status,
+                notes: appointmentData.notes,
+                location_id: appointmentData.location_id,
+                client: appointmentData.clients,
+              } as any,
+              service: data.services as any,
+              staff: data.staff as any,
+              price: data.price,
+              start_time: data.start_time,
+              end_time: data.end_time,
+              voucher_discount: data.voucher_discount,
+            };
+            setAppointment(fresh);
+          }
+        }
+      } catch (e) {
+        console.error('[AppointmentDetails] load error', e);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    load();
+  }, [params?.appointment_id, appointment]);
+
   // Refetch appointment data when screen comes into focus
   useFocusEffect(
     React.useCallback(() => {
-      console.log("[AppointmentDetails] Screen focused, refetching data");
+      if (!appointmentServiceId.current) return;
       fetchAppointmentDetails();
     }, [fetchAppointmentDetails])
   );
 
   // Find the location name using location_id
-  const location = allLocations.find(
+  const location = appointment ? allLocations.find(
     (loc) => loc.id === appointment.appointment.location_id
-  );
+  ) : undefined;
   const locationName = location?.name || "Location not found";
 
   const handleCancelAppointment = () => {
+    if (!appointment) return;
     Alert.alert(
       "Void Sale",
       "Are you sure you want to void this sale? This action cannot be undone",
@@ -256,10 +387,12 @@ const AppointmentDetailsScreen = () => {
   };
 
   const navigateToClientDetail = (client: any) => {
+    if (!appointment) return;
     navigation.navigate("ClientDetail", { item: client });
   };
 
   const calculateDuration = () => {
+    if (!appointment) return "0m";
     const [startHours, startMinutes] = appointment.start_time
       .split(":")
       .map(Number);
@@ -335,7 +468,7 @@ const AppointmentDetailsScreen = () => {
         </TouchableOpacity>
       </View>
 
-      {isLoading ? (
+      {isLoading || !appointment ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={paint.primary} />
           <Text style={[styles.loadingText, { color: paint.textSecondary }]}>

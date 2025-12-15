@@ -24,30 +24,14 @@ function jsonResponse(body: unknown, status = 200) {
   });
 }
 
-// Helper: format time nicely in Gulf Standard Time
 function formatTime(isoString: string): string {
   const date = new Date(isoString);
   return new Intl.DateTimeFormat("en-US", {
     hour: "numeric",
     minute: "numeric",
     hour12: true,
-    timeZone: "Asia/Dubai", // adjust if needed
+    timeZone: "Asia/Dubai",
   }).format(date);
-}
-
-// Helper: resolve appointment datetime from record
-function resolveAppointmentDateTime(appointment: any): string {
-  // Prefer a full datetime field if available
-  if (appointment.start_at) return appointment.start_at;
-  if (appointment.appointment_date_time) return appointment.appointment_date_time;
-
-  // Combine date + time if both exist
-  if (appointment.appointment_date && appointment.appointment_time) {
-    return `${appointment.appointment_date}T${appointment.appointment_time}+04:00`;
-  }
-
-  // Fallback to created_at
-  return appointment.created_at;
 }
 
 serve(async (req: Request) => {
@@ -79,8 +63,8 @@ serve(async (req: Request) => {
 
     let enrichedPayload: PushPayload | null = null;
 
-    // INSERT case
-    if (payload?.type === "INSERT" && payload?.record) {
+    // INSERT case (appointments)
+    if (payload?.type === "INSERT" && payload?.table === "appointments" && payload?.record) {
       const appointment = payload.record;
 
       const { data: client } = await supabase
@@ -102,13 +86,16 @@ serve(async (req: Request) => {
         .limit(1)
         .maybeSingle();
 
-      const timeText = formatTime(resolveAppointmentDateTime(appointment));
+      const timeText = formatTime(appointment.created_at);
 
       const bodyText =
         `${timeText} ${service?.service_name ?? ""} for ` +
         `${client?.first_name ?? ""} ${client?.last_name ?? ""} with ` +
         `${service?.staff_name ?? ""} booked by ${location?.name ?? ""} reception`;
 
+      if (appointment.isOnline === true) {
+        bodyText += " (booked online)";
+      }
       enrichedPayload = {
         title: "New appointment",
         body: bodyText,
@@ -116,8 +103,8 @@ serve(async (req: Request) => {
       };
     }
 
-    // DELETE case
-    else if (payload?.type === "DELETE" && payload?.old_record) {
+    // DELETE case (appointments)
+    else if (payload?.type === "DELETE" && payload?.table === "appointments" && payload?.old_record) {
       const appointment = payload.old_record;
 
       const { data: client } = await supabase
@@ -132,14 +119,7 @@ serve(async (req: Request) => {
         .eq("id", appointment.location_id)
         .single();
 
-      const { data: service } = await supabase
-        .from("appointment_service_pricing")
-        .select("service_name, staff_name")
-        .eq("appointment_id", appointment.id)
-        .limit(1)
-        .maybeSingle();
-
-      const timeText = formatTime(resolveAppointmentDateTime(appointment));
+      const timeText = formatTime(appointment.created_at);
 
       const bodyText =
         `Appointment canceled at ${timeText} for ` +
@@ -151,6 +131,104 @@ serve(async (req: Request) => {
         body: bodyText,
         data: { type: "canceled", appointmentId: appointment.id },
       };
+    }
+
+    // SALES INSERT case (discounts/tips/vouchers/memberships)
+    else if (payload?.type === "INSERT" && payload?.table === "sales" && payload?.record) {
+      const sale = payload.record;
+
+      const hasDiscountOrTip =
+        (sale.voucher_discount ?? 0) > 0 ||
+        (sale.membership_discount ?? 0) > 0 ||
+        (sale.tip_amount ?? 0) > 0 ||
+        (sale.discount_amount ?? 0) > 0 ||
+        (sale.manual_discount ?? 0) > 0;
+
+      if (hasDiscountOrTip) {
+        const { data: client } = await supabase
+          .from("clients")
+          .select("first_name, last_name")
+          .eq("id", sale.client_id)
+          .single();
+
+        const { data: appointment } = await supabase
+          .from("appointments")
+          .select("location_id, created_at")
+          .eq("id", sale.appointment_id)
+          .single();
+
+        const { data: location } = await supabase
+          .from("locations")
+          .select("name")
+          .eq("id", appointment?.location_id)
+          .single();
+
+        const { data: service } = await supabase
+          .from("appointment_service_pricing")
+          .select("service_name, staff_name")
+          .eq("appointment_id", sale.appointment_id)
+          .limit(1)
+          .maybeSingle();
+
+        const timeText = formatTime(appointment?.created_at);
+
+        // Collect all applied items
+        const parts: string[] = [];
+        if ((sale.voucher_discount ?? 0) > 0) parts.push(`Voucher AED ${sale.voucher_discount}`);
+        if ((sale.membership_discount ?? 0) > 0) parts.push(`Membership AED ${sale.membership_discount}`);
+        if ((sale.discount_amount ?? 0) > 0) parts.push(`Discount AED ${sale.discount_amount}`);
+        if ((sale.manual_discount ?? 0) > 0) parts.push(`Manual discount AED ${sale.manual_discount}`);
+        if ((sale.tip_amount ?? 0) > 0) parts.push(`Tip AED ${sale.tip_amount}`);
+
+        // Dynamic title/type
+        let title: string;
+        let type: string;
+        if (parts.length > 1) {
+          title = "Discounts & tips applied";
+          type = "combined";
+        } else {
+          const single = parts[0] ?? "Sale update";
+          if (single.includes("Voucher")) { title = "Voucher applied"; type = "voucher"; }
+          else if (single.includes("Membership")) { title = "Membership discount"; type = "membership"; }
+          else if (single.includes("Manual")) { title = "Manual discount"; type = "manual_discount"; }
+          else if (single.includes("Tip")) { title = "Tip added"; type = "tip"; }
+          else { title = "Discount applied"; type = "discount"; }
+        }
+
+        const preposition = type === "tip" ? "from" : "for";
+
+        const bodyText =
+          `${parts.join(" + ")} added at ${timeText} ${preposition} ` +
+          `${client?.first_name ?? ""} ${client?.last_name ?? ""} ` +
+          `${service?.service_name ? "(" + service.service_name + ")" : ""} ` +
+          `with ${service?.staff_name ?? ""} by ${location?.name ?? ""} reception`;
+        enrichedPayload = {
+          title,
+          body: bodyText,
+          data: { type, appointmentId: sale.appointment_id },
+        };
+      }
+    }
+    // PRODUCTS INSERT/UPDATE case (low stock alert)
+    else if ((payload?.type === "INSERT" || payload?.type === "UPDATE") 
+            && payload?.table === "products" 
+            && payload?.record) {
+      const product = payload.record;
+
+      const LOW_STOCK = 1;
+
+      if (Number(product.total_stock ?? 0) <= LOW_STOCK) {
+
+        const bodyText =
+          `⚠️ Product "${product.product_name}" is low in stock ` +
+          `(only ${product.total_stock} left)`;
+
+        enrichedPayload = {
+          title: "Product Low stock",
+          body: bodyText,
+          data: { type: "low_stock", productId: product.id },
+        };
+      }
     }
 
     // Direct push payload case

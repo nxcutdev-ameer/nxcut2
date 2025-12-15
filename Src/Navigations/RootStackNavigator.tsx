@@ -73,7 +73,7 @@ export type RootStackParamList = {
     item: any;
   };
   AddClientScreen: undefined;
-  AppointmentDetailsScreen: undefined;
+  AppointmentDetailsScreen: { appointment_id?: string; appointment_service_id?: string; appointment?: any } | undefined;
   CreateAppointment: undefined;
   PaymentMethodsScreen: undefined;
   AddPaymentMethodScreen: undefined;
