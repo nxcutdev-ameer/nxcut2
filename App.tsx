@@ -84,7 +84,7 @@ export default function App() {
             .select('created_at')
             .order('created_at', { ascending: false })
             .limit(1);
-          if (!latestErr && latestRows && latestRows.length > 0) {
+          if (!latestErr && latestRows && latestRows.length> 0) {
             const latest = new Date(latestRows[0].created_at).getTime();
             const lastSeen = lastSeenAt ? new Date(lastSeenAt).getTime() : 0;
             if (!lastSeenAt || (isFinite(latest) && latest > lastSeen)) {
