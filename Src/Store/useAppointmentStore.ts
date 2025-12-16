@@ -81,6 +81,8 @@ interface AppointmentStore {
     ttlMs: number
   ) => void;
   clearAppointmentCaches: () => void;
+  // clearCalanderData removed - using overlay-wrapped refresh instead
+  // clearCalanderData: () => void;
 }
 
 export const useAppointmentStore = create<AppointmentStore>((set, get) => ({
@@ -141,7 +143,6 @@ export const useAppointmentStore = create<AppointmentStore>((set, get) => ({
       barGraphCache: {},
       staffPerformanceCache: {},
     }),
-
   fetchCalanderAppointmentsData: async (date: string, locationIds?: string[]) => {
     try {
       let responce = await appointmentsRepository.getAppointmentCalanderData(

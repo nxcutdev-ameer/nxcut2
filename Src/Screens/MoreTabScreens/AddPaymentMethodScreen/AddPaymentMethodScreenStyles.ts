@@ -7,13 +7,15 @@ export const AddPaymentMethodScreenStyles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.primary,
   },
+  gradientHeader: {
+    paddingTop: getHeightEquivalent(0), // gradient will extend under status bar via SafeAreaView
+  },
   header: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: getWidthEquivalent(20),
     paddingVertical: getHeightEquivalent(16),
-    backgroundColor: colors.primary,
   },
   backButton: {
     width: getWidthEquivalent(40),
@@ -36,8 +38,8 @@ export const AddPaymentMethodScreenStyles = StyleSheet.create({
   content: {
     flex: 1,
     backgroundColor: colors.white,
-    borderTopLeftRadius: getWidthEquivalent(24),
-    borderTopRightRadius: getWidthEquivalent(24),
+    // borderTopLeftRadius: getWidthEquivalent(24),
+    // borderTopRightRadius: getWidthEquivalent(24),
     paddingTop: getHeightEquivalent(24),
     paddingHorizontal: getWidthEquivalent(20),
   },

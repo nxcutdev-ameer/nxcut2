@@ -31,6 +31,7 @@ import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context"
 import { CalanderScreenStyles } from "./CalanderScreenStyles";
 import DraggableCalendarColumn from "../../../Components/DraggableCalendarColumn";
 import { useNotificationsStore } from "../../../Store/useNotificationsStore";
+import * as Notifications from 'expo-notifications';
 import TimeGutter from "../../../Components/TimeGutter";
 import TimeGutterHeader from "../../../Components/TimeGutterHeader";
 import {
@@ -803,7 +804,7 @@ const CalanderScreen = () => {
   // Track if we're returning from an appointment screen
   const isReturningFromAppointmentScreen = useRef(false);
   
-  // Refresh calendar when returning from other screens (create/cancel appointment)
+  // Refresh calendar when returning from other screens (create/cancel appointment) and when notifications arrive
   useFocusEffect(
     useCallback(() => {
       // Ignore scroll events temporarily when returning from another screen
@@ -820,7 +821,18 @@ const CalanderScreen = () => {
       if (dataChanged || isRefreshing) {
         navigation.setParams({ dataChanged: undefined, refresh: undefined });
       }
-      
+
+      // Subscribe to push notifications to refresh calendar on new notifications
+      const receivedSub = Notifications.addNotificationReceivedListener(() => {
+        const locationIds = pageFilter.location_ids.length > 0 
+          ? pageFilter.location_ids 
+          : allLocations.map((loc) => loc.id);
+        const dateString = currentDate.toISOString().split('T')[0];
+        setIsFocusLoading(true);
+        Promise.resolve(fetchCalanderAppointmentsData(dateString, locationIds))
+          .finally(() => setIsFocusLoading(false));
+      });
+
       // Check if returning from appointment screen
       const isReturningFromAppointment = isComingFromAppointmentScreen.current;
       
@@ -842,11 +854,13 @@ const CalanderScreen = () => {
       // Only refresh calendar data if backend interaction occurred (dataChanged flag)
       if (dataChanged) {
         console.log('[CalendarScroll-Focus] Backend data changed - refreshing calendar');
+        setIsFocusLoading(true);
         const locationIds = pageFilter.location_ids.length > 0 
           ? pageFilter.location_ids 
           : allLocations.map((loc) => loc.id);
         const dateString = currentDate.toISOString().split('T')[0];
-        fetchCalanderAppointmentsData(dateString, locationIds);
+        Promise.resolve(fetchCalanderAppointmentsData(dateString, locationIds))
+          .finally(() => setIsFocusLoading(false));
       } else if (!isReturningFromAppointment) {
         // Auto-scroll when navigating from tabs (not returning from appointment screens and no data change)
         console.log('[CalendarScroll-Focus] Tab navigation - performing auto-scroll');

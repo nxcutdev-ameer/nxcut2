@@ -385,7 +385,7 @@ const CreateAppointmentScreen = ({ route }: any) => {
     if (hasDataChanged.current) {
       const parent = navigation.getParent();
       if (parent) {
-        parent.setParams({ dataChanged: true });
+        parent.setParams({ dataChanged: true, refresh: true });
       }
     }
     navigation.goBack();
@@ -626,7 +626,7 @@ const CreateAppointmentScreen = ({ route }: any) => {
                         // Navigate back with params using setParams before going back
                         const parent = navigation.getParent();
                         if (parent) {
-                          parent.setParams({ dataChanged: true });
+                          parent.setParams({ dataChanged: true, refresh: true });
                         }
                         navigation.goBack();
                       },
@@ -738,7 +738,7 @@ const CreateAppointmentScreen = ({ route }: any) => {
         setTimeout(() => {
           const parent = navigation.getParent();
           if (parent) {
-            parent.setParams({ dataChanged: true });
+            parent.setParams({ dataChanged: true, refresh: true });
           }
           navigation.goBack();
         }, 1500);
@@ -779,7 +779,7 @@ const CreateAppointmentScreen = ({ route }: any) => {
           setTimeout(() => {
             const parent = navigation.getParent();
             if (parent) {
-              parent.setParams({ dataChanged: true });
+              parent.setParams({ dataChanged: true, refresh: true });
             }
             navigation.goBack();
           }, 1500);

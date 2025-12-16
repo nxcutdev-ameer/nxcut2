@@ -75,7 +75,7 @@ const useCalanderScreenVM = () => {
         setIsLoading(true);
         try {
           await fetchCalanderAppointmentsData(
-            currentDate.toISOString(),
+            currentDate.toISOString().split("T")[0],
             pageFilter.location_ids.length > 0 ? pageFilter.location_ids : undefined
           );
         } finally {
@@ -90,7 +90,7 @@ const useCalanderScreenVM = () => {
     if (hasInitialLoad || !isFromLogin) {
       console.log("[CalendarVM] Refetching data due to filter change");
       fetchCalanderAppointmentsData(
-        currentDate.toISOString(),
+        currentDate.toISOString().split("T")[0],
         pageFilter.location_ids.length > 0 ? pageFilter.location_ids : undefined
       );
     }

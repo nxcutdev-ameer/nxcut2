@@ -18,6 +18,7 @@ import {
   Check,
 } from "lucide-react-native";
 import { colors } from "../../../Constants/colors";
+import { LinearGradient } from "expo-linear-gradient";
 import { AddPaymentMethodScreenStyles } from "./AddPaymentMethodScreenStyles";
 
 interface PaymentMethodType {
@@ -195,8 +196,14 @@ const AddPaymentMethodScreen = () => {
 
   return (
     <SafeAreaView style={AddPaymentMethodScreenStyles.mainContainer}>
-      {/* Header */}
-      <View style={AddPaymentMethodScreenStyles.header}>
+      {/* Gradient Header matching PaymentMethodsScreen */}
+      <LinearGradient
+        colors={[colors.primary, colors.primary]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={AddPaymentMethodScreenStyles.gradientHeader}
+      >
+        <View style={AddPaymentMethodScreenStyles.header}>
         <TouchableOpacity
           style={AddPaymentMethodScreenStyles.backButton}
           onPress={() => navigation.goBack()}
@@ -208,6 +215,7 @@ const AddPaymentMethodScreen = () => {
         </Text>
         <View style={AddPaymentMethodScreenStyles.headerSpacer} />
       </View>
+     </LinearGradient>
 
       {/* Content */}
       <ScrollView style={AddPaymentMethodScreenStyles.content}>
