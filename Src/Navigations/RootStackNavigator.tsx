@@ -87,7 +87,7 @@ const RootStackNavigator = () => {
 
   return (
     <GestureHandlerRootView>
-      <NavigationContainer>
+      <NavigationContainer ref={require('./navigationRef').navigationRef as any}>
         <Stack.Navigator
           initialRouteName="SplashScreen"
           screenOptions={{

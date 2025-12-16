@@ -79,7 +79,7 @@ export const CalanderScreenStyles = StyleSheet.create({
     marginLeft: getWidthEquivalent(4),
   },
   profileInitials: {
-    fontSize: fontEq(14),
+    fontSize: fontEq(16),
     fontWeight: "600",
     color: colors.primary,
   },

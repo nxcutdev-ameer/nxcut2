@@ -1,10 +1,6 @@
-import { get } from "react-native/Libraries/TurboModule/TurboModuleRegistry";
 import { colors, theme, shadows } from "../../../Constants/colors";
 import { StyleSheet } from "react-native";
-import {
-  getHeightEquivalent,
-  getWidthEquivalent,
-} from "../../../Utils/helpers";
+import { getHeightEquivalent, getWidthEquivalent, fontEq } from "../../../Utils/helpers";
 
 export const MoreScreenStyles = StyleSheet.create({
   mainContainer: {
@@ -17,44 +13,57 @@ export const MoreScreenStyles = StyleSheet.create({
     padding: theme.spacing.md,
   },
   header: {
-    flexDirection: "row-reverse",
-    justifyContent: "space-between",
-    alignItems: "center",
+    height: getHeightEquivalent(50),
+    width: '100%',
+    backgroundColor: colors.background,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    paddingHorizontal: getWidthEquivalent(16),
     marginBottom: theme.spacing.xs,
-    paddingHorizontal: theme.spacing.md,
-    paddingVertical: theme.spacing.md,
   },
   headerRight: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: theme.spacing.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: getWidthEquivalent(4),
   },
-  bellWrapper: {
-    position: "relative",
-    marginRight: theme.spacing.md,
+  headerButton: {
+    width: getWidthEquivalent(40),
+    height: getWidthEquivalent(40),
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: getWidthEquivalent(20),
+    position: 'relative',
   },
-  badge: {
-    position: "absolute",
-    top: -2,
-    right: -2,
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: colors.danger,
+  notificationBadge: {
+    position: 'absolute',
+    top: getHeightEquivalent(6),
+    right: getWidthEquivalent(8),
+    width: getWidthEquivalent(11),
+    height: getWidthEquivalent(11),
+    borderRadius: getWidthEquivalent(11) / 2,
+    backgroundColor: '#FF4444',
   },
-  profileCircle: {
-    width: getWidthEquivalent(38), //32,
+  profileButton: {
+    width: getWidthEquivalent(38),
     height: getWidthEquivalent(38),
-    borderRadius: 30,
+    borderRadius: getWidthEquivalent(50),
     backgroundColor: colors.primaryLight,
-    justifyContent: "center",
     alignItems: "center",
+    justifyContent: "center",
+    marginLeft: getWidthEquivalent(4),
   },
-  profileText: {
+  profileInitials: {
+    fontSize: fontEq(14),
+    fontWeight: "600",
     color: colors.primary,
-    fontWeight: "bold",
   },
-
+  headerTitle: {
+    fontSize: fontEq(16),
+    fontWeight: "600",
+    color: colors.primary,
+    alignSelf: "center",
+  },
   // Wallet Card
   walletCardWrapper: {
     marginBottom: theme.spacing.lg,

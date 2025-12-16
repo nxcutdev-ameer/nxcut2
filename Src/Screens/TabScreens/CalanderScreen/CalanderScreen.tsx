@@ -30,6 +30,7 @@ import React, {
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { CalanderScreenStyles } from "./CalanderScreenStyles";
 import DraggableCalendarColumn from "../../../Components/DraggableCalendarColumn";
+import { useNotificationsStore } from "../../../Store/useNotificationsStore";
 import TimeGutter from "../../../Components/TimeGutter";
 import TimeGutterHeader from "../../../Components/TimeGutterHeader";
 import {
@@ -1004,7 +1005,9 @@ const CalanderScreen = () => {
                 >
                   <Bell size={24} color={colors.black} strokeWidth={1.7} />
                   {/* Notification badge */}
-                  <View style={CalanderScreenStyles.notificationBadge} />
+                  {useNotificationsStore((s) => s.hasUnread) ? (
+                    <View style={CalanderScreenStyles.notificationBadge} />
+                  ) : null}
                 </TouchableOpacity>
 
                 <TouchableOpacity

@@ -26,6 +26,7 @@ import {
 import { MoreScreenStyles } from "./MoreScreenStyles";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
+import { useNotificationsStore } from "../../../Store/useNotificationsStore";
 import { supabase } from "../../../Utils/supabase";
 import { useAuthStore } from "../../../Store/useAuthStore";
 import CustomToast from "../../../Components/CustomToast";
@@ -33,6 +34,7 @@ import { useToast } from "../../../Hooks/useToast";
 const MoreScreen = () => {
   const navigation: any = useNavigation();
   const { toast, hideToast } = useToast();
+  const session = useAuthStore((s: any) => s.session);
   const menuItems = [
     {
       label: "DashBoard",
@@ -85,16 +87,20 @@ const MoreScreen = () => {
         <View style={MoreScreenStyles.headerRight}>
           <TouchableOpacity
             onPress={() => navigation.navigate("NotificationScreen")}
-            style={MoreScreenStyles.bellWrapper}
+            style={MoreScreenStyles.headerButton}
           >
             <Bell size={24} color={colors.text} strokeWidth={1.7} />
-            {/* <View style={MoreScreenStyles.badge} /> */}
+            {useNotificationsStore((s) => s.hasUnread) ? (
+              <View style={MoreScreenStyles.notificationBadge} />
+            ) : null}
           </TouchableOpacity>
           <TouchableOpacity
             onPress={() => navigation.navigate("ProfileAreaScreen")}
-            style={MoreScreenStyles.profileCircle}
+            style={MoreScreenStyles.profileButton}
           >
-            <Text style={MoreScreenStyles.profileText}>M</Text>
+         <Text style={MoreScreenStyles.headerTitle}>
+                    {session?.user.email?.slice(0, 1).toLocaleUpperCase()}
+                  </Text>
           </TouchableOpacity>
         </View>
       </View>

@@ -50,6 +50,7 @@ const AppointmentDetailsScreen = () => {
   const [isCanceling, setIsCanceling] = useState(false);
   const [appointment, setAppointment] = useState<AppointmentCalanderBO | null>(initialAppointment ?? null);
   const [isLoading, setIsLoading] = useState(!initialAppointment);
+  const [unavailable, setUnavailable] = useState(false);
   
   // Store the appointment service ID separately to avoid closure issues
   const appointmentServiceId = React.useRef<string | null>(initialAppointment?.id ?? params.appointment_service_id ?? null);

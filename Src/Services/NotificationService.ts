@@ -79,10 +79,13 @@ export async function registerDevicePushTokenGeneric(token: string) {
 
 export function addNotificationListeners(onTap?: (data: NotificationData) => void) {
   const receivedSub = Notifications.addNotificationReceivedListener(() => {
-    // Optional: could update in-app inbox, badge, etc.
+    // Set global unread badge for this session
+    try { require('../Store/useNotificationsStore').useNotificationsStore.getState().setUnread(true); } catch {}
   });
 
   const responseSub = Notifications.addNotificationResponseReceivedListener((response) => {
+    try { require('../Store/useNotificationsStore').useNotificationsStore.getState().setUnread(true); } catch {}
+
     const data = (
       response &&
       response.notification &&

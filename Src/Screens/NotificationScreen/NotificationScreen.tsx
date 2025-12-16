@@ -1,26 +1,28 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   StyleSheet,
   Text,
   View,
   TouchableOpacity,
   RefreshControl,
-  Alert,
   FlatList,
   ActivityIndicator,
   Animated,
   Easing,
-  Dimensions,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useNavigation } from "@react-navigation/native";
+import * as Notifications from 'expo-notifications';
+import { useNavigation, useFocusEffect } from "@react-navigation/native";
+import { useNotificationsStore } from "../../Store/useNotificationsStore";
 import { ArrowLeft, BellOff, Settings } from "lucide-react-native";
 import colors from "../../Constants/colors";
 import { supabase } from "../../Utils/supabase";
+import { routeFromNotificationData } from "../../Utils/notificationRouting";
 import {
   fontEq,
   getHeightEquivalent,
   getWidthEquivalent,
+  formatTimeAgo,
 } from "../../Utils/helpers";
 
 type NotificationRow = {
@@ -54,7 +56,14 @@ const NotificationScreen = () => {
       case 'appointments':
         return ['New appointment', 'Appointment canceled', 'Appointment cancelled'];
       case 'tips_discounts':
-        return ['Discounts & tips applied', 'Tip added', 'Manual discount'];
+        return [
+          'Discounts & tips applied',
+          'Tip added',
+          'Manual discount',
+          'Voucher applied',
+          'Membership discount',
+          'Discount applied'
+        ];
       case 'products':
         return ['Product Low stock'];
       default:
@@ -84,10 +93,16 @@ const NotificationScreen = () => {
       if (error) throw error;
       const rows = Array.isArray(data) ? (data as NotificationRow[]).filter(Boolean) : [];
 
+      const dedupe = (list: NotificationRow[]) => {
+        const map = new Map<string, NotificationRow>();
+        for (const it of list) if (it && it.id) map.set(it.id, it);
+        return Array.from(map.values()).sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      };
+
       if (append) {
-        setItems((prev) => [...prev, ...rows]);
+        setItems((prev) => dedupe([...prev, ...rows]));
       } else {
-        setItems(rows);
+        setItems(dedupe(rows));
       }
       setHasMore(rows.length === PAGE_SIZE);
       setPage(nextPage);
@@ -116,6 +131,59 @@ const NotificationScreen = () => {
 
     fetchNotifications(0, false);
   }, [fetchNotifications, currentTab, fadeAnim, underlineAnim]);
+
+  // When entering the notification screen, mark notifications as read for this session
+  useFocusEffect(
+    React.useCallback(() => {
+      try { useNotificationsStore.getState().markRead(); } catch {}
+      return () => {};
+    }, [])
+  );
+
+  // Debounced refresh requests to avoid multiple rapid reloads
+  const refreshDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const requestRefresh = useCallback(() => {
+    try { if (refreshDebounceRef.current) clearTimeout(refreshDebounceRef.current); } catch {}
+    refreshDebounceRef.current = setTimeout(() => {
+      fetchNotifications(0, false);
+    }, 400);
+  }, [fetchNotifications]);
+
+  // Live refresh with Expo notifications (foreground receive and tap)
+  useEffect(() => {
+    const received = Notifications.addNotificationReceivedListener(() => {
+      // Foreground push received; refresh current tab
+      try { useNotificationsStore.getState().setUnread(true); } catch {}
+      requestRefresh();
+    });
+    const responded = Notifications.addNotificationResponseReceivedListener(() => {
+      // User tapped a notification; refresh as well
+      requestRefresh();
+    });
+    return () => {
+      try { (received as any)?.remove?.(); } catch {}
+      try { (responded as any)?.remove?.(); } catch {}
+    };
+  }, [fetchNotifications]);
+
+  // Live refresh with Supabase realtime on notifications insert
+  useEffect(() => {
+    const channel = supabase
+      .channel('notifications_live')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'notifications' },
+        () => {
+          try { useNotificationsStore.getState().setUnread(true); } catch {}
+          requestRefresh();
+        },
+      )
+      .subscribe();
+
+    return () => {
+      try { supabase.removeChannel(channel); } catch {}
+    };
+  }, [fetchNotifications]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -211,7 +279,7 @@ const NotificationScreen = () => {
          style={[
            styles.animatedUnderline,
            {
-             width: tabWidth || undefined,
+             width: tabWidth-5-10 || undefined,
              transform: [
                {
                  translateX: underlineAnim.interpolate({
@@ -257,36 +325,7 @@ const NotificationScreen = () => {
           <TouchableOpacity
             style={[styles.card, { backgroundColor: colors.colors.white }]}
             activeOpacity={0.8}
-            onPress={() => {
-              const t = (n.title || '').toLowerCase();
-              if (t.includes('new appointment')) {
-                if (n.appointment_id) {
-                  navigation.navigate('AppointmentDetailsScreen', {
-                    appointment_id: n.appointment_id || undefined,
-                  } as any);
-                } else {
-                  Alert.alert('Appointment', 'No appointment id found');
-                }
-              } else if (t.includes('appointment canceled') || t.includes('appointment cancelled')) {
-                Alert.alert('Appointment Canceled', 'This appointment was canceled.');
-              } else if (t.includes('product low stock')) {
-                Alert.alert(
-                  'Low Stock Alert',
-                  n.body || 'One or more products are running low on stock. Please restock soon to avoid shortages.',
-                  [{ text: 'OK', style: 'default' }]
-                );
-              } else if (
-                t.includes('discounts & tips applied') ||
-                t.includes('tip added') ||
-                t.includes('manual discount')
-              ) {
-                const saleIdMatch = (n.body || '').match(/sale[_\s-]*id[:#\s-]*([A-Za-z0-9_-]+)/i);
-                const saleId = saleIdMatch?.[1];
-                navigation.navigate('TransactionDetailsScreen', {
-                  saleId: saleId,
-                } as any);
-              }
-            }}
+            onPress={() => routeFromNotificationData({ title: n.title, body: n.body, appointment_id: n.appointment_id || undefined })}
           >
             <View style={styles.cardHeader}>
               <Text style={[styles.cardTitle, { color: colors.colors.text }]} numberOfLines={1}>
@@ -296,11 +335,11 @@ const NotificationScreen = () => {
                 {n.type || 'info'}
               </Text>
             </View>
+            <Text style={[styles.cardDate, { color: colors.colors.textSecondary }]}>
+              {formatTimeAgo(n.created_at)}
+            </Text>
             <Text style={[styles.cardBody, { color: colors.colors.black }]}>
               {n.body}
-            </Text>
-            <Text style={[styles.cardDate, { color: colors.colors.textSecondary }]}>
-              {new Date(n.created_at).toLocaleString()}
             </Text>
           </TouchableOpacity>
         )}
@@ -320,7 +359,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: getWidthEquivalent(20),
-    paddingBottom: getHeightEquivalent(0),
+    paddingBottom: getHeightEquivalent(18),
     borderBottomWidth: 0,
     borderBottomColor: colors.colors.border,
     position: 'relative',
@@ -364,12 +403,13 @@ const styles = StyleSheet.create({
     fontSize: fontEq(14),
     fontWeight: '600',
     marginBottom: getHeightEquivalent(8),
+    fontFamily: "Helvetica",
   },
   animatedUnderline: {
     position: 'absolute',
     bottom: -1,
-    left: 0,
-    height: 2,
+    left: 10,
+    height: 2.9,
   },
   scrollContainer: {
     flex: 1,
@@ -396,7 +436,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: getHeightEquivalent(6),
+    marginBottom: getHeightEquivalent(3),
   },
   cardTitle: {
     fontSize: fontEq(16),
@@ -409,6 +449,13 @@ const styles = StyleSheet.create({
     fontSize: fontEq(12),
     fontWeight: '600',
     textTransform: 'uppercase',
+    fontFamily: "Helvetica",
+    paddingHorizontal: getWidthEquivalent(8),
+    paddingVertical: getHeightEquivalent(2),
+    borderRadius: getHeightEquivalent(999),
+    overflow: 'hidden',
+    backgroundColor: colors.colors.primaryLight,
+    color: colors.colors.primary,
   },
   cardBody: {
     fontSize: fontEq(14),
@@ -418,6 +465,8 @@ const styles = StyleSheet.create({
   },
   cardDate: {
     fontSize: fontEq(12),
+    marginBottom: getHeightEquivalent(12),
+    fontFamily: "Helvetica",
   },
   emptyStateContainer: {
     flex: 1,
@@ -435,12 +484,14 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     marginBottom: getHeightEquivalent(16),
     textAlign: "center",
+    fontFamily: "Helvetica",
   },
   emptySubtitle: {
     fontSize: fontEq(16),
     lineHeight: fontEq(24),
     textAlign: "center",
     marginBottom: getHeightEquivalent(32),
+    fontFamily: "Helvetica",
   },
   comingSoonBadge: {
     backgroundColor: colors.colors.primary,
