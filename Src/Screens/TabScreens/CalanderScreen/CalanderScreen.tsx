@@ -828,11 +828,12 @@ const CalanderScreen = () => {
       ignoreScrollEvents.current = true;
       lastScrollDirection.current = null; // Reset scroll direction
       isNavigatingDate.current = false; // Reset navigation flag
-      
+      setScrollEnabled(true); // ensure scrolling is enabled when focusing
+
       const params = route.params as any;
       const dataChanged = params?.dataChanged;
       const isRefreshing = params?.refresh;
-      
+
       // Clear the params
       if (dataChanged || isRefreshing) {
         navigation.setParams({ dataChanged: undefined, refresh: undefined });
@@ -840,8 +841,8 @@ const CalanderScreen = () => {
 
       // Subscribe to push notifications to refresh calendar on new notifications
       const receivedSub = Notifications.addNotificationReceivedListener(() => {
-        const locationIds = pageFilter.location_ids.length > 0 
-          ? pageFilter.location_ids 
+        const locationIds = pageFilter.location_ids.length > 0
+          ? pageFilter.location_ids
           : allLocations.map((loc) => loc.id);
         const dateString = currentDate.toISOString().split('T')[0];
         setIsFocusLoading(true);
@@ -851,14 +852,14 @@ const CalanderScreen = () => {
 
       // Check if returning from appointment screen
       const isReturningFromAppointment = isComingFromAppointmentScreen.current;
-      
+
       console.log('[CalendarScroll-Focus] Screen focused:', {
         isComingFromAppointmentScreen: isComingFromAppointmentScreen.current,
         dataChanged,
         isReturningFromAppointment,
         reason: isReturningFromAppointment ? 'Returning from appointment screen' : 'Tab navigation or other navigation'
       });
-      
+
       // Set refresh flag to prevent auto-scroll in useEffect when:
       // 1. Returning from appointment screens (even if no data changed)
       // 2. Data changed and we're refreshing
@@ -866,13 +867,13 @@ const CalanderScreen = () => {
         isRefreshingData.current = true;
         console.log('[CalendarScroll-Focus] Blocking auto-scroll - returning from appointment screen');
       }
-      
+
       // Only refresh calendar data if backend interaction occurred (dataChanged flag)
       if (dataChanged) {
         console.log('[CalendarScroll-Focus] Backend data changed - refreshing calendar');
         setIsFocusLoading(true);
-        const locationIds = pageFilter.location_ids.length > 0 
-          ? pageFilter.location_ids 
+        const locationIds = pageFilter.location_ids.length > 0
+          ? pageFilter.location_ids
           : allLocations.map((loc) => loc.id);
         const dateString = currentDate.toISOString().split('T')[0];
         Promise.resolve(fetchCalanderAppointmentsData(dateString, locationIds))
@@ -898,19 +899,19 @@ const CalanderScreen = () => {
             const dateHeaderHeight = getHeightEquivalent(135);
             const staffHeaderHeight = getHeightEquivalent(85);
             const tabBarHeight = getHeightEquivalent(100);
-            
+
             // Calculate actual visible calendar height
             const visibleHeight = screenHeight - statusBarHeight - dateHeaderHeight - staffHeaderHeight - tabBarHeight;
-            
+
             // Calculate scroll position to center the current time
             const scrollY = currentTimePosition - (visibleHeight / 2);
-            
+
             console.log('[CalendarScroll-Focus] Auto-scrolling to current time (tab navigation):', {
               currentHour,
               currentMinute,
               scrollY: Math.max(0, scrollY)
             });
-            
+
             // Scroll to current time (unified scroll)
             if (verticalScrollRef.current) {
               verticalScrollRef.current.scrollTo({
@@ -921,7 +922,7 @@ const CalanderScreen = () => {
             // UNIFIED SCROLL: Only need to scroll one ref now
           }
         };
-        
+
         // Small delay to ensure view is ready
         setTimeout(() => {
           scrollToCurrentTime();
@@ -929,18 +930,29 @@ const CalanderScreen = () => {
       } else {
         console.log('[CalendarScroll-Focus] No backend changes - skipping refresh');
       }
-      
+
       // Reset the flags after a delay to allow data to load
-      setTimeout(() => {
+      const flagsTimer = setTimeout(() => {
         isComingFromAppointmentScreen.current = false;
         isRefreshingData.current = false;
         console.log('[CalendarScroll-Focus] Flags reset - auto-scroll re-enabled');
       }, 700); // Reset after data loads (matches the 500ms delay in useEffect + buffer)
-      
+
       // Re-enable scroll events after a longer delay (1000ms) to ensure back swipe completes
-      setTimeout(() => {
+      const ignoreTimer = setTimeout(() => {
         ignoreScrollEvents.current = false;
       }, 1000);
+
+      // Cleanup on blur/unfocus to prevent freezing and stale subscriptions
+      return () => {
+        try { receivedSub.remove(); } catch {}
+        setIsFocusLoading(false);
+        Animated.timing(overlayOpacity, { toValue: 0, duration: 150, useNativeDriver: true }).start();
+        clearTimeout(flagsTimer);
+        clearTimeout(ignoreTimer);
+        ignoreScrollEvents.current = false;
+        isRefreshingData.current = false;
+      };
     }, [route.params, fetchCalanderAppointmentsData, pageFilter, allLocations, currentDate, navigation, insets.top])
   );
   
