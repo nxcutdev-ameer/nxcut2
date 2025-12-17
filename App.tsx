@@ -24,6 +24,7 @@ export default function App() {
   const initializeAuth = useAuthStore((state) => state.initializeAuth);
 
   useEffect(() => {
+    let responseSub: any = null;
     async function initialize() {
       // Initialize notifications (foreground handler, listeners, token)
       const {
@@ -54,7 +55,7 @@ export default function App() {
         });
 
         // Handle taps while app is running (foreground/background)
-        const responseSub = Notifications.addNotificationResponseReceivedListener((response) => {
+        responseSub = Notifications.addNotificationResponseReceivedListener((response) => {
           const content = response?.notification?.request?.content;
           const data = { ...(content?.data || {}), title: content?.title as any, body: content?.body as any };
           routeFromNotificationData(data);
@@ -73,9 +74,6 @@ export default function App() {
           } catch {}
         })();
 
-        // Cleanup
-        return () => { try { (responseSub as any)?.remove?.(); } catch {} };
-
         // Initial badge state: check if there are new notifications since last seen
         try {
           const lastSeenAt = await AsyncStorage.getItem('notifications:lastSeenAt');
@@ -84,10 +82,13 @@ export default function App() {
             .select('created_at')
             .order('created_at', { ascending: false })
             .limit(1);
-          if (!latestErr && latestRows && latestRows.length> 0) {
-            const latest = new Date(latestRows[0].created_at).getTime();
+
+          const hasRow = Array.isArray(latestRows) && latestRows.length > 0 && latestRows[0] && (latestRows[0] as any).created_at;
+          if (!latestErr && hasRow) {
+            const createdAt = (latestRows as any)[0]?.created_at as string | undefined;
+            const latest = createdAt ? new Date(createdAt).getTime() : NaN;
             const lastSeen = lastSeenAt ? new Date(lastSeenAt).getTime() : 0;
-            if (!lastSeenAt || (isFinite(latest) && latest > lastSeen)) {
+            if (!lastSeenAt || (Number.isFinite(latest) && latest > lastSeen)) {
               useNotificationsStore.getState().setUnread(true);
             }
           }
@@ -149,8 +150,12 @@ export default function App() {
       }
     }
 
-    initialize();
-  }, []);
+   initialize();
+
+   return () => {
+     try { (responseSub as any)?.remove?.(); } catch {}
+   };
+ }, []);
 
   return (
     <GestureHandlerRootView>

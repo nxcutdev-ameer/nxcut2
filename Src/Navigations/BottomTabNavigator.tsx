@@ -1,4 +1,4 @@
-import { StyleSheet, View, TouchableOpacity, Text } from "react-native";
+import { StyleSheet, View, TouchableOpacity, Text, Animated, ActivityIndicator } from "react-native";
 import React from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { colors, shadows } from "../Constants/colors";
@@ -46,10 +46,26 @@ const CreateButton = ({ children, onPress }: any) => {
 };
 
 import { useCalendarEditingStore } from "../Store/useCalendarEditingStore";
-import { ActivityIndicator } from "react-native";
+//import { ActivityIndicator } from "react-native";
 
 const BottomTabNavigator = () => {
   const { isVisible, isSaving, onSave, onCancel } = useCalendarEditingStore();
+
+  // Animated value for footer slide
+  const slideAnim = React.useRef(new Animated.Value(0)).current; // 0 hidden, 1 visible
+
+  React.useEffect(() => {
+    Animated.timing(slideAnim, {
+      toValue: isVisible ? 1 : 0,
+      duration: 250,
+      useNativeDriver: true,
+    }).start();
+  }, [isVisible, slideAnim]);
+
+  const translateY = slideAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [120, 0], // slide up from 120px below
+  });
 
   return (
     <View style={{ flex: 1, position: 'relative' }}>
@@ -159,9 +175,16 @@ const BottomTabNavigator = () => {
       </Tab.Navigator>
 
       {/* Global Editing Footer Overlay */}
-      {isVisible && (
-        <View style={styles.editingFooter}>
-          <TouchableOpacity
+      <Animated.View
+        pointerEvents={isVisible ? 'auto' : 'none'}
+        style={[
+          styles.editingFooter,
+          { transform: [{ translateY: translateY as any }] },
+        ]}
+      >
+        {isVisible && (
+          <>
+            <TouchableOpacity
             style={[
               styles.editingButton,
               styles.editingCancelButton,
@@ -201,8 +224,9 @@ const BottomTabNavigator = () => {
               </Text>
             )}
           </TouchableOpacity>
-        </View>
-      )}
+          </>
+        )}
+      </Animated.View>
     </View>
   );
 };

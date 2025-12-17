@@ -91,6 +91,7 @@ export async function routeFromNotificationData(payload: NotificationRouteData) 
 
   // Products / stock
   if (title.includes('product low stock')) {
+    Alert.alert('Product Low stock', payload.body);
     return navigateSafe('NotificationScreen');
   }
 

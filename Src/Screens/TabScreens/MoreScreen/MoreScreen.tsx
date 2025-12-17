@@ -107,7 +107,8 @@ const MoreScreen = () => {
       <ScrollView style={MoreScreenStyles.container}>
         {/* Wallet Card */}
         <Pressable
-          onPress={() => navigation.navigate("WalletScreen")}
+          //onPress={() => navigation.navigate("WalletScreen")}
+          onPress={() => {}}
           style={({ pressed }) => [
             MoreScreenStyles.walletCardWrapper,
             pressed && MoreScreenStyles.walletCardPressed,

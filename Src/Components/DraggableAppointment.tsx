@@ -88,6 +88,9 @@ const DraggableAppointment: React.FC<DraggableAppointmentProps> = ({
 }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [committedPosition, setCommittedPosition] = useState({ x: 0, y: 0 });
+  // Ghost placeholder to indicate initial position while dragging
+  const [showGhost, setShowGhost] = useState(false);
+  const ghostRef = useRef({ top: 0, left: 0, height: 0, width: 0, color: colors.primary });
   const [displayStart, setDisplayStart] = useState(event.start);
   const [displayEnd, setDisplayEnd] = useState(event.end);
   const propTimesRef = useRef({
@@ -1198,7 +1201,7 @@ const DraggableAppointment: React.FC<DraggableAppointmentProps> = ({
             },
             isSmall && { fontSize: fontEq(11) },
           ]}
-          numberOfLines={2}
+          numberOfLines={1}
           ellipsizeMode="tail"
         >
           {event.data.appointment.client.first_name}{" "}
@@ -1212,7 +1215,7 @@ const DraggableAppointment: React.FC<DraggableAppointmentProps> = ({
             },
             isSmall && { fontSize: fontEq(9), marginBottom: 0 },
           ]}
-          numberOfLines={2}
+          numberOfLines={1}
           ellipsizeMode="tail"
         >
           {event.data.service.name}

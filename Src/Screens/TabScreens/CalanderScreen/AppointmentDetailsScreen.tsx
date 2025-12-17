@@ -23,6 +23,7 @@ import {
   Users,
   Tag,
   X,
+  ClipboardClock,
 } from "lucide-react-native";
 import colors from "../../../Constants/colors";
 import {
@@ -50,7 +51,7 @@ const AppointmentDetailsScreen = () => {
   const [isCanceling, setIsCanceling] = useState(false);
   const [appointment, setAppointment] = useState<AppointmentCalanderBO | null>(initialAppointment ?? null);
   const [isLoading, setIsLoading] = useState(!initialAppointment);
-  const [unavailable, setUnavailable] = useState(false);
+  // const [unavailable, setUnavailable] = useState(false);
   
   // Store the appointment service ID separately to avoid closure issues
   const appointmentServiceId = React.useRef<string | null>(initialAppointment?.id ?? params.appointment_service_id ?? null);
@@ -110,11 +111,17 @@ const AppointmentDetailsScreen = () => {
       if (error) {
         console.error("[AppointmentDetails] Error fetching appointment:", error);
         console.error("[AppointmentDetails] Error details:", JSON.stringify(error));
+        Alert.alert("Error", "Failed to load appointment details. Please try again.");
+        setIsLoading(false);
+        setAppointment(null);  
         return;
       }
 
       if (!data) {
         console.error("[AppointmentDetails] No data returned for appointment service ID:", appointmentServiceId.current);
+         Alert.alert("Error", "Failed to load appointment details. Please try again.");
+         setIsLoading(false);
+         setAppointment(null);  
         return;
       }
 
@@ -157,6 +164,9 @@ const AppointmentDetailsScreen = () => {
       console.log("[AppointmentDetails] State updated successfully");
     } catch (e) {
       console.error("[AppointmentDetails] Error in fetchAppointmentDetails:", e);
+       Alert.alert("Error", "Failed to load appointment details. Please try again.");
+      setIsLoading(false);
+      setAppointment(null);  
     } finally {
       setIsLoading(false);
     }
@@ -287,12 +297,14 @@ const AppointmentDetailsScreen = () => {
         }
       } catch (e) {
         console.error('[AppointmentDetails] load error', e);
+        Alert.alert("Error", "Failed to load appointment details. Please try again.");
+        setIsLoading(false);
       } finally {
         setIsLoading(false);
       }
     };
     load();
-  }, [params?.appointment_id, appointment]);
+  }, [params?.appointment_id]);
 
   // Refetch appointment data when screen comes into focus
   useFocusEffect(
@@ -308,8 +320,33 @@ const AppointmentDetailsScreen = () => {
   ) : undefined;
   const locationName = location?.name || "Location not found";
 
+  // Handle cancelled appointment: alert and return
+  const hasHandledCancelled = React.useRef(false);
+  useEffect(() => {
+    if (appointment && appointment.appointment?.status?.toLowerCase() === 'cancelled' && !hasHandledCancelled.current) {
+      hasHandledCancelled.current = true;
+      Alert.alert(
+        'Appointment Cancelled',
+        'This appointment has been cancelled and cannot be viewed.',
+        [
+          {
+            text: 'OK',
+            onPress: () => navigation.goBack(),
+          },
+        ],
+        { cancelable: false }
+      );
+    }
+  }, [appointment, navigation]);
+
+  const isCancelled = !!(appointment && appointment.appointment?.status?.toLowerCase() === 'cancelled');
+
   const handleCancelAppointment = () => {
     if (!appointment) return;
+    if (isCancelled) {
+      Alert.alert('Already Cancelled', 'This appointment is already cancelled.');
+      return;
+    }
     Alert.alert(
       "Void Sale",
       "Are you sure you want to void this sale? This action cannot be undone",
@@ -454,26 +491,35 @@ const AppointmentDetailsScreen = () => {
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Appointment Details</Text>
         </View>
-        <TouchableOpacity
-          style={styles.cancelButton}
-          onPress={handleCancelAppointment}
-          disabled={isCanceling}
-        >
-          {isCanceling ? (
-            <ActivityIndicator size="small" color={paint.white} />
-          ) : (
-            <View style={styles.cancelButtonContent}>
-              <Text style={styles.cancelButtonText}>Void Sale</Text>
-            </View>
-          )}
-        </TouchableOpacity>
+        {appointment && !isCancelled && (
+          <TouchableOpacity
+            style={styles.cancelButton}
+            onPress={handleCancelAppointment}
+            disabled={isCanceling}
+          >
+            {isCanceling ? (
+              <ActivityIndicator size="small" color={paint.white} />
+            ) : (
+              <View style={styles.cancelButtonContent}>
+                <Text style={styles.cancelButtonText}>Void Sale</Text>
+              </View>
+            )}
+          </TouchableOpacity>
+        )}
       </View>
 
-      {isLoading || !appointment ? (
+      {isLoading ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={paint.primary} />
           <Text style={[styles.loadingText, { color: paint.textSecondary }]}>
             Loading appointment details...
+          </Text>
+        </View>
+      ) : !appointment ? (
+        <View style={styles.loadingContainer}>
+          <ClipboardClock size={40} color={paint.gray[400]} />
+          <Text style={[styles.loadingText, { color: paint.textSecondary }]}>
+            No appointment found or it has been canceled.
           </Text>
         </View>
       ) : (

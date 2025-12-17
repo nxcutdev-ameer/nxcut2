@@ -251,7 +251,7 @@ const CalanderScreen = () => {
   // Ensure overlay appears when navigating back to Calendar tab (focus)
   useFocusEffect(
     useCallback(() => {
-      // Force show overlay for UX even if data is cached
+     // Force show overlay for UX even if data is cached
       // setIsFocusLoading(true);
       // const t = setTimeout(() => setIsFocusLoading(false), 1000);
       // return () => clearTimeout(t);
@@ -266,30 +266,46 @@ const CalanderScreen = () => {
   const [currentStaffIndex, setCurrentStaffIndex] = useState(0);
   const scrollViewRef = useRef<ScrollView>(null);
   const verticalScrollRef = useRef<any>(null);
-  const calendarVerticalScrollRef = useRef<ScrollView>(null);
+  // const calendarVerticalScrollRef = useRef<ScrollView>(null);
   const horizontalScrollRef = useRef<Reanimated.ScrollView>(null as any);
-  const headerHorizontalRef = useRef<Reanimated.ScrollView>(null as any);
-  const isSyncingHorizontal = useRef(false);
-  const useNativeSticky = true;
+  // const headerHorizontalRef = useRef<Reanimated.ScrollView>(null as any);
+  // const isSyncingHorizontal = useRef(false);
+  // const useNativeSticky = true;
   
   const [scrollEnabled, setScrollEnabled] = useState(true);
   
   // Footer Store Actions (Selected individually to avoid re-renders on state changes)
   const showEditingFooter = useCalendarEditingStore(state => state.showEditingFooter);
   const hideEditingFooter = useCalendarEditingStore(state => state.hideEditingFooter);
-  const setFooterIsSaving = useCalendarEditingStore(state => state.setIsSaving);
+  // const setFooterIsSaving = useCalendarEditingStore(state => state.setIsSaving);
   const updateCallbacks = useCalendarEditingStore(state => state.updateCallbacks);
   const savedHorizontalScrollPosition = useRef(0);
-  const lastHorizontalScrollX = useRef(0);
+  // const lastHorizontalScrollX = useRef(0);
   const isProgrammaticScroll = useRef(false); // Track programmatic scrolls (auto-scroll)
   const [editingState, setEditingState] = useState<EditingState | null>(null);
   const [isSaving, setIsSaving] = useState(false);
-  const [isPreparing, setIsPreparing] = useState(false);
+  // const [isPreparing, setIsPreparing] = useState(false);
   const [isFocusLoading, setIsFocusLoading] = useState(false);
   const overlayOpacity = useRef(new Animated.Value(0)).current;
   const tabBarHeight = useBottomTabBarHeight?.() || 0;
   const [currentScrollX, setCurrentScrollX] = useState(0);
   const [currentScrollY, setCurrentScrollY] = useState(0);
+
+  // Animated header overlay for rescheduling
+  const editHeaderAnim = useRef(new Animated.Value(0)).current; // 0 hidden, 1 visible
+  const dateHeaderHeight = getHeightEquivalent(90);
+  const timeGutterWidth = getWidthEquivalent(40);
+  useEffect(() => {
+    Animated.timing(editHeaderAnim, {
+      toValue: editingState ? 1 : 0,
+      duration: 250,
+      useNativeDriver: true,
+    }).start();
+  }, [editingState]);
+  const editHeaderTranslateY = editHeaderAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [-dateHeaderHeight, 0],
+  });
 
   // Sticky staff header - Reanimated shared values
   const stickyScrollY = useSharedValue(0);
@@ -319,25 +335,25 @@ const CalanderScreen = () => {
     zIndex: 5000,
   }));
 
-  const stickyHeaderXYAnimatedStyle = useAnimatedStyle(() => ({
-    transform: [
-      { translateY: stickyScrollY.value },
-      { translateX: -horizontalScrollX.value },
-    ],
-    zIndex: 5000,
-  }));
+  // const stickyHeaderXYAnimatedStyle = useAnimatedStyle(() => ({
+  //   transform: [
+  //     { translateY: stickyScrollY.value },
+  //     { translateX: -horizontalScrollX.value },
+  //   ],
+  //   zIndex: 5000,
+  // }));
 
-  const hasPendingChanges = useMemo(() => {
-    if (!editingState) {
-      return false;
-    }
+  // const hasPendingChanges = useMemo(() => {
+  //   if (!editingState) {
+  //     return false;
+  //   }
 
-    return (
-      editingState.pendingStaffId !== editingState.originalStaffId ||
-      editingState.pendingStart.getTime() !== editingState.originalStart.getTime() ||
-      editingState.pendingEnd.getTime() !== editingState.originalEnd.getTime()
-    );
-  }, [editingState]);
+  //   return (
+  //     editingState.pendingStaffId !== editingState.originalStaffId ||
+  //     editingState.pendingStart.getTime() !== editingState.originalStart.getTime() ||
+  //     editingState.pendingEnd.getTime() !== editingState.originalEnd.getTime()
+  //   );
+  // }, [editingState]);
 
   const handleStartEditing = useCallback(
     (appointment: CalendarAppointment, staffId: string) => {
@@ -953,11 +969,11 @@ const CalanderScreen = () => {
 
   return (
     <>
-      <StatusBar
+      {/* <StatusBar
         barStyle="dark-content"
         backgroundColor={colors.white}
         translucent={true}
-      />
+      /> */}
       <SafeAreaView
         edges={["bottom"]}
         style={CalanderScreenStyles.mainContainer}
@@ -965,22 +981,44 @@ const CalanderScreen = () => {
         <View
           style={{
             backgroundColor: colors.white,
-            // shadowColor: "#00000079",
-            // shadowOffset: { width: 0, height: 2 }, // downward shadow
-            // shadowOpacity: 0.35,
-            // shadowRadius: 4,
-            // elevation: 4, // Android shadow
-            // zIndex: 1,
             paddingTop: insets.top,
           }}
         >
+          {/* Global Sliding Edit Header Overlay - full width, high z-index, centered text */}
+          <Animated.View
+            pointerEvents={editingState ? 'auto' : 'none'}
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              height: dateHeaderHeight,
+              transform: [{ translateY: editHeaderTranslateY as any }],
+              backgroundColor: colors.primary,
+              justifyContent: 'center',
+              alignItems: 'center',
+              zIndex: 9999,
+              elevation: 9999,
+              paddingTop: insets.top,
+            }}
+          >
+            <Text
+              style={{
+                color: colors.white,
+                fontSize: fontEq(18),
+                fontWeight: '700',
+              }}
+            >
+              Reschedule to {formatDate(currentDate)}
+            </Text>
+          </Animated.View>
           {/* Header Section: Date Header only - Staff headers integrated with calendar */}
           <View style={{ flexDirection: "row", width: "100%" }}>
             {/* LEFT: Time Gutter Header spacer */}
             <View style={{ width: getWidthEquivalent(40) }} />
             
             {/* RIGHT: Date Header */}
-            <View style={[CalanderScreenStyles.newHeaderContainer, { flex: 1 }]}>
+            <View style={[CalanderScreenStyles.newHeaderContainer, { flex: 1, overflow: 'hidden' }]}>
               {/* Center - Date */}
               <Pressable
                 onPress={handleDatePress}
@@ -1033,6 +1071,8 @@ const CalanderScreen = () => {
                   </Text>
                 </TouchableOpacity>
               </View>
+
+              
             </View>
           </View>
         </View>

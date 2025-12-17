@@ -244,9 +244,9 @@ const NotificationScreen = () => {
           </Text>
         </View>
 
-        <TouchableOpacity style={styles.settingsButton}>
+        {/* <TouchableOpacity style={styles.settingsButton}>
           <Settings size={24} color={colors.colors.text} strokeWidth={1.9}/>
-        </TouchableOpacity> 
+        </TouchableOpacity>  */}
       </View>
 
       {/* Tabs above header border */}

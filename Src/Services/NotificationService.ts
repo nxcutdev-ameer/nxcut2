@@ -1,6 +1,8 @@
 import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
 import { Platform } from 'react-native';
+import Constants from 'expo-constants';
+import * as Updates from 'expo-updates';
 import { supabase } from '../Utils/supabase';
 
 export type NotificationData = {
@@ -54,8 +56,13 @@ export async function requestPermissionsAndGetToken(): Promise<string | null> {
 
     await ensureAndroidChannel();
 
-    // When using EAS-managed projects, getting the token without a project ID works
-    const tokenResp = await Notifications.getExpoPushTokenAsync();
+    // For EAS builds, provide projectId to ensure a valid token for production/TestFlight
+    const projectId = (Constants?.expoConfig as any)?.extra?.eas?.projectId
+      || (Constants as any)?.easConfig?.projectId
+      || (Constants as any)?.projectId;
+    const tokenResp = projectId
+      ? await Notifications.getExpoPushTokenAsync({ projectId })
+      : await Notifications.getExpoPushTokenAsync();
     const token = tokenResp.data;
     return token ?? null;
   } catch (e) {
@@ -64,13 +71,19 @@ export async function requestPermissionsAndGetToken(): Promise<string | null> {
   }
 }
 
-// Register token generically (per device), no user binding
-// Table: device_push_tokens(id uuid pk, expo_push_token text unique, created_at timestamptz)
+// Register token generically (per device), storing platform and environment for routing
+// Suggested table columns now: id uuid pk, expo_push_token text unique, platform text, environment text, created_at timestamptz, updated_at timestamptz
 export async function registerDevicePushTokenGeneric(token: string) {
   try {
+    // Determine environment/channel for routing: dev vs testflight vs production
+    const channel = (Updates as any)?.channel ?? (Updates as any)?.updateId ? 'production' : (__DEV__ ? 'dev' : 'production');
+    const platform = Platform.OS;
+
+    const payload: any = { expo_push_token: token, platform, environment: channel };
+
     const { error } = await supabase
       .from('device_push_tokens')
-      .upsert({ expo_push_token: token }, { onConflict: 'expo_push_token' });
+      .upsert(payload, { onConflict: 'expo_push_token' });
     if (error) throw error;
   } catch (e) {
     console.log('[Notifications] registerDevicePushTokenGeneric error', e);
