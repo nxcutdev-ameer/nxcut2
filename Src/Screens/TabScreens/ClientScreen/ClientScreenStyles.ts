@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View } from "react-native";
+import { Platform, StyleSheet, Text, View } from "react-native";
 import colors from "../../../Constants/colors";
 import {
   fontEq,
@@ -16,7 +16,7 @@ export const ClientScreenStyles = StyleSheet.create({
   },
   header: {
     width: "100%",
-    height: getHeightEquivalent(50),
+    height: Platform.OS === 'android' ? getHeightEquivalent(70):getHeightEquivalent(50),
     alignItems: "center",
     justifyContent: "space-between",
     flexDirection: "row",
@@ -49,8 +49,9 @@ export const ClientScreenStyles = StyleSheet.create({
     alignSelf: "center",
   },
   actionButtonText: {
-    fontSize: fontEq(14),
-    fontWeight: "500",
+    fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(14),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
+    fontWeight: "400",
     color: paint.text,
   },
   elipseContainer: {
@@ -60,7 +61,8 @@ export const ClientScreenStyles = StyleSheet.create({
     justifyContent: "center",
   },
   headerText: {
-    fontSize: fontEq(17),
+    fontSize:Platform.OS === 'android' ?fontEq(15): fontEq(17),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
     fontWeight: "600",
     color: paint.text,
     marginTop: getHeightEquivalent(15),
@@ -93,7 +95,8 @@ export const ClientScreenStyles = StyleSheet.create({
     lineHeight: getHeightEquivalent(16),
   },
   subTitle: {
-    fontSize: fontEq(12),
+    fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(14),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
     fontWeight: "400",
     color: paint.text,
     marginTop: getHeightEquivalent(8),
@@ -139,9 +142,11 @@ export const ClientScreenStyles = StyleSheet.create({
     flexDirection: "row",
   },
   searchInput: {
-    height: "70%",
+    height: "100%",
     width: "80%",
     marginLeft: getWidthEquivalent(10),
+    fontSize:Platform.OS === 'android' ?fontEq(10): fontEq(14),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
   },
   clientCardContainer: {
     height: getHeightEquivalent(80),
@@ -173,23 +178,27 @@ export const ClientScreenStyles = StyleSheet.create({
     marginRight: getWidthEquivalent(12),
   },
   clientName: {
-    fontSize: fontEq(14),
+    fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(14),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
     fontWeight: "400",
     color: paint.text,
     marginBottom: getHeightEquivalent(3),
   },
   clientEmail: {
-    fontSize: fontEq(14),
+    fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(14),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
     fontWeight: "400",
     color: paint.textSecondary,
     marginBottom: getHeightEquivalent(5),
   },
   clientPhone: {
-    fontSize: fontEq(14),
+    fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(14),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
     color: paint.textSecondary,
   },
   clientInitials: {
-    fontSize: fontEq(18),
+    fontSize:Platform.OS === 'android' ?fontEq(14): fontEq(18),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
     fontWeight: "600",
     color: "#3C096C",
   },
@@ -204,7 +213,8 @@ export const ClientScreenStyles = StyleSheet.create({
     justifyContent: "center",
   },
   clientSales: {
-    fontSize: fontEq(12),
+    fontSize:Platform.OS === 'android' ?fontEq(10): fontEq(12),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
     fontWeight: "400",
     color: paint.gray[700],
   },
@@ -224,7 +234,8 @@ export const ClientScreenStyles = StyleSheet.create({
     borderColor: paint.border,
   },
   loadMoreText: {
-    fontSize: fontEq(14),
+    fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(14),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
     fontWeight: "500",
     color: paint.text,
   },
@@ -236,14 +247,16 @@ export const ClientScreenStyles = StyleSheet.create({
     paddingVertical: getHeightEquivalent(60),
   },
   emptyStateTitle: {
-    fontSize: fontEq(18),
+    fontSize:Platform.OS === 'android' ?fontEq(16): fontEq(18),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
     fontWeight: "600",
     color: paint.text,
     textAlign: "center",
     marginBottom: getHeightEquivalent(8),
   },
   emptyStateSubtitle: {
-    fontSize: fontEq(14),
+    fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(14),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
     fontWeight: "400",
     color: paint.textSecondary,
     textAlign: "center",
@@ -270,7 +283,8 @@ export const ClientScreenStyles = StyleSheet.create({
     paddingVertical: getHeightEquivalent(40),
   },
   loadingText: {
-    fontSize: fontEq(14),
+    fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(14),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
     fontWeight: "400",
     color: paint.textSecondary,
     marginTop: getHeightEquivalent(10),

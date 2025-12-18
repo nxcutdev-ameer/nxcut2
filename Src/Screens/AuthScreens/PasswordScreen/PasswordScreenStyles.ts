@@ -1,6 +1,7 @@
-import { StyleSheet } from "react-native";
+import { Platform, StyleSheet } from "react-native";
 import { colors } from "../../../Constants/colors";
 import {
+  fontEq,
   getHeightEquivalent,
   getWidthEquivalent,
 } from "../../../Utils/helpers";
@@ -26,7 +27,8 @@ export const PasswordScreenStyles = StyleSheet.create({
     alignItems: "center",
   },
   title: {
-    fontSize: 26,
+        fontSize:Platform.OS === 'android' ?fontEq(20): fontEq(26),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
     fontWeight: "600",
     color: colors.text,
     marginBottom: 32,
@@ -45,7 +47,8 @@ export const PasswordScreenStyles = StyleSheet.create({
   forgotPasswordText: {
     color: colors.primary,
     fontWeight: "500",
-    fontSize: 15,
+    fontSize:Platform.OS === 'android' ?fontEq(13): fontEq(15),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
   },
   continueButton: {
     backgroundColor: colors.primary,
@@ -69,7 +72,8 @@ export const PasswordScreenStyles = StyleSheet.create({
     minHeight: 44,
   },
   backButtonText: {
-    fontSize: 18,
+    fontSize:Platform.OS === 'android' ?fontEq(14): fontEq(18),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
     fontWeight: "500",
     color: colors.text,
   },

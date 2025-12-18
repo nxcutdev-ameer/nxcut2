@@ -1,4 +1,4 @@
-import { StyleSheet } from "react-native";
+import { Platform, StyleSheet } from "react-native";
 import colors from "../../../Constants/colors";
 import {
   fontEq,
@@ -267,7 +267,8 @@ const PerformanceDashboardScreenStyles = StyleSheet.create({
     // backgroundColor:"red"
   },
   filterPanelTitle: {
-    fontSize: fontEq(20),
+    fontSize:Platform.OS === 'android' ?fontEq(16): fontEq(20),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "700",
     color: colors.colors.text,
   },
@@ -290,7 +291,8 @@ const PerformanceDashboardScreenStyles = StyleSheet.create({
     borderBottomColor: colors.colors.border,
   },
   filterOptionText: {
-    fontSize: fontEq(16),
+      fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(16),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     color: colors.colors.text,
     fontWeight: "500",
   },
@@ -321,12 +323,14 @@ const PerformanceDashboardScreenStyles = StyleSheet.create({
     backgroundColor: colors.colors.primary,
   },
   filterClearButtonText: {
-    fontSize: fontEq(16),
+    fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(16),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "600",
     color: colors.colors.text,
   },
   filterApplyButtonText: {
-    fontSize: fontEq(16),
+      fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(16),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "600",
     color: colors.colors.white,
   },

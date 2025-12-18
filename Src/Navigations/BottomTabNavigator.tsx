@@ -1,4 +1,4 @@
-import { StyleSheet, View, TouchableOpacity, Text, Animated, ActivityIndicator } from "react-native";
+import { StyleSheet, View, TouchableOpacity, Text, Animated, ActivityIndicator, Platform } from "react-native";
 import React from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { colors, shadows } from "../Constants/colors";
@@ -97,9 +97,9 @@ const BottomTabNavigator = () => {
                   <Text
                     style={{
                       color: focused ? colors?.primary : "black",
-                      fontSize: fontEq(10),
+                      fontSize:Platform.OS === 'android' ?fontEq(6): fontEq(10),
+                      fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
                       fontWeight: "700",
-                      fontFamily: "Helvetica",
                       // position: "absolute",
                       marginTop: fontEq(11),
                       alignSelf: "center",
@@ -304,7 +304,8 @@ const styles = StyleSheet.create({
     backgroundColor: colors.black,
   },
   editingButtonText: {
-    fontSize: fontEq(16),
+    fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(16),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
     fontWeight: "600",
   },
   editingCancelText: {

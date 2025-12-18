@@ -6,6 +6,7 @@ import {
   Text,
   ScrollView,
   TouchableOpacity,
+  Platform,
 } from "react-native";
 import { colors } from "../Constants/colors";
 import {
@@ -101,12 +102,13 @@ const styles = StyleSheet.create({
     width: "100%",
   },
   input: {
-    height: getHeightEquivalent(45),
+    height: getHeightEquivalent(50),
     borderWidth: getWidthEquivalent(1),
     borderColor: colors.border,
     borderRadius: getWidthEquivalent(8),
     paddingHorizontal: getWidthEquivalent(16),
-    fontSize: fontEq(16),
+    fontSize:Platform.OS === 'android' ?fontEq(10): fontEq(14),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
     color: colors.text,
     backgroundColor: colors.white,
   },
@@ -118,7 +120,8 @@ const styles = StyleSheet.create({
   },
   errorText: {
     color: colors.danger,
-    fontSize: fontEq(14),
+    fontSize:Platform.OS === 'android' ?fontEq(10): fontEq(14),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
     marginTop: getHeightEquivalent(4),
     marginLeft: getWidthEquivalent(4),
   },
@@ -136,7 +139,8 @@ const styles = StyleSheet.create({
     marginRight: getWidthEquivalent(5),
   },
   domainText: {
-    fontSize: fontEq(14),
+        fontSize:Platform.OS === 'android' ?fontEq(10): fontEq(14),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
     color: colors.text,
   },
 });

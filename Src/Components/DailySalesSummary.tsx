@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, StyleSheet, ActivityIndicator } from "react-native";
+import { View, Text, StyleSheet, ActivityIndicator, Platform } from "react-native";
 import colors from "../Constants/colors";
 import {
   fontEq,
@@ -86,7 +86,7 @@ const DailySalesSummary: React.FC<DailySalesSummaryProps> = ({
                 styles.value,
                 {
                   color: item.isAmount ? paint.primary : paint.text,
-                  fontSize: item.isAmount ? fontEq(18) : fontEq(22),
+                  fontSize: item.isAmount ? Platform.OS === 'android' ?fontEq(12): fontEq(18) : Platform.OS === 'android' ?fontEq(12): fontEq(22),
                   fontWeight: "700",
                 },
               ]}
@@ -113,7 +113,8 @@ const styles = StyleSheet.create({
     borderRadius: 16,
   },
   loadingText: {
-    fontSize: fontEq(16),
+    fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(16),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
     marginTop: getHeightEquivalent(12),
   },
   gridContainer: {
@@ -140,7 +141,8 @@ const styles = StyleSheet.create({
     shadowRadius: 2,
   },
   title: {
-    fontSize: fontEq(12),
+    fontSize:Platform.OS === 'android' ?fontEq(10): fontEq(12),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "500",
     textAlign: "center",
     marginBottom: getHeightEquivalent(12),

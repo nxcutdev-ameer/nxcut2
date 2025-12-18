@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Dimensions,
+  Platform,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StackScreenProps } from "@react-navigation/stack";
@@ -14,6 +15,7 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import { colors } from "../../../Constants/colors";
 import { RootStackParamList } from "../../../Navigations/RootStackNavigator";
 import { useTransactionDetailsScreenVM } from "./TransactionDetailsScreenVM";
+import { fontEq } from "../../../Utils/helpers";
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
 
@@ -23,15 +25,15 @@ const cardRadius = Math.min(screenWidth * 0.06, 18);
 const cardPadding = Math.max(screenWidth * 0.045, 16);
 const avatarSize = Math.max(screenWidth * 0.14, 48);
 const closeButtonSize = Math.max(screenWidth * 0.1, 36);
-const titleFontSize = Math.min(26, screenWidth * 0.07);
-const headingFontSize = Math.max(16, screenWidth * 0.045);
-const sectionTitleFontSize = Math.max(14, screenWidth * 0.04);
-const subtitleFontSize = Math.max(12, screenWidth * 0.035);
-const bodyFontSize = Math.max(12, screenWidth * 0.036);
-const smallFontSize = Math.max(12, screenWidth * 0.032);
-const priceFontSize = Math.max(12, screenWidth * 0.036);
-const amountFontSize = Math.max(16, screenWidth * 0.045);
-const summaryValueFontSize = Math.max(16, screenWidth * 0.043);
+const titleFontSize = Platform.OS === 'android' ? fontEq(16) : Math.min(26, screenWidth * 0.07);
+const headingFontSize = Platform.OS === 'android' ? fontEq(14) : Math.max(16, screenWidth * 0.045);
+const sectionTitleFontSize = Platform.OS === 'android' ? fontEq(12) : Math.max(14, screenWidth * 0.04);
+const subtitleFontSize = Platform.OS === 'android' ? fontEq(12) : Math.max(12, screenWidth * 0.035);
+const bodyFontSize = Platform.OS === 'android' ? fontEq(11) : Math.max(12, screenWidth * 0.036);
+const smallFontSize = Platform.OS === 'android' ? fontEq(9): Math.max(12, screenWidth * 0.032);
+const priceFontSize = Platform.OS === 'android' ? fontEq(10) : Math.max(12, screenWidth * 0.036);
+const amountFontSize = Platform.OS === 'android' ? fontEq(10) : Math.max(16, screenWidth * 0.045);
+const summaryValueFontSize = Platform.OS === 'android' ? fontEq(12) : Math.max(16, screenWidth * 0.043);
 const dividerThickness = Math.max(screenHeight * 0.0015, 1);
 
 type TransactionDetailsProps = StackScreenProps<

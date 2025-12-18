@@ -5,9 +5,11 @@ import {
   View,
   TouchableOpacity,
   GestureResponderEvent,
+  Platform,
 } from "react-native";
 import { colors, theme } from "../Constants/colors";
 import { ChevronRight } from "lucide-react-native";
+import { fontEq } from "../Utils/helpers";
 
 interface ListItemProps {
   title: string;
@@ -69,7 +71,8 @@ const styles = StyleSheet.create({
     gap: theme.spacing.sm,
   },
   title: {
-    fontSize: 15,
+    fontSize:Platform.OS === 'android' ?fontEq(13): fontEq(15),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     color: colors.black,
     fontWeight: "500",
   },

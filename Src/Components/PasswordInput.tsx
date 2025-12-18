@@ -5,6 +5,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   Text,
+  Platform,
 } from "react-native";
 import { Eye, EyeOff } from "lucide-react-native";
 import { colors } from "../Constants/colors";
@@ -90,7 +91,8 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
-    fontSize: fontEq(16),
+    fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(16),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
     color: colors.text,
     paddingVertical: 0,
   },
@@ -100,7 +102,8 @@ const styles = StyleSheet.create({
   },
   errorText: {
     color: colors.danger,
-    fontSize: fontEq(14),
+        fontSize:Platform.OS === 'android' ?fontEq(10): fontEq(14),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
     marginTop: getHeightEquivalent(4),
     marginLeft: getWidthEquivalent(4),
   },

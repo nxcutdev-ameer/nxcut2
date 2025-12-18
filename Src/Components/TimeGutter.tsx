@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, StyleSheet } from "react-native";
+import { View, Text, StyleSheet, Platform } from "react-native";
 import {
   getWidthEquivalent,
   getHeightEquivalent,
@@ -110,18 +110,19 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   timeText: {
-    fontSize: fontEq(12),
+    fontSize: Platform.OS === 'android' ? fontEq(9) : fontEq(12),
     color: colors.black,
     fontWeight: "700",
     textAlign: "center",
     marginRight: getWidthEquivalent(2),
-    fontFamily: "Helvetica",
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
   },
   periodText: {
-    fontSize: fontEq(10),
+    fontSize: Platform.OS === 'android' ? fontEq(9) : fontEq(10),
     color: colors.black,
     fontWeight: "400",
     textAlign: "center",
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
   },
   periodWrapper: {
     flexDirection: "row",

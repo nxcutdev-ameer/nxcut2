@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, StyleSheet } from "react-native";
+import { View, Text, StyleSheet, Platform } from "react-native";
 import { Gift, Calendar, User } from "lucide-react-native";
 import colors from "../Constants/colors";
 import {
@@ -168,7 +168,8 @@ const styles = StyleSheet.create({
     gap: getWidthEquivalent(6),
   },
   dateText: {
-    fontSize: fontEq(14),
+        fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(14),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     color: colors.colors.textSecondary,
     fontWeight: "500",
   },
@@ -178,7 +179,8 @@ const styles = StyleSheet.create({
     borderRadius: getWidthEquivalent(12),
   },
   statusText: {
-    fontSize: fontEq(12),
+    fontSize:Platform.OS === 'android' ?fontEq(10): fontEq(12),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     color: colors.colors.white,
     fontWeight: "600",
   },
@@ -189,7 +191,8 @@ const styles = StyleSheet.create({
     marginBottom: getHeightEquivalent(16),
   },
   clientName: {
-    fontSize: fontEq(16),
+    fontSize:Platform.OS === 'android' ?fontEq(14): fontEq(16),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     color: colors.colors.text,
     fontWeight: "600",
   },
@@ -205,13 +208,15 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   voucherName: {
-    fontSize: fontEq(18),
+    fontSize:Platform.OS === 'android' ?fontEq(14): fontEq(18),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     color: colors.colors.text,
     fontWeight: "700",
     marginBottom: getHeightEquivalent(4),
   },
   voucherCode: {
-    fontSize: fontEq(14),
+    fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(14),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     color: colors.colors.primary,
     fontWeight: "500",
     letterSpacing: 1,
@@ -228,12 +233,14 @@ const styles = StyleSheet.create({
     marginBottom: getHeightEquivalent(12),
   },
   amountLabel: {
-    fontSize: fontEq(14),
+    fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(14),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     color: colors.colors.textSecondary,
     fontWeight: "500",
   },
   remainingAmount: {
-    fontSize: fontEq(18),
+    fontSize:Platform.OS === 'android' ?fontEq(14): fontEq(18),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     color: colors.colors.success,
     fontWeight: "700",
   },
@@ -253,7 +260,8 @@ const styles = StyleSheet.create({
     borderRadius: getHeightEquivalent(4),
   },
   progressText: {
-    fontSize: fontEq(12),
+    fontSize:Platform.OS === 'android' ?fontEq(10): fontEq(12),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     color: colors.colors.textSecondary,
     textAlign: "right",
     fontWeight: "500",
@@ -264,12 +272,14 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   totalLabel: {
-    fontSize: fontEq(14),
+    fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(14),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     color: colors.colors.textSecondary,
     fontWeight: "500",
   },
   totalAmount: {
-    fontSize: fontEq(16),
+    fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(16),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     color: colors.colors.text,
     fontWeight: "600",
   },

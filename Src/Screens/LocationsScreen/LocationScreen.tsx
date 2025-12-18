@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { FlatList, Text, TouchableOpacity, View, ActivityIndicator, Image, ImageBackground } from "react-native";
+import { FlatList, Text, TouchableOpacity, View, ActivityIndicator, Image, ImageBackground, Platform } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuthStore } from "../../Store/useAuthStore";
 import { LocationScreenStyles } from "./LocationScreenStyles";
@@ -190,7 +190,8 @@ const LocationScreen = () => {
           paddingHorizontal: getWidthEquivalent(40),
         }}>
           <Text style={{
-            fontSize: fontEq(14),
+            fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(14),
+            fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
             color: colors.colors.text,
             marginBottom: getHeightEquivalent(12),
             textAlign: 'center',

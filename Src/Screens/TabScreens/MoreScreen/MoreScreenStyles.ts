@@ -1,5 +1,5 @@
 import { colors, theme, shadows } from "../../../Constants/colors";
-import { StyleSheet } from "react-native";
+import { Platform, StyleSheet } from "react-native";
 import { getHeightEquivalent, getWidthEquivalent, fontEq } from "../../../Utils/helpers";
 
 export const MoreScreenStyles = StyleSheet.create({
@@ -59,7 +59,8 @@ export const MoreScreenStyles = StyleSheet.create({
     color: colors.primary,
   },
   headerTitle: {
-    fontSize: fontEq(16),
+    fontSize:Platform.OS === 'android' ?fontEq(14): fontEq(16),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
     fontWeight: "600",
     color: colors.primary,
     alignSelf: "center",
@@ -70,23 +71,25 @@ export const MoreScreenStyles = StyleSheet.create({
   },
   walletCardPressed: {
     opacity: 0.9,
-    transform: [{ scale: 0.98 }],
+    transform: [{ scale: 0.92 }],
   },
   walletCard: {
     backgroundColor: colors.gradient.start,
     borderRadius: theme.borderRadius.large,
     padding: theme.spacing.lg,
     overflow: "hidden",
-    height: getHeightEquivalent(150),
+    height: Platform.OS === 'android' ?getHeightEquivalent(190):getHeightEquivalent(150),
   },
   walletLabel: {
     color: colors.white,
-    fontSize: 14,
+    fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(14),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
     marginBottom: 4,
   },
   walletAmount: {
     color: colors.white,
-    fontSize: 26,
+    fontSize:Platform.OS === 'android' ?fontEq(18): fontEq(26),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
     fontWeight: "bold",
     marginBottom: theme.spacing.sm,
   },
@@ -94,13 +97,14 @@ export const MoreScreenStyles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.white,
     borderRadius: theme.borderRadius.round,
-    paddingVertical: 6,
-    paddingHorizontal: 16,
+    paddingVertical: getHeightEquivalent(6),
+    paddingHorizontal: getWidthEquivalent(16),
     alignSelf: "flex-start",
   },
   walletButtonText: {
     color: colors.white,
-    fontSize: 14,
+    fontSize:Platform.OS === 'android' ?fontEq(10): fontEq(14),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
   },
 
   // Menu Grid
@@ -122,7 +126,8 @@ export const MoreScreenStyles = StyleSheet.create({
   menuLabel: {
     marginTop: theme.spacing.sm,
     color: colors.text,
-    fontSize: 14,
+    fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(14),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
   },
   footer: {
     flex: 1,
@@ -148,7 +153,8 @@ export const MoreScreenStyles = StyleSheet.create({
   },
   footerLabel: {
     color: colors.text,
-    fontSize: 16,
+        fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(16),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "500",
   },
 });

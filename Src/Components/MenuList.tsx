@@ -16,7 +16,7 @@ const MenuList: React.FC<MenuListProps> = ({ items }) => {
         <ListItem
           key={index}
           title={item.label}
-          icon={<item.icon size={20} color={colors.text} />}
+          icon={<item.icon size={22} color={colors.text} />}
           showBadge={item.showBadge}
           badgeValue={item.badgeValue}
           onPress={item.onPress}

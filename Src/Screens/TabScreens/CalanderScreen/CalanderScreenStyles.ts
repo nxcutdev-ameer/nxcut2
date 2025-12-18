@@ -1,4 +1,4 @@
-import { StyleSheet } from "react-native";
+import { Platform, StyleSheet } from "react-native";
 import { colors } from "../../../Constants/colors";
 import {
   fontEq,
@@ -49,11 +49,11 @@ export const CalanderScreenStyles = StyleSheet.create({
     borderRadius: getWidthEquivalent(20),
   },
   dateText: {
-    fontSize: fontEq(16),
+    fontSize:Platform.OS === 'android' ?fontEq(14): fontEq(16),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
     fontWeight: "500",
     color: paint.black,
     marginRight: getWidthEquivalent(8),
-    fontFamily: "Helvetica",
   },
   rightHeaderContainer: {
     flexDirection: "row",
@@ -79,7 +79,8 @@ export const CalanderScreenStyles = StyleSheet.create({
     marginLeft: getWidthEquivalent(4),
   },
   profileInitials: {
-    fontSize: fontEq(16),
+    fontSize:Platform.OS === 'android' ?fontEq(14): fontEq(16),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
     fontWeight: "600",
     color: colors.primary,
   },
@@ -243,7 +244,8 @@ export const CalanderScreenStyles = StyleSheet.create({
     marginRight: getWidthEquivalent(8),
   },
   staffName: {
-    fontSize: fontEq(10),
+    fontSize:Platform.OS === 'android' ?fontEq(8): fontEq(10),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
     fontWeight: "600",
     color: paint.text,
     textAlign: "center",
@@ -450,7 +452,8 @@ export const CalanderScreenStyles = StyleSheet.create({
     marginTop: 10,
   },
   filterPanelTitle: {
-    fontSize: fontEq(18),
+    fontSize:Platform.OS === 'android' ?fontEq(16): fontEq(18),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
     fontWeight: "600",
     color: paint.text,
   },
@@ -471,7 +474,8 @@ export const CalanderScreenStyles = StyleSheet.create({
     paddingVertical: getHeightEquivalent(15),
   },
   filterOptionText: {
-    fontSize: fontEq(16),
+    fontSize:Platform.OS === 'android' ?fontEq(14): fontEq(16),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
     fontWeight: "600",
     color: paint.text,
     marginBottom: getHeightEquivalent(10),
@@ -493,7 +497,8 @@ export const CalanderScreenStyles = StyleSheet.create({
     justifyContent: "center",
   },
   filterClearButtonText: {
-    fontSize: fontEq(14),
+    fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(14),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
     fontWeight: "600",
     color: paint.textSecondary,
   },
@@ -506,7 +511,8 @@ export const CalanderScreenStyles = StyleSheet.create({
     justifyContent: "center",
   },
   filterApplyButtonText: {
-    fontSize: fontEq(14),
+    fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(14),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
     fontWeight: "600",
     color: paint.white,
   },

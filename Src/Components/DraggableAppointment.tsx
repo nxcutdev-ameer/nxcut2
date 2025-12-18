@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect, useMemo } from "react";
-import { View, Text, StyleSheet, Animated, PanResponder, GestureResponderEvent, PanResponderGestureState } from "react-native";
+import { View, Text, StyleSheet, Animated, PanResponder, GestureResponderEvent, PanResponderGestureState, Platform } from "react-native";
 import * as Haptics from "expo-haptics";
 import { Tag } from "lucide-react-native";
 import { colors } from "../Constants/colors";
@@ -1284,25 +1284,27 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   clientName: {
-    fontSize: fontEq(12),
+    fontSize:Platform.OS === 'android' ?fontEq(10): fontEq(12),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
     fontWeight: "700",
     color: colors.text,
     marginBottom: getHeightEquivalent(2),
     includeFontPadding: false,
   },
   serviceName: {
-    fontSize: fontEq(10),
+    fontSize:Platform.OS === 'android' ?fontEq(8): fontEq(10),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
     fontWeight: "500",
     color: colors.black,
     marginBottom: getHeightEquivalent(2),
     includeFontPadding: false,
   },
   timeText: {
-    fontSize: fontEq(12),
+    fontSize:Platform.OS === 'android' ?fontEq(10): fontEq(12),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
     fontWeight: "400",
     color: colors.black,
     includeFontPadding: false,
-    fontFamily: "Helvetica",
   },
   dragIndicator: {
     position: "absolute",

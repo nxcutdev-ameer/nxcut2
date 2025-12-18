@@ -1,4 +1,4 @@
-import { StyleSheet } from "react-native";
+import { Platform, StyleSheet } from "react-native";
 import { colors } from "../../Constants/colors";
 import {
   fontEq,
@@ -25,13 +25,15 @@ export const LocationScreenStyles = StyleSheet.create({
     // borderColor: colors.border,
   },
   hederText: {
-    fontSize: fontEq(25),
+    fontSize:Platform.OS === 'android' ?fontEq(18): fontEq(25),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
     fontWeight: "bold",
     color: colors.text,
   },
   subHeaderText: {
     marginTop: getHeightEquivalent(15),
-    fontSize: fontEq(14),
+    fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(14),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
     color: colors.textSecondary,
     marginBottom: getHeightEquivalent(8),
     textAlign: "center",
@@ -71,7 +73,8 @@ export const LocationScreenStyles = StyleSheet.create({
     marginTop: 40,
   },
   emptyText: {
-    fontSize: 16,
+    fontSize:Platform.OS === 'android' ?fontEq(14): fontEq(16),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
     color: colors.textSecondary,
   },
   button: {
@@ -93,7 +96,8 @@ export const LocationScreenStyles = StyleSheet.create({
     elevation: 0,
   },
   buttonText: {
-    fontSize: fontEq(18),
+    fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(18),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
     fontWeight: "bold",
     color: colors.white,
   },
@@ -147,7 +151,8 @@ export const LocationScreenStyles = StyleSheet.create({
     flex: 1,
   },
   LocationText: {
-    fontSize: fontEq(20),
+    fontSize:Platform.OS === 'android' ?fontEq(16): fontEq(20),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
     fontWeight: '700',
     color: '#FFFFFF',
     textShadowColor: 'rgba(0, 0, 0, 0.5)',
@@ -155,7 +160,8 @@ export const LocationScreenStyles = StyleSheet.create({
     textShadowRadius: 3,
   },
   locationDateText: {
-    fontSize: fontEq(12),
+    fontSize:Platform.OS === 'android' ?fontEq(8): fontEq(12),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
     fontWeight: '400',
     color: '#FFFFFF',
     opacity: 0.85,
@@ -170,10 +176,12 @@ export const LocationScreenStyles = StyleSheet.create({
     paddingVertical: getHeightEquivalent(6),
     borderRadius: 20,
     marginLeft: getWidthEquivalent(10),
+    marginTop: getHeightEquivalent(6),
   },
   selectedBadgeText: {
     color: '#FFFFFF',
-    fontSize: fontEq(12),
+    fontSize:Platform.OS === 'android' ?fontEq(8): fontEq(10),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
     fontWeight: '600',
   },
   
@@ -196,10 +204,11 @@ export const LocationScreenStyles = StyleSheet.create({
     backgroundColor: colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: getHeightEquivalent(15),
+    //marginBottom: getHeightEquivalent(15),
   },
   placeholderIconText: {
-    fontSize: fontEq(32),
+    fontSize:Platform.OS === 'android' ?fontEq(18): fontEq(32),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
     fontWeight: '700',
     color: '#FFFFFF',
   },
@@ -208,7 +217,8 @@ export const LocationScreenStyles = StyleSheet.create({
     marginTop: getHeightEquivalent(8),
   },
   placeholderLocationText: {
-    fontSize: fontEq(20),
+    fontSize:Platform.OS === 'android' ?fontEq(14): fontEq(20),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
     fontWeight: '600',
     color: colors.text,
     textAlign: 'center',
@@ -217,7 +227,8 @@ export const LocationScreenStyles = StyleSheet.create({
     color: colors.primary,
   },
   placeholderDateText: {
-    fontSize: fontEq(12),
+        fontSize:Platform.OS === 'android' ?fontEq(8): fontEq(12),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
     fontWeight: '400',
     color: colors.textSecondary,
     textAlign: 'center',

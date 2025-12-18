@@ -10,6 +10,7 @@ import {
   StatusBar,
   Pressable,
   Image,
+  Platform,
 } from "react-native";
 
 // Reanimated v2 for sticky header
@@ -190,7 +191,8 @@ const FilterPanelModal = ({
                 </View>
                 <Text
                   style={{
-                    fontSize: 16,
+                    fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(16),
+                    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
                     color: colors.text,
                     fontWeight: isSelected ? "600" : "400",
                   }}
@@ -1017,7 +1019,8 @@ const CalanderScreen = () => {
             <Text
               style={{
                 color: colors.white,
-                fontSize: fontEq(18),
+                fontSize: Platform.OS === 'android' ?fontEq(12): fontEq(18),
+                fontFamily: Platform.OS === 'android' ? 'sans-serif' : 'Helvetica',
                 fontWeight: '700',
               }}
             >
@@ -1158,10 +1161,10 @@ const CalanderScreen = () => {
                         >
                           <Text
                             style={{
-                              fontSize: fontEq(12),
+                              fontSize:Platform.OS === 'android' ?fontEq(8): fontEq(12),
                               fontWeight: "500",
                               color: "#D32F2F",
-                              fontFamily: "Helvetica",
+                              fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
                             }}
                           >
                             {((currentTime.getHours() % 12) || 12)

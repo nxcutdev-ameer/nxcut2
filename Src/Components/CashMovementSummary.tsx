@@ -3,6 +3,7 @@ import {
   View,
   Text,
   StyleSheet,
+  Platform,
 } from 'react-native';
 import colors from '../Constants/colors';
 import {
@@ -187,7 +188,8 @@ const styles = StyleSheet.create({
     borderColor: '#E0E0E0',
   },
   cashMovementTitle: {
-    fontSize: fontEq(18),
+    fontSize:Platform.OS === 'android' ?fontEq(14): fontEq(18),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: '600',
     textAlign: 'center',
     marginBottom: getHeightEquivalent(16),
@@ -204,7 +206,8 @@ const styles = StyleSheet.create({
   },
   cashMovementHeaderText: {
     flex: 1,
-    fontSize: fontEq(14),
+    fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(14),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: '600',
     textAlign: 'center',
   },
@@ -216,7 +219,8 @@ const styles = StyleSheet.create({
   },
   cashMovementCell: {
     flex: 1,
-    fontSize: fontEq(14),
+      fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(14),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     textAlign: 'center',
     fontWeight: '500',
   },
@@ -230,19 +234,23 @@ const styles = StyleSheet.create({
     marginBottom: getHeightEquivalent(4),
   },
   summaryLabel: {
-    fontSize: fontEq(14),
+    fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(14),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: '500',
   },
   summaryValue: {
-    fontSize: fontEq(14),
+    fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(14),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: '500',
   },
   totalLabel: {
-    fontSize: fontEq(16),
+    fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(16),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: '700',
   },
   totalValue: {
-    fontSize: fontEq(16),
+    fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(16),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: '700',
   },
   emptyState: {
@@ -250,7 +258,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   emptyText: {
-    fontSize: fontEq(16),
+    fontSize:Platform.OS === 'android' ?fontEq(10): fontEq(16),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontStyle: 'italic',
   },
 });

@@ -95,7 +95,7 @@ const DailySalesScreen = () => {
       <View style={DailySalesScreenStyles.titleSection}>
         <Text style={DailySalesScreenStyles.bodyTitle}>Daily Sales</Text>
         <Text style={DailySalesScreenStyles.bodySubtitle}>
-          View,Filter and export the transactions and cash movement for the day.
+          View, Filter and export the transactions and cash movement for the day.
         </Text>
 
         <View style={DailySalesScreenStyles.dateNavigationContainer}>

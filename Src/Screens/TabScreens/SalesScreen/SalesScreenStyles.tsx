@@ -1,4 +1,4 @@
-import { StyleSheet } from "react-native";
+import { Platform, StyleSheet } from "react-native";
 import colors from "../../../Constants/colors";
 import {
   fontEq,
@@ -45,7 +45,8 @@ export const SalesScreenStyles = StyleSheet.create({
     gap: getWidthEquivalent(8),
   },
   headerTitle: {
-    fontSize: fontEq(16),
+   fontSize:Platform.OS === 'android' ?fontEq(14): fontEq(16),
+     fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
     fontWeight: "600",
     color: paint.primary,
     alignSelf: "center",
@@ -81,7 +82,8 @@ export const SalesScreenStyles = StyleSheet.create({
     paddingHorizontal: getWidthEquivalent(20),
   },
   bodyTitle: {
-    fontSize: fontEq(26),
+    fontSize:Platform.OS === 'android' ?fontEq(20): fontEq(26),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
     fontWeight: "700",
     color: paint.black,
     marginLeft: getWidthEquivalent(8),

@@ -6,6 +6,7 @@ import {
   Animated,
   PanResponder,
   TouchableOpacity,
+  Platform,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import * as Haptics from "expo-haptics";
@@ -819,10 +820,10 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   slotTimeText: {
-    fontSize: fontEq(12),
+    fontSize:Platform.OS === 'android' ?fontEq(8): fontEq(12),
+   fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
     fontWeight: "500",
     color: colors.primary,
-    fontFamily: "Helvetica",
 
     backgroundColor: colors.white,
     paddingHorizontal: getWidthEquivalent(8),

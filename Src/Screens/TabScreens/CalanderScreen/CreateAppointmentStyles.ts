@@ -1,4 +1,4 @@
-import { StyleSheet } from "react-native";
+import { Platform, StyleSheet } from "react-native";
 import { colors } from "../../../Constants/colors";
 import {
   fontEq,
@@ -40,7 +40,8 @@ export const CreateAppointmentStyles = StyleSheet.create({
     justifyContent: "center",
   },
   headerTitle: {
-    fontSize: fontEq(18),
+    fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(18),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
     fontWeight: "600",
     color: colors.text,
     flex: 1,
@@ -54,7 +55,7 @@ export const CreateAppointmentStyles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: colors.white,
     paddingHorizontal: getWidthEquivalent(12),
-    paddingVertical: getHeightEquivalent(6),
+    paddingVertical: getHeightEquivalent(4),
     borderRadius: getWidthEquivalent(20),
     gap: getWidthEquivalent(6),
     borderWidth: 1,
@@ -66,12 +67,14 @@ export const CreateAppointmentStyles = StyleSheet.create({
     gap: getWidthEquivalent(4),
   },
   headerDateText: {
-    fontSize: fontEq(14),
+    fontSize:Platform.OS === 'android' ?fontEq(10): fontEq(14),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
     fontWeight: "600",
     color: colors.text,
   },
   headerTimeText: {
-    fontSize: fontEq(14),
+    fontSize:Platform.OS === 'android' ?fontEq(10): fontEq(14),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
     fontWeight: "600",
     color: colors.black,
   },
@@ -96,7 +99,8 @@ export const CreateAppointmentStyles = StyleSheet.create({
     gap: getHeightEquivalent(12),
   },
   sectionTitle: {
-    fontSize: fontEq(16),
+     fontSize:Platform.OS === 'android' ?fontEq(14): fontEq(16),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
     fontWeight: "600",
     color: colors.black,
     marginBottom: getHeightEquivalent(12),
@@ -167,7 +171,8 @@ export const CreateAppointmentStyles = StyleSheet.create({
   searchInput: {
     flex: 1,
     paddingVertical: getHeightEquivalent(12),
-    fontSize: fontEq(16),
+    fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(16),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
     color: colors.text,
   },
   addButton: {
@@ -184,7 +189,8 @@ export const CreateAppointmentStyles = StyleSheet.create({
     // borderColor: colors.gray[300],
   },
   addButtonText: {
-    fontSize: fontEq(18),
+    fontSize:Platform.OS === 'android' ?fontEq(16): fontEq(18),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
     fontWeight: "400",
     color: colors.black,
   },
@@ -211,12 +217,14 @@ export const CreateAppointmentStyles = StyleSheet.create({
     flex: 1,
   },
   clientName: {
-    fontSize: fontEq(16),
+    fontSize:Platform.OS === 'android' ?fontEq(14): fontEq(16),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
     fontWeight: "400",
     color: colors.text,
   },
   clientEmail: {
-    fontSize: fontEq(14),
+    fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(14),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
     fontWeight: "400",
     color: colors.textSecondary,
     marginTop: getHeightEquivalent(2),
@@ -254,7 +262,8 @@ export const CreateAppointmentStyles = StyleSheet.create({
     justifyContent: "center",
   },
   addServiceButtonText: {
-    fontSize: fontEq(14),
+    fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(14),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "500",
     color: colors.black,
   },
@@ -277,12 +286,14 @@ export const CreateAppointmentStyles = StyleSheet.create({
     flex: 1,
   },
   serviceName: {
-    fontSize: fontEq(14),
+    fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(14),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
     fontWeight: "500",
     color: colors.black,
   },
   servicePrice: {
-    fontSize: fontEq(14),
+    fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(14),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "600",
     color: colors.black,
     marginTop: getHeightEquivalent(2),
@@ -300,7 +311,8 @@ export const CreateAppointmentStyles = StyleSheet.create({
     borderColor: colors.danger,
   },
   noServicesText: {
-    fontSize: fontEq(14),
+    fontSize:Platform.OS === 'android' ?fontEq(10): fontEq(14),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
     fontWeight: "400",
     color: colors.textSecondary,
     textAlign: "center",
@@ -330,12 +342,14 @@ export const CreateAppointmentStyles = StyleSheet.create({
     marginBottom: getHeightEquivalent(16),
   },
   totalLabel: {
-    fontSize: fontEq(16),
+  fontSize:Platform.OS === 'android' ?fontEq(14): fontEq(16),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
     fontWeight: "600",
     color: colors.black,
   },
   totalAmount: {
-    fontSize: fontEq(16),
+    fontSize:Platform.OS === 'android' ?fontEq(14): fontEq(16),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
     fontWeight: "600",
     color: colors.black,
   },
@@ -349,7 +363,8 @@ export const CreateAppointmentStyles = StyleSheet.create({
     justifyContent: "center",
   },
   Label: {
-    fontSize: fontEq(14),
+    fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(14),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
     fontWeight: "400",
     color: colors.gray[600],
   },
@@ -357,7 +372,8 @@ export const CreateAppointmentStyles = StyleSheet.create({
     backgroundColor: colors.gray[300],
   },
   saveButtonText: {
-    fontSize: fontEq(16),
+    fontSize:Platform.OS === 'android' ?fontEq(14): fontEq(16),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
     fontWeight: "700",
     color: colors.white,
   },
@@ -387,7 +403,8 @@ export const CreateAppointmentStyles = StyleSheet.create({
   serviceSearchInput: {
     flex: 1,
     paddingVertical: getHeightEquivalent(12),
-    fontSize: fontEq(16),
+    fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(14),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
     color: colors.text,
   },
   serviceList: {
@@ -407,7 +424,8 @@ export const CreateAppointmentStyles = StyleSheet.create({
     backgroundColor: colors.white,
   },
   serviceDuration: {
-    fontSize: fontEq(12),
+  fontSize:Platform.OS === 'android' ?fontEq(10): fontEq(12),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
     fontWeight: "400",
     color: colors.textSecondary,
     marginLeft: getWidthEquivalent(5),
@@ -419,13 +437,15 @@ export const CreateAppointmentStyles = StyleSheet.create({
     padding: getWidthEquivalent(16),
   },
   emptyStateTitle: {
-    fontSize: fontEq(18),
+    fontSize:Platform.OS === 'android' ?fontEq(14): fontEq(18),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
     fontWeight: "600",
     color: colors.text,
     marginBottom: getHeightEquivalent(8),
   },
   emptyStateSubtitle: {
-    fontSize: fontEq(14),
+    fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(14),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
     fontWeight: "400",
     color: colors.textSecondary,
     marginBottom: getHeightEquivalent(16),
@@ -464,7 +484,8 @@ export const CreateAppointmentStyles = StyleSheet.create({
     justifyContent: "center",
   },
   clientInitials: {
-    fontSize: fontEq(16),
+     fontSize:Platform.OS === 'android' ?fontEq(14): fontEq(16),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
     fontWeight: "600",
     color: "#3C096C",
   },
@@ -473,7 +494,8 @@ export const CreateAppointmentStyles = StyleSheet.create({
     marginLeft: getWidthEquivalent(16),
   },
   clientPhone: {
-    fontSize: fontEq(14),
+    fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(14),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
     fontWeight: "400",
     color: colors.textSecondary,
     marginTop: getHeightEquivalent(2),
@@ -499,7 +521,8 @@ export const CreateAppointmentStyles = StyleSheet.create({
     borderColor: colors.border,
   },
   loadMoreText: {
-    fontSize: fontEq(16),
+    fontSize:Platform.OS === 'android' ?fontEq(14): fontEq(16),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
     fontWeight: "400",
     color: colors.black,
   },
@@ -539,7 +562,8 @@ export const CreateAppointmentStyles = StyleSheet.create({
     padding: getWidthEquivalent(16),
   },
   loadingText: {
-    fontSize: fontEq(16),
+    fontSize:Platform.OS === 'android' ?fontEq(14): fontEq(16),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
     fontWeight: "600",
     color: colors.text,
     marginTop: getHeightEquivalent(8),
@@ -580,19 +604,22 @@ export const CreateAppointmentStyles = StyleSheet.create({
     flex: 1,
   },
   selectedClientPhone: {
-    fontSize: fontEq(14),
+    fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(14),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "500",
     color: colors.text,
     marginTop: getHeightEquivalent(2),
   },
   selectedClientName: {
-    fontSize: fontEq(16),
+    fontSize:Platform.OS === 'android' ?fontEq(14): fontEq(16),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
     fontWeight: "600",
     color: colors.text,
     marginBottom: getHeightEquivalent(4),
   },
   selectedClientEmail: {
-    fontSize: fontEq(14),
+    fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(14),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
     fontWeight: "400",
     color: colors.textSecondary,
   },
@@ -609,7 +636,8 @@ export const CreateAppointmentStyles = StyleSheet.create({
     alignItems: "center",
   },
   viewProfileText: {
-    fontSize: fontEq(14),
+    fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(14),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
     fontWeight: "600",
     color: colors.black,
   },
@@ -625,7 +653,8 @@ export const CreateAppointmentStyles = StyleSheet.create({
     justifyContent: "center",
   },
   changeClientText: {
-    fontSize: fontEq(14),
+    fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(14),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
     fontWeight: "600",
     color: colors.text,
   },
@@ -665,12 +694,14 @@ export const CreateAppointmentStyles = StyleSheet.create({
     opacity: 0.5,
   },
   modalDoneButtonText: {
-    fontSize: fontEq(16),
+  fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(14),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
     fontWeight: "600",
     color: colors.white,
   },
   serviceModalTitle: {
-    fontSize: fontEq(18),
+    fontSize:Platform.OS === 'android' ?fontEq(16): fontEq(18),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
     fontWeight: "600",
     color: colors.text,
     textAlign: "left",
@@ -700,12 +731,14 @@ export const CreateAppointmentStyles = StyleSheet.create({
     borderColor: colors.border,
   },
   durationLabel: {
-    fontSize: fontEq(14),
+    fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(14),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
     fontWeight: "500",
     color: colors.black,
   },
   durationValue: {
-    fontSize: fontEq(14),
+    fontSize:Platform.OS === 'android' ?fontEq(10): fontEq(12),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
     fontWeight: "500",
     color: colors.black,
   },
@@ -732,7 +765,8 @@ export const CreateAppointmentStyles = StyleSheet.create({
     gap: getWidthEquivalent(12),
   },
   selectionButtonText: {
-    fontSize: fontEq(14),
+    fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(14),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
     fontWeight: "500",
     color: colors.text,
     flex: 1,
@@ -766,7 +800,8 @@ export const CreateAppointmentStyles = StyleSheet.create({
     borderColor: colors.primary,
   },
   modalListItemText: {
-    fontSize: fontEq(14),
+    fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(14),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
     fontWeight: "500",
     color: colors.text,
     flex: 1,
@@ -823,13 +858,15 @@ export const CreateAppointmentStyles = StyleSheet.create({
     color: colors.textSecondary,
   },
   clientCardPlaceholder: {
-    fontSize: fontEq(16),
+    fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(16),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "500",
     color: colors.black,
     marginBottom: getHeightEquivalent(4),
   },
   clientCardSubtext: {
-    fontSize: fontEq(13),
+    fontSize:Platform.OS === 'android' ?fontEq(10): fontEq(13),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "400",
     color: colors.textSecondary,
   },
@@ -854,7 +891,8 @@ export const CreateAppointmentStyles = StyleSheet.create({
     marginBottom: getHeightEquivalent(16),
   },
   clientModalTitle: {
-    fontSize: fontEq(24),
+     fontSize:Platform.OS === 'android' ?fontEq(18): fontEq(24),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
     fontWeight: "600",
     color: colors.black,
   },

@@ -1,10 +1,11 @@
 import React from "react";
-import { View, Text, TouchableOpacity, ScrollView } from "react-native";
+import { View, Text, TouchableOpacity, ScrollView, Platform } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Modal from "react-native-modal";
 import { X, Check } from "lucide-react-native";
 import colors from "../Constants/colors";
 import PerformanceDashboardScreenStyles from "../Screens/MoreTabScreens/PerformanceDashboardScreen/PerformanceDashboardScreenStyles";
+import { fontEq } from "../Utils/helpers";
 
 interface Location {
   id: string;
@@ -119,7 +120,8 @@ const LocationFilterModal: React.FC<LocationFilterModalProps> = ({
                 </View>
                 <Text
                   style={{
-                    fontSize: 16,
+                       fontSize:Platform.OS === 'android' ?fontEq(14): fontEq(16),
+                        fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
                     color: colors.colors.text,
                     fontWeight: isSelected ? "600" : "400",
                   }}

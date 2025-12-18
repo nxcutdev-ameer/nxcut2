@@ -13,6 +13,7 @@ import {
   ScrollView,
   Alert,
   Modal,
+  Platform,
 } from "react-native";
 import { useReportStore } from "../../../Store/useReportsStore";
 import { useAuthStore } from "../../../Store/useAuthStore";
@@ -949,7 +950,8 @@ const styles = StyleSheet.create({
     borderBottomColor: colors.border,
   },
   modalTitle: {
-    fontSize: fontEq(24),
+    fontSize:Platform.OS === 'android' ?fontEq(18): fontEq(24),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "600",
     color: colors.text,
   },
@@ -995,13 +997,15 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   optionTitle: {
-    fontSize: fontEq(16),
+    fontSize:Platform.OS === 'android' ?fontEq(14): fontEq(16),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "600",
     color: colors.text,
     marginBottom: 2,
   },
   optionDescription: {
-    fontSize: fontEq(13),
+    fontSize:Platform.OS === 'android' ?fontEq(10): fontEq(13),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     color: colors.textSecondary,
   },
   container: {
@@ -1036,12 +1040,14 @@ const styles = StyleSheet.create({
     borderBottomColor: colors.border,
   },
   headerText: {
-    fontSize: fontEq(26),
+    fontSize:Platform.OS === 'android' ?fontEq(16): fontEq(26),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "600",
     color: colors.text,
   },
   subHeaderText: {
-    fontSize: fontEq(14),
+    fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(14),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     color: colors.textSecondary,
     marginTop: getHeightEquivalent(8),
   },
@@ -1061,7 +1067,8 @@ const styles = StyleSheet.create({
     gap: getWidthEquivalent(8),
   },
   periodFilterButtonText: {
-    fontSize: fontEq(14),
+    fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(14),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "600",
     color: colors.text,
   },
@@ -1088,7 +1095,8 @@ const styles = StyleSheet.create({
   tableHeaderText: {
     fontWeight: "600",
     color: colors.text,
-    fontSize: 14,
+    fontSize:Platform.OS === 'android' ?fontEq(10): fontEq(14),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     paddingHorizontal: 8,
     textAlign: "center",
   },
@@ -1121,14 +1129,16 @@ const styles = StyleSheet.create({
   },
   totalCellText: {
     color: colors.primary,
-    fontSize: fontEq(12),
+    fontSize:Platform.OS === 'android' ?fontEq(10): fontEq(12),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "700",
     textAlign: "center",
     lineHeight: 20,
   },
   tableCell: {
     color: colors.text,
-    fontSize: 13,
+    fontSize:Platform.OS === 'android' ?fontEq(10): fontEq(13),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     textAlign: "center",
     lineHeight: 18,
     width: getWidthEquivalent(100),
@@ -1166,13 +1176,15 @@ const styles = StyleSheet.create({
   loadingText: {
     textAlign: "center",
     color: colors.textSecondary,
-    fontSize: fontEq(16),
+    fontSize:Platform.OS === 'android' ?fontEq(14): fontEq(16),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "500",
     marginTop: getHeightEquivalent(20),
   },
   loading: {
     textAlign: "center",
     color: colors.textSecondary,
-    fontSize: 16,
+    fontSize:Platform.OS === 'android' ?fontEq(14): fontEq(16),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
   },
 });

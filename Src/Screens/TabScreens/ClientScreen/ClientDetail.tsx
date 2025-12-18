@@ -1,4 +1,4 @@
-  import { View, Text, TouchableOpacity, Linking, Alert } from "react-native";
+  import { View, Text, TouchableOpacity, Linking, Alert, Platform } from "react-native";
 import React, { useMemo, useCallback } from "react";
 import { useRoute, RouteProp, useNavigation } from "@react-navigation/native";
 import { ClientBO } from "../../../Repository/clientRepository";
@@ -143,7 +143,8 @@ const ClientDetailStyles = StyleSheet.create({
     padding: getWidthEquivalent(8),
   },
   headerTitle: {
-    fontSize: fontEq(18),
+  fontSize:Platform.OS === 'android' ?fontEq(16): fontEq(18),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
     fontWeight: "600",
     color: colors.black,
     flex: 1,
@@ -168,7 +169,8 @@ const ClientDetailStyles = StyleSheet.create({
     marginBottom: getHeightEquivalent(10),
   },
   clientInitials: {
-    fontSize: fontEq(24),
+    fontSize:Platform.OS === 'android' ?fontEq(22): fontEq(24),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
     fontWeight: "700",
     color: "#3C096C",
   },
@@ -184,14 +186,16 @@ const ClientDetailStyles = StyleSheet.create({
     marginRight: getWidthEquivalent(12),
   },
   clientName: {
-    fontSize: fontEq(16),
+    fontSize:Platform.OS === 'android' ?fontEq(14): fontEq(16),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
     fontWeight: "700",
     color: colors.black,
     marginBottom: getHeightEquivalent(4),
     textAlign: "center",
   },
   clientPhone: {
-    fontSize: fontEq(16),
+    fontSize:Platform.OS === 'android' ?fontEq(14): fontEq(16),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
     color: colors.textSecondary,
     textAlign: "center",
   },
@@ -204,7 +208,8 @@ const ClientDetailStyles = StyleSheet.create({
     justifyContent: "center",
   },
   clientSales: {
-    fontSize: fontEq(14),
+    fontSize:Platform.OS === 'android' ?fontEq(10): fontEq(14),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
     fontWeight: "500",
     color: colors.gray[700],
   },
@@ -242,17 +247,20 @@ const ClientDetailStyles = StyleSheet.create({
     gap: getWidthEquivalent(8),
   },
   actionButtonText: {
-    fontSize: fontEq(14),
+    fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(14),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
     fontWeight: "500",
     color: colors.black,
   },
   label: {
-    fontSize: fontEq(14),
+    fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(14),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
     color: colors.gray[600],
     marginBottom: 4,
   },
   value: {
-    fontSize: fontEq(16),
+    fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(16),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "500",
     color: colors.black,
     marginBottom: 16,

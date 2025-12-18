@@ -4,6 +4,7 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
+  Platform,
 } from "react-native";
 import Modal from "react-native-modal";
 import { Calendar as CalendarPicker } from "react-native-calendars";
@@ -58,7 +59,7 @@ const DateModal: React.FC<DateModalProps> = ({
           markedDates={{
             [currentDate.toISOString().split("T")[0]]: {
               selected: true,
-              selectedColor: colors.primary,
+              selectedColor: colors.black,
             },
           }}
           minDate={minDate}
@@ -119,7 +120,8 @@ const styles = StyleSheet.create({
     marginBottom: getHeightEquivalent(20),
   },
   modalTitle: {
-    fontSize: fontEq(20),
+    fontSize:Platform.OS === 'android' ?fontEq(18): fontEq(20),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
     fontWeight: "600",
     color: colors.text,
     textAlign: "center",
@@ -137,7 +139,8 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   cancelButtonText: {
-    fontSize: fontEq(16),
+    fontSize:Platform.OS === 'android' ?fontEq(14): fontEq(16),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
     fontWeight: "600",
     color: colors.text,
   },

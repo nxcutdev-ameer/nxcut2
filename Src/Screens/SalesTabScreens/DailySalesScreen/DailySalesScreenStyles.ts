@@ -1,4 +1,4 @@
-import { StyleSheet } from "react-native";
+import { Platform, StyleSheet } from "react-native";
 import colors from "../../../Constants/colors";
 import {
   fontEq,
@@ -75,12 +75,14 @@ export const DailySalesScreenStyles = StyleSheet.create({
     paddingVertical: getHeightEquivalent(20),
   },
   bodyTitle: {
-    fontSize: fontEq(28),
+    fontSize:Platform.OS === 'android' ?fontEq(18): fontEq(28),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
     fontWeight: "600",
     color: paint.text,
   },
   bodySubtitle: {
-    fontSize: fontEq(13),
+    fontSize:Platform.OS === 'android' ?fontEq(10): fontEq(13),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
     fontWeight: "400",
     color: paint.textSecondary,
     marginTop: getHeightEquivalent(10),
@@ -105,7 +107,8 @@ export const DailySalesScreenStyles = StyleSheet.create({
     borderColor: paint.border,
   },
   todayButtonText: {
-    fontSize: fontEq(14),
+    fontSize:Platform.OS === 'android' ?fontEq(10): fontEq(14),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
     fontWeight: "500",
     color: paint.white,
   },
@@ -139,7 +142,8 @@ export const DailySalesScreenStyles = StyleSheet.create({
   },
 
   filterButtonText: {
-    fontSize: fontEq(14),
+        fontSize:Platform.OS === 'android' ?fontEq(10): fontEq(14),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "500",
     color: colors.colors.black,
     marginRight: getWidthEquivalent(10),
@@ -161,15 +165,17 @@ export const DailySalesScreenStyles = StyleSheet.create({
     paddingBottom: getHeightEquivalent(40),
   },
   sectionTitle: {
-    fontSize: fontEq(22),
+    fontSize:Platform.OS === 'android' ?fontEq(16): fontEq(22),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
     fontWeight: "600",
     color: paint.text,
     marginBottom: getHeightEquivalent(10),
-    marginTop: getHeightEquivalent(20),
+    marginTop: getHeightEquivalent(10),
     marginLeft: getWidthEquivalent(10),
   },
   transactionSummary: {
-    fontSize: fontEq(22),
+    fontSize:Platform.OS === 'android' ?fontEq(16): fontEq(22),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
     fontWeight: "600",
     color: paint.text,
     marginBottom: getHeightEquivalent(10),
@@ -191,14 +197,16 @@ export const DailySalesScreenStyles = StyleSheet.create({
     paddingTop: getHeightEquivalent(10),
   },
   bottomSheetTitle: {
-    fontSize: fontEq(20),
+    fontSize:Platform.OS === 'android' ?fontEq(16): fontEq(20),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "700",
     color: paint.text,
     textAlign: "center",
     marginBottom: getHeightEquivalent(8),
   },
   bottomSheetSubtitle: {
-    fontSize: fontEq(14),
+    fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(14),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "400",
     color: paint.textSecondary,
     textAlign: "center",
@@ -228,13 +236,15 @@ export const DailySalesScreenStyles = StyleSheet.create({
     flex: 1,
   },
   exportOptionTitle: {
-    fontSize: fontEq(16),
+    fontSize:Platform.OS === 'android' ?fontEq(14): fontEq(16),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "600",
     color: paint.text,
     marginBottom: getHeightEquivalent(4),
   },
   exportOptionDescription: {
-    fontSize: fontEq(13),
+    fontSize:Platform.OS === 'android' ?fontEq(10): fontEq(13),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "400",
     color: paint.textSecondary,
   },

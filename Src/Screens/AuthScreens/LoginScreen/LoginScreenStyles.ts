@@ -1,4 +1,4 @@
-import { StyleSheet } from "react-native";
+import { Platform, StyleSheet } from "react-native";
 import {
   getHeightEquivalent,
   getWidthEquivalent,
@@ -19,14 +19,16 @@ export const loginScreenStyles = StyleSheet.create({
     marginTop: getHeightEquivalent(80),
   },
   title: {
-    fontSize: fontEq(32),
+    fontSize:Platform.OS === 'android' ?fontEq(24): fontEq(32),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
     fontWeight: "bold",
     color: colors.text,
     textAlign: "center",
     marginBottom: getHeightEquivalent(8),
   },
   subtitle: {
-    fontSize: fontEq(16),
+    fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(16),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
     color: colors.textMuted,
     textAlign: "center",
     marginBottom: getHeightEquivalent(40),
@@ -47,7 +49,8 @@ export const loginScreenStyles = StyleSheet.create({
   },
   continueButtonText: {
     color: colors.white,
-    fontSize: fontEq(16),
+    fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(16),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
     fontWeight: "600",
   },
   continueButtonTextDisabled: {

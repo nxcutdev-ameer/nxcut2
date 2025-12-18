@@ -6,6 +6,7 @@ import {
   ActivityIndicator,
   ViewStyle,
   TextStyle,
+  Platform,
 } from "react-native";
 import { colors } from "../Constants/colors";
 import {
@@ -128,7 +129,8 @@ const styles = StyleSheet.create({
     borderColor: colors.buttonDisabled,
   },
   buttonText: {
-    fontSize: fontEq(16),
+    fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(16),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
     fontWeight: "600",
   },
   buttonTextPrimary: {

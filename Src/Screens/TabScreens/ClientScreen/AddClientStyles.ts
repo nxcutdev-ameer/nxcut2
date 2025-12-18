@@ -1,4 +1,4 @@
-import { StyleSheet } from "react-native";
+import { Platform, StyleSheet } from "react-native";
 import { colors } from "../../../Constants/colors";
 import {
   fontEq,
@@ -30,7 +30,8 @@ export const AddClientStyles = StyleSheet.create({
     marginLeft: "auto",
   },
   headerTitle: {
-    fontSize: fontEq(20),
+    fontSize:Platform.OS === 'android' ?fontEq(16): fontEq(20),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
     fontWeight: "700",
     color: colors.text,
     flex: 1,
@@ -54,7 +55,8 @@ export const AddClientStyles = StyleSheet.create({
     flex: 1,
   },
   label: {
-    fontSize: fontEq(14),
+    fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(14),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
     fontWeight: "600",
     color: colors.text,
     marginBottom: getHeightEquivalent(8),
@@ -65,7 +67,8 @@ export const AddClientStyles = StyleSheet.create({
     borderRadius: getWidthEquivalent(8),
     paddingHorizontal: getWidthEquivalent(16),
     paddingVertical: getHeightEquivalent(12),
-    fontSize: fontEq(16),
+    fontSize:Platform.OS === 'android' ?fontEq(10): fontEq(16),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
     color: colors.text,
     backgroundColor: colors.white,
   },
@@ -82,12 +85,14 @@ export const AddClientStyles = StyleSheet.create({
     marginBottom: getHeightEquivalent(16),
   },
   generalErrorText: {
-    fontSize: fontEq(14),
+    fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(14),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
     color: colors.danger,
     textAlign: "center",
   },
   errorText: {
-    fontSize: fontEq(12),
+    fontSize:Platform.OS === 'android' ?fontEq(10): fontEq(12),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
     color: colors.danger,
     marginTop: getHeightEquivalent(4),
   },
@@ -108,12 +113,14 @@ export const AddClientStyles = StyleSheet.create({
     minWidth: getWidthEquivalent(100),
   },
   countryCodeText: {
-    fontSize: fontEq(14),
+    fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(14),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
     color: colors.text,
     fontWeight: "500",
   },
   countryNameText: {
-    fontSize: fontEq(12),
+    fontSize:Platform.OS === 'android' ?fontEq(10): fontEq(12),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
     color: colors.textSecondary,
     marginTop: getHeightEquivalent(2),
   },
@@ -124,7 +131,8 @@ export const AddClientStyles = StyleSheet.create({
     borderRadius: getWidthEquivalent(8),
     paddingHorizontal: getWidthEquivalent(16),
     paddingVertical: getHeightEquivalent(12),
-    fontSize: fontEq(16),
+    fontSize:Platform.OS === 'android' ?fontEq(10): fontEq(16),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
     color: colors.text,
   },
   dateButton: {
@@ -138,7 +146,8 @@ export const AddClientStyles = StyleSheet.create({
     paddingVertical: getHeightEquivalent(12),
   },
   dateButtonText: {
-    fontSize: fontEq(16),
+    fontSize:Platform.OS === 'android' ?fontEq(10): fontEq(16),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
     color: colors.text,
   },
   placeholderText: {
@@ -159,7 +168,8 @@ export const AddClientStyles = StyleSheet.create({
     paddingVertical: getHeightEquivalent(12),
   },
   dropdownButtonText: {
-    fontSize: fontEq(16),
+    fontSize:Platform.OS === 'android' ?fontEq(10): fontEq(16),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
     color: colors.text,
   },
   saveButton: {
@@ -174,7 +184,8 @@ export const AddClientStyles = StyleSheet.create({
     opacity: 0.6,
   },
   saveButtonText: {
-    fontSize: fontEq(16),
+      fontSize:Platform.OS === 'android' ?fontEq(14): fontEq(16),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
     fontWeight: "600",
     color: colors.white,
   },
@@ -200,7 +211,8 @@ export const AddClientStyles = StyleSheet.create({
     marginBottom: getHeightEquivalent(15),
   },
   modalTitle: {
-    fontSize: fontEq(18),
+    fontSize:Platform.OS === 'android' ?fontEq(16): fontEq(18),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
     fontWeight: "600",
     color: colors.text,
     marginBottom: getHeightEquivalent(16),
@@ -213,7 +225,8 @@ export const AddClientStyles = StyleSheet.create({
     borderBottomColor: colors.border,
   },
   modalItemText: {
-    fontSize: fontEq(14),
+    fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(14),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
     color: colors.black,
   },
   modalCloseButton: {
@@ -224,7 +237,8 @@ export const AddClientStyles = StyleSheet.create({
     borderRadius: getWidthEquivalent(50),
   },
   modalCloseButtonText: {
-    fontSize: fontEq(16),
+    fontSize:Platform.OS === 'android' ?fontEq(14): fontEq(16),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
     fontWeight: "500",
     color: colors.text,
   },
@@ -236,13 +250,14 @@ export const AddClientStyles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
     paddingHorizontal: getWidthEquivalent(12),
-    paddingVertical: getHeightEquivalent(12),
+    paddingVertical: Platform.OS === 'android' ?getHeightEquivalent(2) : getHeightEquivalent(12),
     marginBottom: getHeightEquivalent(16),
     gap: getWidthEquivalent(8),
   },
   searchInput: {
     flex: 1,
-    fontSize: fontEq(16),
+    fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(16),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
     color: colors.text,
   },
   loadingContainer: {
@@ -259,7 +274,8 @@ export const AddClientStyles = StyleSheet.create({
     justifyContent: "center",
   },
   emptyText: {
-    fontSize: fontEq(14),
+    fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(14),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
     color: colors.textSecondary,
     textAlign: "center",
   },
