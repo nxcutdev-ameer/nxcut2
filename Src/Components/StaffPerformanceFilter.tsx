@@ -8,6 +8,7 @@ import {
   Modal,
   ScrollView,
   FlatList,
+  Platform,
 } from 'react-native';
 import { ChevronDown, Search } from 'lucide-react-native';
 import colors from '../Constants/colors';
@@ -200,7 +201,8 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     marginLeft: getWidthEquivalent(8),
-    fontSize: fontEq(14),
+    fontSize:Platform.OS === 'android' ?fontEq(10): fontEq(14),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: '500',
   },
   dateFiltersContainer: {
@@ -219,7 +221,8 @@ const styles = StyleSheet.create({
     paddingVertical: getHeightEquivalent(12),
   },
   dropdownText: {
-    fontSize: fontEq(14),
+       fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(14),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: '500',
   },
   modalOverlay: {
@@ -252,7 +255,8 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   modalTitle: {
-    fontSize: fontEq(18),
+    fontSize:Platform.OS === 'android' ?fontEq(16): fontEq(18),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: '600',
     textAlign: 'center',
     marginBottom: getHeightEquivalent(15),
@@ -269,7 +273,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   modalOptionText: {
-    fontSize: fontEq(14),
+    fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(14),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: '500',
   },
 });

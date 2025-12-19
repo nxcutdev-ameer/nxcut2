@@ -1,4 +1,4 @@
-import { StyleSheet } from "react-native";
+import { Platform, StyleSheet } from "react-native";
 import { colors } from "../../../Constants/colors";
 import {
   fontEq,
@@ -48,13 +48,15 @@ export const styles = StyleSheet.create({
     borderBottomColor: colors.border,
   },
   headerText: {
-    fontSize: fontEq(22),
+    fontSize:Platform.OS === 'android' ?fontEq(18): fontEq(22),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "700",
     color: colors.text,
     marginBottom: getHeightEquivalent(8),
   },
   subHeaderText: {
-    fontSize: fontEq(14),
+    fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(14),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     color: colors.textSecondary,
     marginBottom: getHeightEquivalent(20),
     lineHeight: getHeightEquivalent(22),
@@ -76,7 +78,8 @@ export const styles = StyleSheet.create({
     width: "100%",
   },
   buttonText: {
-    fontSize: fontEq(14),
+    fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(14),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "500",
     color: colors.text,
   },
@@ -103,7 +106,8 @@ export const styles = StyleSheet.create({
     paddingHorizontal: getWidthEquivalent(20),
   },
   tableHeaderText: {
-    fontSize: fontEq(16),
+    fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(16),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "700",
     color: colors.text,
   },
@@ -135,7 +139,8 @@ export const styles = StyleSheet.create({
     //borderBottomRightRadius: getWidthEquivalent(12),
   },
   tableCellText: {
-    fontSize: fontEq(13),
+    fontSize:Platform.OS === 'android' ?fontEq(10): fontEq(13),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "500",
     color: colors.text,
   },
@@ -144,7 +149,8 @@ export const styles = StyleSheet.create({
     backgroundColor: colors.primaryLight,
   },
   tableCellTextHighlighted: {
-    fontSize: fontEq(13),
+    fontSize:Platform.OS === 'android' ?fontEq(10): fontEq(13),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "700",
     color: "#000000",
   },
@@ -163,14 +169,16 @@ export const styles = StyleSheet.create({
   },
   // Blue text for sub-fields
   tableCellTextBlue: {
-    fontSize: fontEq(14),
+    fontSize:Platform.OS === 'android' ?fontEq(10): fontEq(14),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "500",
     color: "#007AFF",
     alignSelf: "center",
   },
   // Red text for specific fields
   tableCellTextRed: {
-    fontSize: fontEq(14),
+    fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(14),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "500",
     color: "#FF3B30",
   },
@@ -185,7 +193,8 @@ export const styles = StyleSheet.create({
     height: getHeightEquivalent(150),
   },
   loadingText: {
-    fontSize: fontEq(16),
+    fontSize:Platform.OS === 'android' ?fontEq(14): fontEq(16),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     color: colors.textSecondary,
     marginTop: getHeightEquivalent(20),
     textAlign: "center",
@@ -208,7 +217,8 @@ export const styles = StyleSheet.create({
     borderBottomColor: colors.border,
   },
   modalTitle: {
-    fontSize: fontEq(20),
+    fontSize:Platform.OS === 'android' ?fontEq(18): fontEq(20),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "700",
     color: colors.text,
   },
@@ -228,14 +238,16 @@ export const styles = StyleSheet.create({
     borderColor: colors.border,
   },
   exportOptionTitle: {
-    fontSize: fontEq(18),
+    fontSize:Platform.OS === 'android' ?fontEq(16): fontEq(18),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "600",
     color: colors.text,
     marginTop: getHeightEquivalent(12),
     marginBottom: getHeightEquivalent(4),
   },
   exportOptionDescription: {
-    fontSize: fontEq(14),
+    fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(14),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     color: colors.textSecondary,
     textAlign: "center",
   },
@@ -303,7 +315,8 @@ export const styles = StyleSheet.create({
   },
   dailyAmountText: {
     textAlign: "center",
-    fontSize: fontEq(13),
+    fontSize:Platform.OS === 'android' ?fontEq(10): fontEq(13),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
   },
   // Sticky table styles
   stickyTableContainer: {

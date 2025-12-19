@@ -1,4 +1,4 @@
-import { StyleSheet } from "react-native";
+import { Platform, StyleSheet } from "react-native";
 import colors from "../../../Constants/colors";
 import {
   fontEq,
@@ -27,7 +27,8 @@ export const TeamScreenStyles = StyleSheet.create({
     width: getWidthEquivalent(80),
   },
   backArrowText: {
-    fontSize: fontEq(16),
+    fontSize:Platform.OS === 'android' ?fontEq(14): fontEq(16),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "500",
     color: colors.colors.text,
     marginLeft: getWidthEquivalent(8),
@@ -55,7 +56,8 @@ export const TeamScreenStyles = StyleSheet.create({
   },
   addButtonText: {
     color: colors.colors.white,
-    fontSize: fontEq(14),
+    fontSize:Platform.OS === 'android' ?fontEq(10): fontEq(12),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "600",
     marginLeft: getWidthEquivalent(4),
   },
@@ -68,7 +70,8 @@ export const TeamScreenStyles = StyleSheet.create({
     borderBottomColor: colors.colors.border,
   },
   bodyTitle: {
-    fontSize: fontEq(24),
+    fontSize:Platform.OS === 'android' ?fontEq(18): fontEq(24),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "600",
     color: colors.colors.text,
     marginBottom: getHeightEquivalent(16),
@@ -87,11 +90,12 @@ export const TeamScreenStyles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.colors.gray[300],
     paddingHorizontal: getWidthEquivalent(12),
-    paddingVertical: getHeightEquivalent(12),
+    paddingVertical: Platform.OS === 'android' ? undefined: getHeightEquivalent(12),
   },
   searchInput: {
     flex: 1,
-    fontSize: fontEq(16),
+    fontSize:Platform.OS === 'android' ?fontEq(10): fontEq(16),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     color: colors.colors.text,
     marginLeft: getWidthEquivalent(8),
   },
@@ -148,7 +152,8 @@ export const TeamScreenStyles = StyleSheet.create({
     alignItems: "center",
   },
   memberInitialText: {
-    fontSize: fontEq(18),
+    fontSize:Platform.OS === 'android' ?fontEq(16): fontEq(18),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "700",
     color: colors.colors.white,
   },
@@ -157,13 +162,15 @@ export const TeamScreenStyles = StyleSheet.create({
     flex: 1,
   },
   memberName: {
-    fontSize: fontEq(16),
+    fontSize:Platform.OS === 'android' ?fontEq(14): fontEq(16),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "600",
     color: colors.colors.text,
     marginBottom: getHeightEquivalent(2),
   },
   memberStatus: {
-    fontSize: fontEq(12),
+    fontSize:Platform.OS === 'android' ?fontEq(10): fontEq(12),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "500",
     paddingHorizontal: getWidthEquivalent(8),
     paddingVertical: getHeightEquivalent(2),
@@ -190,7 +197,8 @@ export const TeamScreenStyles = StyleSheet.create({
     alignItems: "center",
   },
   memberDetailText: {
-    fontSize: fontEq(14),
+    fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(14),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     color: colors.colors.textSecondary,
     marginLeft: getWidthEquivalent(8),
   },
@@ -202,7 +210,8 @@ export const TeamScreenStyles = StyleSheet.create({
     paddingVertical: getHeightEquivalent(60),
   },
   emptyStateText: {
-    fontSize: fontEq(16),
+    fontSize:Platform.OS === 'android' ?fontEq(14): fontEq(16),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     color: colors.colors.textSecondary,
     textAlign: "center",
     marginTop: getHeightEquivalent(16),
@@ -215,7 +224,8 @@ export const TeamScreenStyles = StyleSheet.create({
     paddingVertical: getHeightEquivalent(40),
   },
   loadingText: {
-    fontSize: fontEq(16),
+    fontSize:Platform.OS === 'android' ?fontEq(14): fontEq(16),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     color: colors.colors.textSecondary,
     marginTop: getHeightEquivalent(12),
   },
@@ -256,7 +266,8 @@ export const TeamScreenStyles = StyleSheet.create({
     marginBottom: getHeightEquivalent(20),
   },
   bottomSheetTitle: {
-    fontSize: fontEq(18),
+    fontSize:Platform.OS === 'android' ?fontEq(16): fontEq(18),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "600",
     color: colors.colors.text,
   },
@@ -274,7 +285,8 @@ export const TeamScreenStyles = StyleSheet.create({
     marginBottom: getHeightEquivalent(8),
   },
   bottomSheetOptionText: {
-    fontSize: fontEq(16),
+    fontSize:Platform.OS === 'android' ?fontEq(14): fontEq(16),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "500",
     color: colors.colors.text,
     marginLeft: getWidthEquivalent(12),

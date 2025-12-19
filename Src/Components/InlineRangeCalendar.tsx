@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { View, Text, TouchableOpacity } from "react-native";
+import { View, Text, TouchableOpacity, Platform } from "react-native";
 import { ChevronLeft, ChevronRight } from "lucide-react-native";
 import colors from "../Constants/colors";
 import { fontEq, getHeightEquivalent, getWidthEquivalent } from "../Utils/helpers";
@@ -379,7 +379,8 @@ const styles = {
     height: getWidthEquivalent(34),
   },
   monthLabel: {
-    fontSize: fontEq(16),
+    fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(16),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "600" as const,
   },
   weekRow: {
@@ -390,7 +391,8 @@ const styles = {
   weekDayLabel: {
     width: `${100 / DAYS_IN_WEEK}%`,
     textAlign: "center" as const,
-    fontSize: fontEq(11),
+    fontSize:Platform.OS === 'android' ?fontEq(10): fontEq(11),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "400" as const,
     letterSpacing: 0.4,
   },
@@ -410,7 +412,8 @@ const styles = {
     justifyContent: "center" as const,
   },
   dayLabel: {
-    fontSize: fontEq(13),
+    fontSize:Platform.OS === 'android' ?fontEq(9): fontEq(13),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "500" as const,
     paddingHorizontal: getWidthEquivalent(4),
     paddingVertical: getHeightEquivalent(2),
@@ -418,12 +421,13 @@ const styles = {
   dayCircle: {
     width: getWidthEquivalent(32),
     height: getWidthEquivalent(32),
-    borderRadius: getWidthEquivalent(16),
+    borderRadius:Platform.OS === 'android' ?  getWidthEquivalent(50):getWidthEquivalent(16),
     alignItems: "center" as const,
     justifyContent: "center" as const,
   },
   rangeCircle: {
     alignSelf: "center" as const,
+        borderRadius:Platform.OS === 'android' ?  getWidthEquivalent(50):getWidthEquivalent(16),
   },
   rangeCircleStart: {
     marginLeft: getWidthEquivalent(4),

@@ -1,4 +1,4 @@
-import { StyleSheet } from "react-native";
+import { Platform, StyleSheet } from "react-native";
 import { colors } from "../../../Constants/colors";
 import {
   fontEq,
@@ -26,7 +26,7 @@ export const ReportDetailsScreenStyles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     //width: getWidthEquivalent(40),
-    height: getHeightEquivalent(40),
+    height: Platform.OS === 'android' ?getHeightEquivalent(60):getHeightEquivalent(40),
     flexDirection: "row",
     // Add some visual feedback
     backgroundColor: "transparent",
@@ -43,12 +43,14 @@ export const ReportDetailsScreenStyles = StyleSheet.create({
     borderColor: colors.textMuted,
   },
   headerButtonText: {
-    fontSize: fontEq(20), // 20,
+    fontSize:Platform.OS === 'android' ?fontEq(18): fontEq(20),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "500",
     color: colors.text,
   },
   headerText: {
-    fontSize: fontEq(25),
+    fontSize:Platform.OS === 'android' ?fontEq(18): fontEq(25),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "600",
   },
   badgeContainer: {
@@ -68,7 +70,8 @@ export const ReportDetailsScreenStyles = StyleSheet.create({
     alignItems: "center",
   },
   subTextBadge: {
-    fontSize: fontEq(12),
+     fontSize:Platform.OS === 'android' ?fontEq(10): fontEq(12),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "500",
     color: colors.text,
     marginTop: getHeightEquivalent(20),
@@ -120,7 +123,8 @@ export const ReportDetailsScreenStyles = StyleSheet.create({
     flex: 1,
     height: "100%",
     marginLeft: getWidthEquivalent(10),
-    fontSize: fontEq(16),
+     fontSize:Platform.OS === 'android' ?fontEq(10): fontEq(16),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     color: colors.text,
     fontWeight: "500",
   },
@@ -149,7 +153,8 @@ export const ReportDetailsScreenStyles = StyleSheet.create({
     borderRadius: 40,
   },
   tabText: {
-    fontSize: fontEq(16),
+    fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(16),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "600",
     color: colors.text,
   },
@@ -170,7 +175,8 @@ export const ReportDetailsScreenStyles = StyleSheet.create({
     paddingHorizontal: getWidthEquivalent(40),
   },
   emptyStateTitle: {
-    fontSize: fontEq(20),
+    fontSize:Platform.OS === 'android' ?fontEq(18): fontEq(20),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "600",
     color: colors.text,
     textAlign: "center",
@@ -178,7 +184,8 @@ export const ReportDetailsScreenStyles = StyleSheet.create({
     marginBottom: getHeightEquivalent(8),
   },
   emptyStateSubtitle: {
-    fontSize: fontEq(16),
+    fontSize:Platform.OS === 'android' ?fontEq(14): fontEq(16),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     color: colors.textSecondary,
     textAlign: "center",
     lineHeight: fontEq(22),
@@ -196,14 +203,16 @@ export const ReportDetailsScreenStyles = StyleSheet.create({
     opacity: 0.6,
   },
   emptyTabTitle: {
-    fontSize: fontEq(22),
+     fontSize:Platform.OS === 'android' ?fontEq(18): fontEq(22),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "700",
     color: colors.text,
     textAlign: "center",
     marginBottom: getHeightEquivalent(12),
   },
   emptyTabSubtitle: {
-    fontSize: fontEq(16),
+     fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(16),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     color: colors.textSecondary,
     textAlign: "center",
     lineHeight: fontEq(24),
@@ -217,7 +226,8 @@ export const ReportDetailsScreenStyles = StyleSheet.create({
   },
   comingSoonText: {
     color: colors.white,
-    fontSize: fontEq(12),
+    fontSize:Platform.OS === 'android' ?fontEq(10): fontEq(12),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "600",
     textTransform: "uppercase",
     letterSpacing: 0.5,

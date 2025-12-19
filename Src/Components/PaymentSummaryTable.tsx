@@ -1,6 +1,7 @@
 import React from "react";
 import {
   ActivityIndicator,
+  Platform,
   ScrollView,
   StyleSheet,
   Text,
@@ -225,18 +226,21 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   headerText: {
-    fontSize: fontEq(12),
+    fontSize:Platform.OS === 'android' ?fontEq(10): fontEq(12),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "600",
     textAlign: "center",
     width: getWidthEquivalent(100),
   },
   bodyText: {
-    fontSize: fontEq(13),
+    fontSize:Platform.OS === 'android' ?fontEq(10): fontEq(13),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     textAlign: "center",
     width: getWidthEquivalent(100),
   },
   totalText: {
-    fontSize: fontEq(14),
+    fontSize:Platform.OS === 'android' ?fontEq(10): fontEq(14),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "700",
   },
   emptyState: {
@@ -244,7 +248,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   emptyText: {
-    fontSize: fontEq(16),
+    fontSize:Platform.OS === 'android' ?fontEq(14): fontEq(16),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontStyle: "italic",
   },
   loadingContainer: {
@@ -255,7 +260,8 @@ const styles = StyleSheet.create({
     marginTop: getHeightEquivalent(16),
   },
   loadingText: {
-    fontSize: fontEq(16),
+    fontSize:Platform.OS === 'android' ?fontEq(14): fontEq(16),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     marginTop: getHeightEquivalent(12),
   },
 });

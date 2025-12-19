@@ -1,4 +1,4 @@
-import { ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { Platform, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import React from "react";
 import usePerformanceDashboardScreenVM from "./PerformanceDashboardScreenVM";
 import {
@@ -93,7 +93,7 @@ const PerfromanceDashboardScreen = () => {
             onPress={() => setShowMonthFilter(true)}
             style={PerformanceDashboardScreenStyles.dateButton}
           >
-            <Text>
+            <Text style={PerformanceDashboardScreenStyles.DateFilter}>
               {new Date(dateRange.start_date).toLocaleDateString("en-US", {
                 month: "short",
                 day: "2-digit",
@@ -492,7 +492,8 @@ const PerfromanceDashboardScreen = () => {
                   yAxisLabelWidth={40}
                   yAxisTextStyle={{
                     color: colors.text,
-                    fontSize: fontEq(12),
+                   fontSize:Platform.OS === 'android' ?fontEq(10): fontEq(12),
+                   fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
                   }}
                   hideDataPoints={false}
                   showVerticalLines={true}
@@ -503,7 +504,8 @@ const PerfromanceDashboardScreen = () => {
                   stepHeight={getHeightEquivalent(44)}
                   xAxisLabelTextStyle={{
                     color: colors.text,
-                    fontSize: fontEq(12),
+                    fontSize:Platform.OS === 'android' ?fontEq(10): fontEq(12),
+                    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
                     textAlign: "center",
                     fontWeight: "600",
                     width: getWidthEquivalent(45),
@@ -583,7 +585,8 @@ const PerfromanceDashboardScreen = () => {
                     <Text
                       style={[
                         PerformanceDashboardScreenStyles.lineGraphText,
-                        { fontSize: 10, color: colors.textSecondary },
+                        {   fontSize:Platform.OS === 'android' ?fontEq(8): fontEq(10),
+                            fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined, color: colors.textSecondary },
                       ]}
                     >
                       {item.percentage.toFixed(1)}%
@@ -647,7 +650,8 @@ const PerfromanceDashboardScreen = () => {
                     {/* Bar amount label on top */}
                     <Text
                       style={{
-                        fontSize: 10,
+                        fontSize:Platform.OS === 'android' ?fontEq(8): fontEq(10),
+                        fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
                         fontWeight: "600",
                         color: colors.text,
                         marginBottom: 5,
@@ -672,7 +676,8 @@ const PerfromanceDashboardScreen = () => {
                     {/* Bar category label at bottom */}
                     <Text
                       style={{
-                        fontSize: 9,
+                        fontSize:Platform.OS === 'android' ?fontEq(7): fontEq(9),
+                        fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
                         fontWeight: "500",
                         color: colors.textSecondary,
                         marginTop: 8,

@@ -55,13 +55,15 @@ const PerformanceDashboardScreenStyles = StyleSheet.create({
     paddingVertical: getHeightEquivalent(10),
   },
   title: {
-    fontSize: fontEq(24),
+    fontSize:Platform.OS === 'android' ?fontEq(18): fontEq(24),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "700",
     color: colors.colors.text,
     marginBottom: getHeightEquivalent(10),
   },
   description: {
-    fontSize: fontEq(14),
+    fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(14),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "400",
     color: colors.colors.textSecondary,
     marginBottom: getHeightEquivalent(30),
@@ -130,13 +132,15 @@ const PerformanceDashboardScreenStyles = StyleSheet.create({
     elevation: 3,
   },
   sectionTitle: {
-    fontSize: fontEq(14),
+    fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(14),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "500",
     color: colors.colors.textSecondary,
     marginBottom: getHeightEquivalent(10),
   },
   sectionAmount: {
-    fontSize: fontEq(22),
+    fontSize:Platform.OS === 'android' ?fontEq(16): fontEq(22),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "700",
     color: colors.colors.text,
     marginBottom: getHeightEquivalent(8),
@@ -147,7 +151,8 @@ const PerformanceDashboardScreenStyles = StyleSheet.create({
     marginTop: getHeightEquivalent(8),
   },
   compareText: {
-    fontSize: fontEq(12),
+    fontSize:Platform.OS === 'android' ?fontEq(10): fontEq(12),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     color: colors.colors.success,
     fontWeight: "500",
     marginLeft: getWidthEquivalent(4),
@@ -170,13 +175,15 @@ const PerformanceDashboardScreenStyles = StyleSheet.create({
     elevation: 3,
   },
   tableSectionTitle: {
-    fontSize: fontEq(18),
+    fontSize:Platform.OS === 'android' ?fontEq(14): fontEq(18),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "700",
     color: colors.colors.text,
     marginBottom: getHeightEquivalent(8),
   },
   tableSectionSubtitle: {
-    fontSize: fontEq(14),
+    fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(14),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     color: colors.colors.textSecondary,
     marginBottom: getHeightEquivalent(20),
   },
@@ -190,7 +197,8 @@ const PerformanceDashboardScreenStyles = StyleSheet.create({
     marginBottom: getHeightEquivalent(8),
   },
   tableHeaderText: {
-    fontSize: fontEq(12),
+    fontSize:Platform.OS === 'android' ?fontEq(10): fontEq(12),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "600",
     color: colors.colors.text,
     textAlign: "left",
@@ -226,14 +234,20 @@ const PerformanceDashboardScreenStyles = StyleSheet.create({
     alignItems: "flex-end",
   },
   tableCellText: {
-    fontSize: fontEq(12),
+    fontSize:Platform.OS === 'android' ?fontEq(9): fontEq(12),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     color: colors.colors.text,
     fontWeight: "400",
   },
   tableCellTextTotal: {
-    fontSize: fontEq(12),
+    fontSize:Platform.OS === 'android' ?fontEq(9): fontEq(12),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     color: colors.colors.text,
     fontWeight: "700",
+  },
+  DateFilter: {
+    fontSize:Platform.OS === 'android' ?fontEq(10): undefined,
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
   },
   // Filter Panel Styles
   filterPanelModal: {
@@ -291,7 +305,7 @@ const PerformanceDashboardScreenStyles = StyleSheet.create({
     borderBottomColor: colors.colors.border,
   },
   filterOptionText: {
-      fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(16),
+    fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(16),
     fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     color: colors.colors.text,
     fontWeight: "500",
@@ -374,7 +388,8 @@ const PerformanceDashboardScreenStyles = StyleSheet.create({
     elevation: 3,
   },
   lineAmount: {
-    fontSize: fontEq(16),
+    fontSize:Platform.OS === 'android' ?fontEq(14): fontEq(16),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "700",
     color: colors.colors.text,
   },
@@ -396,7 +411,8 @@ const PerformanceDashboardScreenStyles = StyleSheet.create({
     //borderWidth: 1,
   },
   lineGraphText: {
-    fontSize: fontEq(12),
+    fontSize:Platform.OS === 'android' ?fontEq(10): fontEq(12),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "500",
     color: colors.colors.text,
     marginLeft: getWidthEquivalent(5),

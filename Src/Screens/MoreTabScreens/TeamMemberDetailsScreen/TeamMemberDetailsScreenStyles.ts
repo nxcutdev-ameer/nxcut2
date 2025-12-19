@@ -1,4 +1,4 @@
-import { StyleSheet } from "react-native";
+import { Platform, StyleSheet } from "react-native";
 import colors from "../../../Constants/colors";
 import {
   fontEq,
@@ -43,7 +43,8 @@ export const TeamMemberDetailsScreenStyles = StyleSheet.create({
     width: getWidthEquivalent(80),
   },
   backArrowText: {
-    fontSize: fontEq(16),
+    fontSize:Platform.OS === 'android' ?fontEq(14): fontEq(16),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "600",
     color: colors.colors.black,
     marginLeft: getWidthEquivalent(8),
@@ -93,24 +94,28 @@ export const TeamMemberDetailsScreenStyles = StyleSheet.create({
     alignItems: "center",
   },
   profileInitialText: {
-    fontSize: fontEq(36),
+    fontSize:Platform.OS === 'android' ?fontEq(20): fontEq(36),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "700",
     color: colors.colors.white,
   },
   memberName: {
-    fontSize: fontEq(24),
+    fontSize:Platform.OS === 'android' ?fontEq(18): fontEq(24),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "700",
     color: colors.colors.text,
     marginBottom: getHeightEquivalent(4),
   },
   memberRole: {
-    fontSize: fontEq(16),
+    fontSize:Platform.OS === 'android' ?fontEq(14): fontEq(16),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "500",
     color: colors.colors.textSecondary,
     marginBottom: getHeightEquivalent(8),
   },
   memberStatus: {
-    fontSize: fontEq(14),
+    fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(14),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "600",
     paddingHorizontal: getWidthEquivalent(12),
     paddingVertical: getHeightEquivalent(4),
@@ -137,7 +142,8 @@ export const TeamMemberDetailsScreenStyles = StyleSheet.create({
     marginBottom: getHeightEquivalent(12),
   },
   switchLabel: {
-    fontSize: fontEq(16),
+    fontSize:Platform.OS === 'android' ?fontEq(14): fontEq(16),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "500",
     color: colors.colors.text,
     flex: 1,
@@ -164,7 +170,8 @@ export const TeamMemberDetailsScreenStyles = StyleSheet.create({
     marginBottom: getHeightEquivalent(12),
   },
   sectionTitle: {
-    fontSize: fontEq(18),
+    fontSize:Platform.OS === 'android' ?fontEq(16): fontEq(18),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "600",
     color: colors.colors.text,
   },
@@ -203,7 +210,8 @@ export const TeamMemberDetailsScreenStyles = StyleSheet.create({
     width: "40%",
   },
   quickActionText: {
-    fontSize: fontEq(12),
+    fontSize:Platform.OS === 'android' ?fontEq(10): fontEq(12),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "500",
     color: colors.colors.text,
     textAlign: "center",
@@ -253,18 +261,21 @@ export const TeamMemberDetailsScreenStyles = StyleSheet.create({
     flex: 1,
   },
   infoLabel: {
-    fontSize: fontEq(12),
+    fontSize:Platform.OS === 'android' ?fontEq(10): fontEq(12),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "500",
     color: colors.colors.textSecondary,
     marginBottom: getHeightEquivalent(2),
   },
   infoValue: {
-    fontSize: fontEq(16),
+    fontSize:Platform.OS === 'android' ?fontEq(10): fontEq(16),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "500",
     color: colors.colors.text,
   },
   infoInput: {
-    fontSize: fontEq(16),
+    fontSize:Platform.OS === 'android' ?fontEq(10): fontEq(16),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "500",
     color: colors.colors.text,
     borderBottomWidth: 1,
@@ -300,7 +311,8 @@ export const TeamMemberDetailsScreenStyles = StyleSheet.create({
     flexDirection: "row",
   },
   editButtonText: {
-    fontSize: fontEq(16),
+    fontSize:Platform.OS === 'android' ?fontEq(14): fontEq(16),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "600",
     color: colors.colors.white,
     marginLeft: getWidthEquivalent(8),
@@ -319,7 +331,8 @@ export const TeamMemberDetailsScreenStyles = StyleSheet.create({
     flexDirection: "row",
   },
   saveButtonText: {
-    fontSize: fontEq(16),
+    fontSize:Platform.OS === 'android' ?fontEq(14): fontEq(16),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "600",
     color: colors.colors.white,
     marginLeft: getWidthEquivalent(8),
@@ -336,7 +349,8 @@ export const TeamMemberDetailsScreenStyles = StyleSheet.create({
     borderColor: colors.colors.borderLight,
   },
   editCancelButtonText: {
-    fontSize: fontEq(16),
+    fontSize:Platform.OS === 'android' ?fontEq(14): fontEq(16),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "600",
     color: colors.colors.text,
     marginLeft: getWidthEquivalent(8),
@@ -358,7 +372,8 @@ export const TeamMemberDetailsScreenStyles = StyleSheet.create({
     paddingVertical: getHeightEquivalent(40),
   },
   loadingText: {
-    fontSize: fontEq(16),
+    fontSize:Platform.OS === 'android' ?fontEq(14): fontEq(16),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     color: colors.colors.textSecondary,
     marginTop: getHeightEquivalent(12),
   },
@@ -371,14 +386,16 @@ export const TeamMemberDetailsScreenStyles = StyleSheet.create({
     padding: getWidthEquivalent(24),
   },
   confirmationTitle: {
-    fontSize: fontEq(18),
+    fontSize:Platform.OS === 'android' ?fontEq(16): fontEq(18),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "700",
     color: colors.colors.text,
     textAlign: "center",
     marginBottom: getHeightEquivalent(8),
   },
   confirmationMessage: {
-    fontSize: fontEq(14),
+    fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(14),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     color: colors.colors.textSecondary,
     textAlign: "center",
     lineHeight: getHeightEquivalent(20),
@@ -396,7 +413,8 @@ export const TeamMemberDetailsScreenStyles = StyleSheet.create({
     alignItems: "center",
   },
   cancelButtonText: {
-    fontSize: fontEq(16),
+    fontSize:Platform.OS === 'android' ?fontEq(14): fontEq(16),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "600",
     color: colors.colors.text,
   },
@@ -408,7 +426,8 @@ export const TeamMemberDetailsScreenStyles = StyleSheet.create({
     alignItems: "center",
   },
   confirmButtonText: {
-    fontSize: fontEq(16),
+    fontSize:Platform.OS === 'android' ?fontEq(14): fontEq(16),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "600",
     color: colors.colors.white,
   },

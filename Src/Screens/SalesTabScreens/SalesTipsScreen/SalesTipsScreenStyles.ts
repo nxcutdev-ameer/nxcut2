@@ -1,4 +1,4 @@
-import { StyleSheet } from "react-native";
+import { Platform, StyleSheet } from "react-native";
 import { colors } from "../../../Constants/colors";
 import {
   fontEq,
@@ -47,7 +47,8 @@ const SalesTipsScreenStyles = StyleSheet.create({
   },
   addButtonText: {
     color: colors.black,
-    fontSize: fontEq(14),
+    fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(14),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "600",
   },
   filter: {
@@ -74,13 +75,15 @@ const SalesTipsScreenStyles = StyleSheet.create({
     marginBottom: getHeightEquivalent(8),
   },
   title: {
-    fontSize: fontEq(22),
+    fontSize:Platform.OS === 'android' ?fontEq(18): fontEq(22),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "700",
     color: colors.text,
     flex: 1,
   },
   subtitle: {
-    fontSize: fontEq(14),
+    fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(14),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     color: colors.textSecondary,
     lineHeight: getHeightEquivalent(20),
     marginBottom: getHeightEquivalent(16),
@@ -106,14 +109,16 @@ const SalesTipsScreenStyles = StyleSheet.create({
     paddingVertical: getHeightEquivalent(60),
   },
   emptyTitle: {
-    fontSize: fontEq(18),
+    fontSize:Platform.OS === 'android' ?fontEq(16): fontEq(18),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "600",
     color: colors.text,
     marginTop: getHeightEquivalent(16),
     marginBottom: getHeightEquivalent(8),
   },
   emptySubtitle: {
-    fontSize: fontEq(14),
+    fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(14),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     color: colors.textSecondary,
     textAlign: "center",
     lineHeight: getHeightEquivalent(20),
@@ -125,7 +130,8 @@ const SalesTipsScreenStyles = StyleSheet.create({
     paddingVertical: getHeightEquivalent(80),
   },
   loadingText: {
-    fontSize: fontEq(16),
+     fontSize:Platform.OS === 'android' ?fontEq(14): fontEq(16),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     color: colors.textSecondary,
     marginTop: getHeightEquivalent(16),
     fontWeight: "500",
@@ -141,7 +147,8 @@ const SalesTipsScreenStyles = StyleSheet.create({
     width: "100%",
   },
   dateRangeText: {
-    fontSize: fontEq(14),
+    fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(14),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     color: colors.text,
     fontWeight: "500",
   },
@@ -153,7 +160,8 @@ const SalesTipsScreenStyles = StyleSheet.create({
     marginLeft: getWidthEquivalent(8),
   },
   countText: {
-    fontSize: fontEq(14),
+    fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(14),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "600",
     color: colors.text,
   },
@@ -169,7 +177,8 @@ const SalesTipsScreenStyles = StyleSheet.create({
   searchInput: {
     flex: 1,
     marginLeft: getWidthEquivalent(8),
-    fontSize: fontEq(14),
+    fontSize:Platform.OS === 'android' ?fontEq(8): fontEq(14),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     color: colors.text,
     paddingVertical: 0,
     height: "100%",
@@ -181,14 +190,16 @@ const SalesTipsScreenStyles = StyleSheet.create({
     paddingBottom: getHeightEquivalent(100),
   },
   bottomSheetTitle: {
-    fontSize: fontEq(20),
+     fontSize:Platform.OS === 'android' ?fontEq(18): fontEq(20),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "600",
     color: colors.text,
     marginBottom: getHeightEquivalent(8),
     textAlign: "center",
   },
   bottomSheetSubtitle: {
-    fontSize: fontEq(14),
+    fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(14),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     color: colors.textSecondary,
     marginBottom: getHeightEquivalent(20),
     textAlign: "center",
@@ -218,13 +229,15 @@ const SalesTipsScreenStyles = StyleSheet.create({
     flex: 1,
   },
   exportOptionTitle: {
-    fontSize: fontEq(16),
+     fontSize:Platform.OS === 'android' ?fontEq(14): fontEq(16),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "600",
     color: colors.text,
     marginBottom: 2,
   },
   exportOptionDescription: {
-    fontSize: fontEq(13),
+     fontSize:Platform.OS === 'android' ?fontEq(11): fontEq(13),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     color: colors.textSecondary,
   },
   backdrop: {

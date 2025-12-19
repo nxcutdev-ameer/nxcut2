@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   Dimensions,
+  Platform,
 } from 'react-native';
 import { PanGestureHandler, State } from 'react-native-gesture-handler';
 import { FileText, Download, Grid3X3 } from 'lucide-react-native';
@@ -120,7 +121,7 @@ const ExportBottomSheet: React.FC<ExportBottomSheetProps> = ({
             styles.bottomSheet,
             {
               backgroundColor: paint.white,
-              height: screenHeight * 0.35,
+              height: Platform.OS === 'android' ? screenHeight * 0.40:screenHeight * 0.35,
             }
           ]}>
             {/* Handle */}
@@ -195,7 +196,8 @@ const styles = StyleSheet.create({
     marginBottom: getHeightEquivalent(20),
   },
   title: {
-    fontSize: fontEq(18),
+    fontSize:Platform.OS === 'android' ?fontEq(16): fontEq(18),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: '600',
     textAlign: 'center',
     marginBottom: getHeightEquivalent(20),
@@ -216,12 +218,14 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   optionTitle: {
-    fontSize: fontEq(16),
+    fontSize:Platform.OS === 'android' ?fontEq(14): fontEq(16),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: '500',
     marginBottom: getHeightEquivalent(2),
   },
   optionSubtitle: {
-    fontSize: fontEq(12),
+    fontSize:Platform.OS === 'android' ?fontEq(10): fontEq(12),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: '400',
   },
 });

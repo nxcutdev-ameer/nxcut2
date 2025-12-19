@@ -1,4 +1,4 @@
-import { StyleSheet } from "react-native";
+import { Platform, StyleSheet } from "react-native";
 import colors from "../../../Constants/colors";
 import {
   fontEq,
@@ -73,13 +73,15 @@ export const PaymentSummaryScreenStyles = StyleSheet.create({
     borderBottomColor: colors.colors.border,
   },
   bodyTitle: {
-    fontSize: fontEq(22),
+    fontSize:Platform.OS === 'android' ?fontEq(18): fontEq(22),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "700",
     color: colors.colors.text,
     marginBottom: getHeightEquivalent(8),
   },
   bodySubtitle: {
-    fontSize: fontEq(13),
+    fontSize:Platform.OS === 'android' ?fontEq(11): fontEq(13),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     color: colors.colors.textSecondary,
     lineHeight: getHeightEquivalent(22),
     marginBottom: getHeightEquivalent(20),
@@ -101,7 +103,8 @@ export const PaymentSummaryScreenStyles = StyleSheet.create({
   },
   todayButtonText: {
     color: colors.colors.white,
-    fontSize: fontEq(14),
+    fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(14),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "600",
   },
   todayButtonTextDisabled: {
@@ -133,7 +136,8 @@ export const PaymentSummaryScreenStyles = StyleSheet.create({
     borderWidth: 1,
   },
   filterButtonText: {
-    fontSize: fontEq(14),
+    fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(14),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "600",
     color: colors.colors.text,
     marginLeft: getWidthEquivalent(8),
@@ -146,7 +150,8 @@ export const PaymentSummaryScreenStyles = StyleSheet.create({
     paddingBottom: getHeightEquivalent(20),
   },
   sectionTitle: {
-    fontSize: fontEq(18),
+       fontSize:Platform.OS === 'android' ?fontEq(16): fontEq(18),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "600",
     color: colors.colors.text,
     marginTop: getHeightEquivalent(20),

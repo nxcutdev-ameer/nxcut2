@@ -10,6 +10,7 @@ import {
   TouchableOpacity,
   View,
   ActivityIndicator,
+  Platform,
 } from "react-native";
 import {
   SafeAreaView,
@@ -442,7 +443,8 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
   },
   filterHeaderTitle: {
-    fontSize: fontEq(22),
+    fontSize:Platform.OS === 'android' ?fontEq(16): fontEq(22),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "600",
     color: colors.text,
   },
@@ -460,7 +462,8 @@ const styles = StyleSheet.create({
     paddingBottom: getHeightEquivalent(24),
   },
   sectionTitle: {
-    fontSize: fontEq(18),
+    fontSize:Platform.OS === 'android' ?fontEq(14): fontEq(18),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "600",
     color: colors.text,
     marginBottom: getHeightEquivalent(15),
@@ -484,13 +487,15 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   dateLabel: {
-    fontSize: fontEq(14),
+    fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(14),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "500",
     color: colors.text,
     marginBottom: 4,
   },
   dateValue: {
-    fontSize: fontEq(14),
+    fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(14),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "400",
     color: colors.text,
   },
@@ -522,7 +527,8 @@ const styles = StyleSheet.create({
     backgroundColor: `${colors.borderFocus}15`,
   },
   predefinedButtonText: {
-    fontSize: fontEq(14),
+    fontSize:Platform.OS === 'android' ?fontEq(10): fontEq(14),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "500",
     color: colors.text,
   },
@@ -541,10 +547,11 @@ const styles = StyleSheet.create({
   footer: {
     paddingHorizontal: getWidthEquivalent(20),
     paddingVertical: getHeightEquivalent(12),
-    marginBottom: getHeightEquivalent(-20),
+   // marginBottom: getHeightEquivalent(-20),
     borderTopWidth: 1,
     borderTopColor: colors.border,
     backgroundColor: colors.white,
+    marginBottom: Platform.OS === 'android'? getHeightEquivalent(2):  getHeightEquivalent(-20),
   },
   filterButton: {
     backgroundColor: colors.black,
@@ -557,7 +564,8 @@ const styles = StyleSheet.create({
     backgroundColor: colors.gray[300],
   },
   filterButtonText: {
-    fontSize: fontEq(16),
+    fontSize:Platform.OS === 'android' ?fontEq(14): fontEq(16),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "600",
     color: colors.white,
   },

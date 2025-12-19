@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
   Animated,
   Easing,
+  Platform,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import * as Notifications from 'expo-notifications';
@@ -375,9 +376,9 @@ const styles = StyleSheet.create({
     paddingVertical:  getHeightEquivalent(20),
   },
   headerTitle: {
-    fontSize: fontEq(20),
+    fontSize:Platform.OS === 'android' ?fontEq(18): fontEq(20),
+     fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : "Helvetica",
     fontWeight: "600",
-    fontFamily: "Helvetica",
   },
   settingsButton: {
     padding: getWidthEquivalent(8),
@@ -400,10 +401,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   tabText: {
-    fontSize: fontEq(14),
+    fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(14),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : "Helvetica",
     fontWeight: '600',
     marginBottom: getHeightEquivalent(8),
-    fontFamily: "Helvetica",
   },
   animatedUnderline: {
     position: 'absolute',
@@ -439,17 +440,17 @@ const styles = StyleSheet.create({
     marginBottom: getHeightEquivalent(3),
   },
   cardTitle: {
-    fontSize: fontEq(16),
+    fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(16),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : "Helvetica",
     fontWeight: '700',
     flex: 1,
     marginRight: getWidthEquivalent(8),
-    fontFamily: "Helvetica",
   },
   cardType: {
-    fontSize: fontEq(12),
+    fontSize:Platform.OS === 'android' ?fontEq(10): fontEq(12),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : "Helvetica",
     fontWeight: '600',
     textTransform: 'uppercase',
-    fontFamily: "Helvetica",
     paddingHorizontal: getWidthEquivalent(8),
     paddingVertical: getHeightEquivalent(2),
     borderRadius: getHeightEquivalent(999),
@@ -458,15 +459,15 @@ const styles = StyleSheet.create({
     color: colors.colors.primary,
   },
   cardBody: {
-    fontSize: fontEq(14),
+    fontSize:Platform.OS === 'android' ?fontEq(10): fontEq(14),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : "Helvetica",
     lineHeight: fontEq(20),
     marginBottom: getHeightEquivalent(6),
-    fontFamily: "Helvetica",
   },
   cardDate: {
-    fontSize: fontEq(12),
+    fontSize:Platform.OS === 'android' ?fontEq(10): fontEq(12),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : "Helvetica",
     marginBottom: getHeightEquivalent(12),
-    fontFamily: "Helvetica",
   },
   emptyStateContainer: {
     flex: 1,
@@ -480,18 +481,18 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   emptyTitle: {
-    fontSize: fontEq(24),
+    fontSize:Platform.OS === 'android' ?fontEq(18): fontEq(24),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : "Helvetica",
     fontWeight: "700",
     marginBottom: getHeightEquivalent(16),
     textAlign: "center",
-    fontFamily: "Helvetica",
   },
   emptySubtitle: {
-    fontSize: fontEq(16),
+    fontSize:Platform.OS === 'android' ?fontEq(14): fontEq(16),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : "Helvetica",
     lineHeight: fontEq(24),
     textAlign: "center",
     marginBottom: getHeightEquivalent(32),
-    fontFamily: "Helvetica",
   },
   comingSoonBadge: {
     backgroundColor: colors.colors.primary,
@@ -501,7 +502,8 @@ const styles = StyleSheet.create({
   },
   comingSoonText: {
     color: colors.colors.white,
-    fontSize: fontEq(14),
+    fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(14),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : "Helvetica",
     fontWeight: "600",
   },
 });

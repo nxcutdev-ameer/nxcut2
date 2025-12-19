@@ -4,6 +4,7 @@ import {
   TouchableOpacity,
   ScrollView,
   RefreshControl,
+  Platform,
 } from "react-native";
 import React, { useEffect, useMemo, useState } from "react";
 import { appointmentsRepository } from "../../../Repository/appointmentsRepository";
@@ -765,11 +766,13 @@ const DashBoardScreen = () => {
                   yAxisThickness={1}
                   yAxisTextStyle={{
                     color: colors.colors.textSecondary,
-                    fontSize: fontEq(10),
+                    fontSize:Platform.OS === 'android' ?fontEq(6): fontEq(10),
+                    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
                   }}
                   xAxisLabelTextStyle={{
                     color: colors.colors.text,
-                    fontSize: fontEq(10),
+                    fontSize:Platform.OS === 'android' ?fontEq(6): fontEq(10),
+                    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
                     fontWeight: '500',
                   }}
                   rotateLabel

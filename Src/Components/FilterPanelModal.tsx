@@ -1,5 +1,5 @@
 import React from "react";
-import { ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { Platform, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import Modal from "react-native-modal";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
@@ -12,6 +12,7 @@ import {
 } from "lucide-react-native";
 import { colors } from "../Constants/colors";
 import PerformanceDashboardScreenStyles from "../Screens/MoreTabScreens/PerformanceDashboardScreen/PerformanceDashboardScreenStyles";
+import { fontEq } from "../Utils/helpers";
 
 export type FilterOptionId = "location" | "team_member";
 
@@ -157,7 +158,8 @@ const FilterPanelModal: React.FC<FilterPanelModalProps> = ({
                           </View>
                           <Text
                             style={{
-                              fontSize: 16,
+                              fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(16),
+                              fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
                               color: colors.text,
                               fontWeight: isSelected ? "600" : "400",
                             }}
@@ -189,7 +191,8 @@ const FilterPanelModal: React.FC<FilterPanelModalProps> = ({
                         >
                           <Text
                             style={{
-                              fontSize: 14,
+                              fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(14),
+                              fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
                               color: colors.textSecondary,
                               fontStyle: "italic",
                             }}
@@ -251,7 +254,8 @@ const FilterPanelModal: React.FC<FilterPanelModalProps> = ({
                           <View style={{ flex: 1 }}>
                             <Text
                               style={{
-                                fontSize: 16,
+                                    fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(16),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
                                 color: colors.text,
                                 fontWeight: isSelected ? "600" : "400",
                               }}

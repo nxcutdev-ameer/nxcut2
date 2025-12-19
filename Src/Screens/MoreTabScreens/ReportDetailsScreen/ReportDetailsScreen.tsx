@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, ScrollView } from "react-native";
+import { View, Text, TouchableOpacity, ScrollView, Platform } from "react-native";
 import React, { use } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ReportDetailsScreenStyles } from "./ReportDetailsScreenStyles";
@@ -46,7 +46,8 @@ const ReportsDetailsScreen = () => {
           <ArrowLeft size={20} color={colors.colors.black} />
           <Text
             style={{
-              fontSize: fontEq(16),
+              fontSize:Platform.OS === 'android' ?fontEq(14): fontEq(16),
+              fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
               color: colors.colors.black,
               fontWeight: "500",
               marginLeft: getWidthEquivalent(5),

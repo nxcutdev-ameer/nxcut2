@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from "react-native";
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Platform } from "react-native";
 import { SaleTipBO } from "../Repository/teamRepository";
 import colors from "../Constants/colors";
 import {
@@ -146,7 +146,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: getWidthEquivalent(8),
   },
   headerText: {
-    fontSize: fontEq(12),
+    fontSize:Platform.OS === 'android' ?fontEq(8): fontEq(12),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "700",
     color: colors.colors.primary,
     textAlign: "center",
@@ -170,7 +171,8 @@ const styles = StyleSheet.create({
     minHeight: getHeightEquivalent(40),
   },
   cellText: {
-    fontSize: fontEq(12),
+    fontSize:Platform.OS === 'android' ?fontEq(8): fontEq(12),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     color: colors.colors.text,
     textAlign: "center",
     fontWeight: "500",
@@ -185,7 +187,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   emptyText: {
-    fontSize: fontEq(14),
+    fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(14),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     color: colors.colors.textSecondary,
     fontStyle: "italic",
   },

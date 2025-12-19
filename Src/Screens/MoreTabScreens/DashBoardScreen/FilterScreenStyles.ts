@@ -1,4 +1,4 @@
-import { StyleSheet } from "react-native";
+import { Platform, StyleSheet } from "react-native";
 import {
   fontEq,
   getHeightEquivalent,
@@ -32,7 +32,8 @@ export const FilterScreenStyles = StyleSheet.create({
     justifyContent: "space-between",
   },
   headerTitle: {
-    fontSize: fontEq(20),
+    fontSize:Platform.OS === 'android' ?fontEq(18): fontEq(20),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "600",
   },
   closeButton: {
@@ -52,7 +53,8 @@ export const FilterScreenStyles = StyleSheet.create({
     marginBottom: getHeightEquivalent(16),
   },
   sectionLabel: {
-    fontSize: fontEq(14),
+    fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(14),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "500",
     marginBottom: getHeightEquivalent(8),
   },
@@ -66,7 +68,8 @@ export const FilterScreenStyles = StyleSheet.create({
     borderWidth: 1,
   },
   dropdownText: {
-    fontSize: fontEq(14),
+    fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(14),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "500",
   },
   dropdownMenu: {
@@ -93,7 +96,8 @@ export const FilterScreenStyles = StyleSheet.create({
     borderBottomColor: paint.border,
   },
   dropdownOptionText: {
-    fontSize: fontEq(15),
+    fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(15),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
   },
   dateInputsContainer: {
     flexDirection: "row",
@@ -106,7 +110,8 @@ export const FilterScreenStyles = StyleSheet.create({
     flex: 1,
   },
   inputLabel: {
-    fontSize: fontEq(14),
+    fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(14),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "500",
     marginBottom: getHeightEquivalent(8),
   },
@@ -115,11 +120,13 @@ export const FilterScreenStyles = StyleSheet.create({
     paddingVertical: getHeightEquivalent(14),
     borderRadius: 12,
     borderWidth: 1,
-    fontSize: fontEq(14),
+    fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(14),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "500",
   },
   errorText: {
-    fontSize: fontEq(12),
+    fontSize:Platform.OS === 'android' ?fontEq(10): fontEq(12),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "500",
     marginTop: getHeightEquivalent(4),
     marginLeft: getWidthEquivalent(4),
@@ -145,12 +152,14 @@ export const FilterScreenStyles = StyleSheet.create({
     alignItems: "flex-start",
   },
   datePreviewLabel: {
-    fontSize: fontEq(13),
+    fontSize:Platform.OS === 'android' ?fontEq(10): fontEq(13),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "500",
     marginBottom: getHeightEquivalent(6),
   },
   datePreviewValue: {
-    fontSize: fontEq(16),
+    fontSize:Platform.OS === 'android' ?fontEq(14): fontEq(16),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "600",
   },
   datePreviewSeparator: {
@@ -160,7 +169,8 @@ export const FilterScreenStyles = StyleSheet.create({
     marginHorizontal: getWidthEquivalent(18),
   },
   calendarSubHint: {
-    fontSize: fontEq(12),
+    fontSize:Platform.OS === 'android' ?fontEq(10): fontEq(12),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     textAlign: "center",
     marginTop: getHeightEquivalent(12),
     fontStyle: "italic",
@@ -181,12 +191,14 @@ export const FilterScreenStyles = StyleSheet.create({
     shadowRadius: 3,
   },
   calendarLabel: {
-    fontSize: fontEq(16),
+    fontSize:Platform.OS === 'android' ?fontEq(14): fontEq(16),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "600",
     marginBottom: getHeightEquivalent(12),
   },
   calendarHint: {
-    fontSize: fontEq(13),
+    fontSize:Platform.OS === 'android' ?fontEq(10): fontEq(13),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "500",
     marginBottom: getHeightEquivalent(12),
     textAlign: "center",
@@ -206,7 +218,8 @@ export const FilterScreenStyles = StyleSheet.create({
   },
   applyButtonText: {
     color: paint.white,
-    fontSize: fontEq(16),
+    fontSize:Platform.OS === 'android' ?fontEq(14): fontEq(16),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "700",
   },
 });

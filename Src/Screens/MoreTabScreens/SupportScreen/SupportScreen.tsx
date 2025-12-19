@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   ScrollView,
   Linking,
+  Platform,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
@@ -263,7 +264,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   headerTitle: {
-    fontSize: fontEq(20),
+    fontSize:Platform.OS === 'android' ?fontEq(18): fontEq(20),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "700",
   },
   headerSpacer: {
@@ -282,13 +284,15 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   heroTitle: {
-    fontSize: fontEq(28),
+    fontSize:Platform.OS === 'android' ?fontEq(18): fontEq(28),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "700",
     textAlign: "center",
     marginBottom: getHeightEquivalent(12),
   },
   heroSubtitle: {
-    fontSize: fontEq(16),
+    fontSize:Platform.OS === 'android' ?fontEq(14): fontEq(16),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     textAlign: "center",
     lineHeight: fontEq(24),
   },
@@ -297,7 +301,8 @@ const styles = StyleSheet.create({
     marginBottom: getHeightEquivalent(32),
   },
   sectionTitle: {
-    fontSize: fontEq(20),
+    fontSize:Platform.OS === 'android' ?fontEq(16): fontEq(20),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "600",
     marginBottom: getHeightEquivalent(16),
   },
@@ -325,12 +330,14 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   optionTitle: {
-    fontSize: fontEq(16),
+    fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(16),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "600",
     marginBottom: getHeightEquivalent(4),
   },
   optionDescription: {
-    fontSize: fontEq(14),
+    fontSize:Platform.OS === 'android' ?fontEq(10): fontEq(14),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     lineHeight: fontEq(20),
   },
   comingSoonBadge: {
@@ -341,7 +348,8 @@ const styles = StyleSheet.create({
   },
   comingSoonText: {
     color: colors.colors.white,
-    fontSize: fontEq(12),
+    fontSize:Platform.OS === 'android' ?fontEq(10): fontEq(12),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "600",
   },
   quickInfoContainer: {
@@ -359,14 +367,16 @@ const styles = StyleSheet.create({
     borderColor: colors.colors.border,
   },
   quickInfoTitle: {
-    fontSize: fontEq(16),
+    fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(16),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "600",
     marginTop: getHeightEquivalent(12),
     marginBottom: getHeightEquivalent(4),
     textAlign: "center",
   },
   quickInfoDescription: {
-    fontSize: fontEq(14),
+    fontSize:Platform.OS === 'android' ?fontEq(10): fontEq(14),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     textAlign: "center",
     lineHeight: fontEq(20),
   },
@@ -382,13 +392,15 @@ const styles = StyleSheet.create({
     marginBottom: getHeightEquivalent(20),
   },
   contactTitle: {
-    fontSize: fontEq(20),
+    fontSize:Platform.OS === 'android' ?fontEq(14): fontEq(20),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "700",
     marginTop: getHeightEquivalent(12),
     letterSpacing: 1,
   },
   contactDescription: {
-    fontSize: fontEq(16),
+    fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(16),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     lineHeight: fontEq(24),
     textAlign: "center",
     marginBottom: getHeightEquivalent(20),
@@ -404,7 +416,8 @@ const styles = StyleSheet.create({
     borderColor: colors.colors.primary,
   },
   emailText: {
-    fontSize: fontEq(16),
+     fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(16),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "600",
     marginLeft: getWidthEquivalent(8),
   },

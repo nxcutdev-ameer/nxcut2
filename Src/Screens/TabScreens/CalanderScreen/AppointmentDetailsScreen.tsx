@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   Alert,
   ActivityIndicator,
+  Platform,
 } from "react-native";
 import { useNavigation, useRoute, useFocusEffect } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
@@ -871,7 +872,8 @@ const styles = StyleSheet.create({
     marginRight: getWidthEquivalent(8),
   },
   headerTitle: {
-    fontSize: fontEq(16),
+    fontSize:Platform.OS === 'android' ?fontEq(14): fontEq(16),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "700",
     color: "black",
   },
@@ -893,7 +895,8 @@ const styles = StyleSheet.create({
   },
   cancelButtonText: {
     color: "#C22D28",
-    fontSize: fontEq(14),
+    fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(14),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "600",
   },
   scrollView: {
@@ -917,7 +920,8 @@ const styles = StyleSheet.create({
     marginBottom: getHeightEquivalent(16),
   },
   cardTitle: {
-    fontSize: fontEq(16),
+    fontSize:Platform.OS === 'android' ?fontEq(14): fontEq(16),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "600",
   },
   clientInfo: {
@@ -935,7 +939,8 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   clientInitials: {
-    fontSize: fontEq(18),
+    fontSize:Platform.OS === 'android' ?fontEq(16): fontEq(18),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "700",
     color: "#3C096C",
   },
@@ -943,12 +948,14 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   clientName: {
-    fontSize: fontEq(16),
+    fontSize:Platform.OS === 'android' ?fontEq(14): fontEq(16),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "700",
     marginBottom: getHeightEquivalent(4),
   },
   clientContact: {
-    fontSize: fontEq(14),
+    fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(14),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     marginTop: getHeightEquivalent(2),
   },
   viewClientButton: {
@@ -964,7 +971,8 @@ const styles = StyleSheet.create({
     gap: getWidthEquivalent(8),
   },
   viewClientButtonText: {
-    fontSize: fontEq(14),
+    fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(14),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "600",
   },
   infoRow: {
@@ -985,12 +993,14 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   infoLabel: {
-    fontSize: fontEq(14),
+    fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(14),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "500",
     marginBottom: getHeightEquivalent(4),
   },
   infoValue: {
-    fontSize: fontEq(14),
+    fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(14),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "500",
   },
   serviceInfo: {
@@ -1001,12 +1011,14 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: getWidthEquivalent(4),
   },
   serviceName: {
-    fontSize: fontEq(16),
+    fontSize:Platform.OS === 'android' ?fontEq(14): fontEq(16),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "400",
     marginBottom: getHeightEquivalent(8),
   },
   serviceDescription: {
-    fontSize: fontEq(14),
+    fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(14),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     lineHeight: fontEq(20),
   },
   serviceDetails: {
@@ -1021,7 +1033,8 @@ const styles = StyleSheet.create({
     gap: getWidthEquivalent(6),
   },
   serviceDetailText: {
-    fontSize: fontEq(13),
+    fontSize:Platform.OS === 'android' ?fontEq(10): fontEq(13),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
   },
   staffInfo: {
     flexDirection: "row",
@@ -1036,7 +1049,8 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   staffInitials: {
-    fontSize: fontEq(20),
+    fontSize:Platform.OS === 'android' ?fontEq(18): fontEq(20),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "700",
     color: "white",
   },
@@ -1044,12 +1058,14 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   staffName: {
-    fontSize: fontEq(16),
+     fontSize:Platform.OS === 'android' ?fontEq(14): fontEq(16),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "700",
     marginBottom: getHeightEquivalent(4),
   },
   staffContact: {
-    fontSize: fontEq(14),
+    fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(14),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
   },
   pricingRow: {
     flexDirection: "row",
@@ -1058,11 +1074,13 @@ const styles = StyleSheet.create({
     marginBottom: getHeightEquivalent(12),
   },
   pricingLabel: {
-    fontSize: fontEq(14),
+    fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(14),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "500",
   },
   pricingValue: {
-    fontSize: fontEq(14),
+    fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(14),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "600",
   },
   divider: {
@@ -1075,11 +1093,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   totalLabel: {
-    fontSize: fontEq(14),
+    fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(14),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "700",
   },
   totalValue: {
-    fontSize: fontEq(14),
+    fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(14),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "700",
   },
   statusContainer: {
@@ -1091,7 +1111,8 @@ const styles = StyleSheet.create({
     borderRadius: 24,
   },
   statusText: {
-    fontSize: fontEq(16),
+    fontSize:Platform.OS === 'android' ?fontEq(14): fontEq(16),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "700",
     letterSpacing: 1,
   },
@@ -1103,7 +1124,8 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     marginTop: getHeightEquivalent(16),
-    fontSize: fontEq(14),
+    fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(14),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
   },
 });
 

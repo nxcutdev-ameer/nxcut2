@@ -1,4 +1,4 @@
-import { StyleSheet } from "react-native";
+import { Platform, StyleSheet } from "react-native";
 import { colors, theme, shadows } from "../../../Constants/colors";
 import {
   fontEq,
@@ -21,17 +21,20 @@ export const ProfileAreaScreenStyles = StyleSheet.create({
     marginBottom: getHeightEquivalent(theme.spacing.lg),
   },
   subTitle: {
-    fontSize: fontEq(14),
+    fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(14),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     color: colors.textSecondary,
     marginBottom: getHeightEquivalent(4),
   },
   userName: {
-    fontSize: fontEq(20),
+    fontSize:Platform.OS === 'android' ?fontEq(18): fontEq(20),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "bold",
     color: colors.text,
   },
   mutedText: {
-    fontSize: fontEq(14),
+    fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(14),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     color: colors.textMuted,
     marginBottom: getHeightEquivalent(theme.spacing.md),
   },
@@ -47,7 +50,8 @@ export const ProfileAreaScreenStyles = StyleSheet.create({
     alignItems: "center",
   },
   profileInitial: {
-    fontSize: fontEq(16),
+    fontSize:Platform.OS === 'android' ?fontEq(14): fontEq(16),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "bold",
     color: colors.primary,
   },
@@ -93,11 +97,13 @@ export const ProfileAreaScreenStyles = StyleSheet.create({
     gap: theme.spacing.sm,
   },
   menuLabel: {
-    fontSize: fontEq(15),
+    fontSize:Platform.OS === 'android' ?fontEq(13): fontEq(15),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     color: colors.text,
   },
   arrow: {
-    fontSize: 18,
+      fontSize:Platform.OS === 'android' ?fontEq(16): fontEq(18),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     color: colors.textSecondary,
   },
 });

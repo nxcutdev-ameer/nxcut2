@@ -1,6 +1,7 @@
 import React from "react";
-import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet, Platform } from "react-native";
 import { Star } from "lucide-react-native";
+import { fontEq } from "../Utils/helpers";
 
 type ReportCardProps = {
   type: string;
@@ -99,13 +100,15 @@ const styles = StyleSheet.create({
     paddingRight: 24, // Add padding to avoid overlap with star
   },
   title: {
-    fontSize: 15,
+    fontSize:Platform.OS === 'android' ?fontEq(13): fontEq(15),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "600",
     color: "#111827",
     lineHeight: 18, // Control line height for consistency
   },
   description: {
-    fontSize: 13,
+        fontSize:Platform.OS === 'android' ?fontEq(10): fontEq(13),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     color: "#6b7280",
     marginTop: 4,
     lineHeight: 16, // Control line height for 2-line consistency
