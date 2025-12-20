@@ -179,6 +179,28 @@ const AppointmentDetailsScreen = () => {
       try {
         if (appointment) return; // already have it
         setIsLoading(true);
+        // If we only have appointment_id (no service id), resolve a service id first.
+        if (!appointmentServiceId.current && params?.appointment_id) {
+          const { data: svcRow, error: svcErr } = await supabase
+            .from("appointment_services")
+            .select("id")
+            .eq("appointment_id", params.appointment_id)
+            .order("start_time", { ascending: true })
+            .limit(1)
+            .maybeSingle();
+
+          if (svcErr) {
+            console.error(
+              "[AppointmentDetails] Failed to resolve appointment_service_id from appointment_id",
+              svcErr
+            );
+          }
+
+          if (svcRow?.id) {
+            appointmentServiceId.current = svcRow.id;
+          }
+        }
+
         if (appointmentServiceId.current) {
           const { data, error } = await supabase
             .from("appointment_services")
@@ -316,9 +338,9 @@ const AppointmentDetailsScreen = () => {
   );
 
   // Find the location name using location_id
-  const location = appointment ? allLocations.find(
-    (loc) => loc.id === appointment.appointment.location_id
-  ) : undefined;
+  const location = appointment?.appointment?.location_id
+    ? allLocations.find((loc) => loc.id === appointment.appointment.location_id)
+    : undefined;
   const locationName = location?.name || "Location not found";
 
   // Handle cancelled appointment: alert and return
@@ -416,9 +438,17 @@ const AppointmentDetailsScreen = () => {
     });
   };
 
-  const formatTime = (timeString: string) => {
+  const formatTime = (timeString?: string) => {
+    if (!timeString || typeof timeString !== "string") {
+      return "—";
+    }
+
     // timeString format: "12:30:00"
     const [hours, minutes] = timeString.split(":");
+    if (!hours || !minutes) {
+      return "—";
+    }
+
     const hour = parseInt(hours);
     const ampm = hour >= 12 ? "PM" : "AM";
     const displayHour = hour % 12 || 12;
@@ -431,15 +461,32 @@ const AppointmentDetailsScreen = () => {
   };
 
   const calculateDuration = () => {
-    if (!appointment) return "0m";
-    const [startHours, startMinutes] = appointment.start_time
-      .split(":")
-      .map(Number);
-    const [endHours, endMinutes] = appointment.end_time.split(":").map(Number);
+    if (!appointment?.start_time || !appointment?.end_time) return "0m";
+
+    const startParts = String(appointment.start_time).split(":");
+    const endParts = String(appointment.end_time).split(":");
+    if (startParts.length < 2 || endParts.length < 2) {
+      return "0m";
+    }
+
+    const [startHours, startMinutes] = startParts.map(Number);
+    const [endHours, endMinutes] = endParts.map(Number);
+
+    if (
+      Number.isNaN(startHours) ||
+      Number.isNaN(startMinutes) ||
+      Number.isNaN(endHours) ||
+      Number.isNaN(endMinutes)
+    ) {
+      return "0m";
+    }
+
     const durationMinutes =
       endHours * 60 + endMinutes - (startHours * 60 + startMinutes);
-    const hours = Math.floor(durationMinutes / 60);
-    const minutes = durationMinutes % 60;
+    const safeMinutes = Math.max(0, durationMinutes);
+
+    const hours = Math.floor(safeMinutes / 60);
+    const minutes = safeMinutes % 60;
     if (hours > 0) {
       return `${hours}h ${minutes}m`;
     }
@@ -528,52 +575,71 @@ const AppointmentDetailsScreen = () => {
           style={styles.scrollView}
           showsVerticalScrollIndicator={false}
         >
-        {/* Client Information Card */}
-        <View style={[styles.card, { backgroundColor: paint.white }]}>
-          <View style={styles.clientInfo}>
-            <View style={styles.clientAvatar}>
-              <Text style={styles.clientInitials}>
-                {appointment.appointment.client.first_name.charAt(0)}
-                {appointment.appointment.client.last_name.charAt(0)}
-              </Text>
-            </View>
-            <View style={styles.clientDetails}>
-              <Text style={[styles.clientName, { color: paint.text }]}>
-                {appointment.appointment.client.first_name}{" "}
-                {appointment.appointment.client.last_name}
-              </Text>
-              {appointment.appointment.client.phone && (
-                <Text
-                  style={[styles.clientContact, { color: paint.textSecondary }]}
-                >
-                  {appointment.appointment.client.phone}
-                </Text>
-              )}
-              {appointment.appointment.client.email && (
-                <Text
-                  style={[styles.clientContact, { color: paint.textSecondary }]}
-                >
-                  {appointment.appointment.client.email}
-                </Text>
-              )}
-            </View>
-          </View>
+        {(() => {
+          const appt = appointment?.appointment;
+          const client = appt?.client;
+          const firstName = client?.first_name ? String(client.first_name) : "";
+          const lastName = client?.last_name ? String(client.last_name) : "";
+          const initials = `${firstName.charAt(0)}${lastName.charAt(0)}`.trim();
 
-          {/* View Client Details Button */}
-          <TouchableOpacity
-            style={styles.viewClientButton}
-            onPress={() => {
-              if (appointment.appointment.client) {
-                navigateToClientDetail(appointment.appointment.client);
-              }
-            }}
-          >
-            <UserRound size={16} color={paint.black} />
-            <Text style={[styles.viewClientButtonText, { color: paint.black }]}>
-              View Client Details
-            </Text>
-          </TouchableOpacity>
-        </View>
+          return (
+            <>
+              {/* Client Information Card */}
+              <View style={[styles.card, { backgroundColor: paint.white }]}>
+                <View style={styles.clientInfo}>
+                  <View style={styles.clientAvatar}>
+                    <Text style={styles.clientInitials}>
+                      {initials || "?"}
+                    </Text>
+                  </View>
+                  <View style={styles.clientDetails}>
+                    <Text style={[styles.clientName, { color: paint.text }]}>
+                      {`${firstName} ${lastName}`.trim() || "Unknown client"}
+                    </Text>
+                    {client?.phone ? (
+                      <Text
+                        style={[
+                          styles.clientContact,
+                          { color: paint.textSecondary },
+                        ]}
+                      >
+                        {client.phone}
+                      </Text>
+                    ) : null}
+                    {client?.email ? (
+                      <Text
+                        style={[
+                          styles.clientContact,
+                          { color: paint.textSecondary },
+                        ]}
+                      >
+                        {client.email}
+                      </Text>
+                    ) : null}
+                  </View>
+                </View>
+
+                {/* View Client Details Button */}
+                <TouchableOpacity
+                  style={styles.viewClientButton}
+                  onPress={() => {
+                    if (client) {
+                      navigateToClientDetail(client);
+                    }
+                  }}
+                  disabled={!client}
+                >
+                  <UserRound size={16} color={paint.black} />
+                  <Text
+                    style={[styles.viewClientButtonText, { color: paint.black }]}
+                  >
+                    View Client Details
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </>
+          );
+        })()}
 
         {/* Appointment Time Card */}
         <View style={[styles.card, { backgroundColor: paint.white }]}>
@@ -593,7 +659,9 @@ const AppointmentDetailsScreen = () => {
                 Date
               </Text>
               <Text style={[styles.infoValue, { color: paint.text }]}>
-                {formatDate(appointment.appointment.appointment_date)}
+                {appointment?.appointment?.appointment_date
+                  ? formatDate(appointment.appointment.appointment_date)
+                  : "—"}
               </Text>
             </View>
           </View>
@@ -642,23 +710,23 @@ const AppointmentDetailsScreen = () => {
               styles.serviceInfo,
               {
                 borderLeftColor:
-                  appointment.staff.calendar_color || paint.primary,
+                  appointment?.staff?.calendar_color || paint.primary,
               },
             ]}
           >
             <Text style={[styles.serviceName, { color: paint.text }]}>
-              {appointment.service.name}
+              {appointment?.service?.name ?? "Unknown service"}
             </Text>
-            {appointment.service.description && (
+            {appointment?.service?.description ? (
               <Text
                 style={[
                   styles.serviceDescription,
                   { color: paint.textSecondary },
                 ]}
               >
-                {appointment.service.description}
+                {appointment?.service?.description ?? ""}
               </Text>
-            )}
+            ) : null}
           </View>
 
           <View style={styles.serviceDetails}>
@@ -670,10 +738,10 @@ const AppointmentDetailsScreen = () => {
                   { color: paint.textSecondary },
                 ]}
               >
-                {appointment.service.duration_minutes} minutes
+                {(appointment?.service?.duration_minutes ?? 0)} minutes
               </Text>
             </View>
-            {appointment.service.category && (
+            {appointment?.service?.category ? (
               <View style={styles.serviceDetailItem}>
                 <Tag size={16} color={paint.textSecondary} />
                 <Text
@@ -682,10 +750,10 @@ const AppointmentDetailsScreen = () => {
                     { color: paint.textSecondary },
                   ]}
                 >
-                  {appointment.service.category}
+                  {appointment?.service?.category ?? ""}
                 </Text>
               </View>
-            )}
+            ) : null}
           </View>
         </View>
 
@@ -704,26 +772,32 @@ const AppointmentDetailsScreen = () => {
                 styles.staffAvatar,
                 {
                   backgroundColor:
-                    appointment.staff.calendar_color || paint.primaryLight,
+                    appointment?.staff?.calendar_color || paint.primaryLight,
                 },
               ]}
             >
               <Text style={styles.staffInitials}>
-                {appointment.staff.first_name.charAt(0)}
-                {appointment.staff.last_name.charAt(0)}
+                {(appointment?.staff?.first_name
+                  ? String(appointment.staff.first_name).charAt(0)
+                  : "?")}
+                {(appointment?.staff?.last_name
+                  ? String(appointment.staff.last_name).charAt(0)
+                  : "")}
               </Text>
             </View>
             <View style={styles.staffDetails}>
               <Text style={[styles.staffName, { color: paint.text }]}>
-                {appointment.staff.first_name} {appointment.staff.last_name}
+                {`${appointment?.staff?.first_name ?? ""} ${
+                  appointment?.staff?.last_name ?? ""
+                }`.trim() || "Unknown staff"}
               </Text>
-              {appointment.staff.phone_number && (
+              {appointment?.staff?.phone_number ? (
                 <Text
                   style={[styles.staffContact, { color: paint.textSecondary }]}
                 >
-                  {appointment.staff.phone_number}
+                  {appointment?.staff?.phone_number}
                 </Text>
-              )}
+              ) : null}
             </View>
           </View>
         </View>
@@ -795,7 +869,7 @@ const AppointmentDetailsScreen = () => {
             </View>
           </View>
 
-          {appointment.appointment.notes && (
+          {appointment?.appointment?.notes ? (
             <View style={styles.infoRow}>
               <View style={styles.infoIcon}>
                 <FileText size={20} color={paint.primary} />
@@ -807,11 +881,11 @@ const AppointmentDetailsScreen = () => {
                   Notes
                 </Text>
                 <Text style={[styles.infoValue, { color: paint.text }]}>
-                  {appointment.appointment.notes}
+                  {appointment?.appointment?.notes ?? ""}
                 </Text>
               </View>
             </View>
-          )}
+          ) : null}
         </View>
         {/* Status Badge */}
         <View style={[styles.card, { backgroundColor: paint.white }]}>
@@ -821,7 +895,7 @@ const AppointmentDetailsScreen = () => {
                 styles.statusBadge,
                 {
                   backgroundColor: getStatusBgColor(
-                    appointment.appointment.status
+                    appointment?.appointment?.status ?? ""
                   ),
                 },
               ]}
@@ -834,7 +908,7 @@ const AppointmentDetailsScreen = () => {
                   },
                 ]}
               >
-                {appointment.appointment.status.toUpperCase()}
+                {(appointment?.appointment?.status ?? "").toUpperCase()}
               </Text>
             </View>
           </View>

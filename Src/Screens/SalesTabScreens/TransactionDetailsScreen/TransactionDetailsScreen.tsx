@@ -73,6 +73,26 @@ const TransactionDetailsScreen: React.FC<TransactionDetailsProps> = ({
   const totalSectionAmount = subtotal + taxAmount + adjustedTip;
   const payableSectionAmount = totalSectionAmount - voucherDiscount;
 
+  const tipPaymentMethod =
+    sale?.sale_tips
+      ?.map((tip: any) => tip?.payment_methods?.name)
+      .find((name: any) => typeof name === "string" && name.trim().length > 0)
+      ?.trim() ??
+    null;
+
+  const tipStaffNames =
+    sale?.sale_tips
+      ?.map((tip: any) => {
+        const firstName = tip?.staff?.first_name ? String(tip.staff.first_name) : "";
+        const lastName = tip?.staff?.last_name ? String(tip.staff.last_name) : "";
+        const fullName = `${firstName} ${lastName}`.trim();
+        return fullName;
+      })
+      .filter((name: any) => typeof name === "string" && name.trim().length > 0)
+      .filter((name: string, index: number, all: string[]) => all.indexOf(name) === index)
+      .join(", ") ??
+    "";
+
   return (
     <SafeAreaView style={styles.container}>
       {isLoading ? (
@@ -117,7 +137,20 @@ const TransactionDetailsScreen: React.FC<TransactionDetailsProps> = ({
             </TouchableOpacity>
           </View>
 
-          <View style={styles.contactCard}>
+          <TouchableOpacity
+            style={styles.contactCard}
+            activeOpacity={0.5}
+            onPress={() => {
+              const clientItem =
+                sale?.appointment?.client ?? sale?.client ?? null;
+
+              if (!clientItem) {
+                return;
+              }
+
+              navigation.navigate("ClientDetail", { item: clientItem });
+            }}
+          >
             <View style={styles.contactAvatar}>
               <Text style={styles.contactAvatarText}>{clientInitial}</Text>
             </View>
@@ -125,7 +158,7 @@ const TransactionDetailsScreen: React.FC<TransactionDetailsProps> = ({
               <Text style={styles.contactName}>{clientName}</Text>
               <Text style={styles.contactPhone}>{clientPhone}</Text>
             </View>
-          </View>
+          </TouchableOpacity>
 
           <View
             style={[
@@ -153,7 +186,7 @@ const TransactionDetailsScreen: React.FC<TransactionDetailsProps> = ({
                 </Text>
               </View>
             </View>
-            <View style={[styles.summaryRow, styles.summaryRowLast]}>
+            {/* <View style={[styles.summaryRow, styles.summaryRowLast]}>
               <Ionicons
                 name="card-outline"
                 size={18}
@@ -164,7 +197,7 @@ const TransactionDetailsScreen: React.FC<TransactionDetailsProps> = ({
                 <Text style={styles.summaryLabel}>Payment Method</Text>
                 <Text style={styles.summaryValue}>{paymentMethod}</Text>
               </View>
-            </View>
+            </View> */}
           </View>
 
           {combinedItems.length === 0 ? (
@@ -228,14 +261,52 @@ const TransactionDetailsScreen: React.FC<TransactionDetailsProps> = ({
                 <Text style={styles.billingLabel}>VAT 5%</Text>
                 <Text style={styles.price}>+{formatCurrency(taxAmount)}</Text>
               </View>
-              {adjustedTip > 0 ? (
-                <View style={[styles.billingRow, styles.tipRow]}>
-                  <Text style={[styles.billingLabel, styles.tipLabel]}>Tips</Text>
-                  <Text style={[styles.price, styles.tipValue]}>+{formatCurrency(adjustedTip)}</Text>
-                </View>
-              ) : null}
-            </View>
-          </View>
+              {(() => {
+                const saleTips = sale?.sale_tips ?? [];
+
+                return saleTips.length > 0
+                  ? saleTips
+                      .filter((tip: any) => Number(tip?.amount ?? 0) > 0)
+                      .map((tip: any, index: number) => {
+                      const firstName = tip?.staff?.first_name
+                        ? String(tip.staff.first_name)
+                        : "";
+                      const lastName = tip?.staff?.last_name
+                        ? String(tip.staff.last_name)
+                        : "";
+                      const staffName = `${firstName} ${lastName}`.trim();
+                      const tipLabel = staffName ? `Tip • ${staffName}` : "Tip";
+                      const amount = Number(tip?.amount ?? 0);
+
+                      return (
+                        <View
+                          key={tip?.id ?? `${amount}-${index}`}
+                          style={[styles.billingRow, styles.tipRow]}
+                        >
+                          <Text style={[styles.billingLabel, styles.tipLabel]}>
+                            {tipLabel}
+                          </Text>
+                          <Text style={[styles.price, styles.tipValue]}>
+                            +{formatCurrency(amount)}
+                          </Text>
+                        </View>
+                      );
+                    })
+                : adjustedTip > 0
+                  ? (
+                      <View style={[styles.billingRow, styles.tipRow]}>
+                        <Text style={[styles.billingLabel, styles.tipLabel]}>
+                          Tip
+                        </Text>
+                        <Text style={[styles.price, styles.tipValue]}>
+                          +{formatCurrency(adjustedTip)}
+                        </Text>
+                      </View>
+                    )
+                  : null;
+             })()}
+           </View>
+         </View>
           {/* <View style={styles.section}>
             <View
               style={[
@@ -297,7 +368,9 @@ const TransactionDetailsScreen: React.FC<TransactionDetailsProps> = ({
                           • {method?.payment_method ?? "Unknown method"}
                         </Text>
                         {hasTip ? (
-                          <Text style={[styles.billingLabel, styles.tipLabel]}>Tip</Text>
+                          <Text style={[styles.billingLabel, styles.tipLabel]}>
+                            {tipStaffNames ? `Tip • ${tipStaffNames}` : "Tip"}
+                          </Text>
                         ) : null}
                       </View>
                       <View style={{ alignItems: "flex-end" }}>
@@ -314,7 +387,9 @@ const TransactionDetailsScreen: React.FC<TransactionDetailsProps> = ({
                   {adjustedTip > 0 ? (
                     <View style={[styles.billingRow, styles.tipRow]}>
                       <Text style={[styles.billingLabel, styles.tipLabel]}>
-                        Tip Total
+                        {tipPaymentMethod
+                          ? `Tip via ${tipPaymentMethod}`
+                          : "Tip Total"}
                       </Text>
                       <Text style={[styles.price, styles.tipValue]}>
                         {formatCurrency(adjustedTip)}

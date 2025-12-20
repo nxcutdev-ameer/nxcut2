@@ -102,7 +102,7 @@ export const ProfileAreaScreenStyles = StyleSheet.create({
     color: colors.text,
   },
   arrow: {
-      fontSize:Platform.OS === 'android' ?fontEq(16): fontEq(18),
+    fontSize:Platform.OS === 'android' ?fontEq(16): fontEq(18),
     fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     color: colors.textSecondary,
   },

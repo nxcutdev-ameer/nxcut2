@@ -137,7 +137,6 @@ const DraggableAppointment: React.FC<DraggableAppointmentProps> = ({
 
   dragEnabledRef.current = canDrag;
   disableInteractionsRef.current = disableInteractions;
-  wasEditingRef.current = isEditing;
 
   useEffect(() => {
     if (!canDrag) {
@@ -146,7 +145,10 @@ const DraggableAppointment: React.FC<DraggableAppointmentProps> = ({
   }, [canDrag]);
 
   useEffect(() => {
-    if (wasEditingRef.current && !isEditing) {
+    const wasEditing = wasEditingRef.current;
+
+    if (wasEditing && !isEditing) {
+      // Leaving edit mode: normalize any temporary drag offsets and resync with source times
       setCommittedPosition({ x: 0, y: 0 });
       committedPositionRef.current = { x: 0, y: 0 };
       pan.setValue({ x: 0, y: 0 });
@@ -154,6 +156,7 @@ const DraggableAppointment: React.FC<DraggableAppointmentProps> = ({
       setDisplayEnd(new Date(event.end));
     }
 
+    // Track transitions reliably (do NOT set this in render)
     wasEditingRef.current = isEditing;
   }, [event.end, event.start, isEditing, pan]);
 
@@ -240,13 +243,15 @@ const DraggableAppointment: React.FC<DraggableAppointmentProps> = ({
       return;
     }
 
-    if (isDragging) {
+    // During editing/dragging we must not reset offsets, otherwise the card will "jump"
+    // when edit mode changes widths/offsets.
+    if (isDragging || isEditing) {
       return;
     }
 
     setCommittedPosition({ x: 0, y: 0 });
     pan.setValue({ x: 0, y: 0 });
-  }, [columnWidth, leftOffset, pan, isDragging]);
+  }, [columnWidth, leftOffset, pan, isDragging, isEditing]);
 
   const prevStaffRef = useRef({ staffId, columnIndex });
 
@@ -644,13 +649,13 @@ const DraggableAppointment: React.FC<DraggableAppointmentProps> = ({
   const panResponder = useMemo(
     () => PanResponder.create({
       onStartShouldSetPanResponder: () =>
-        wasEditingRef.current || !disableInteractionsRef.current,
+        isEditing || !disableInteractionsRef.current,
       onStartShouldSetPanResponderCapture: () =>
-        wasEditingRef.current || !disableInteractionsRef.current,
+        isEditing || !disableInteractionsRef.current,
       onMoveShouldSetPanResponder: () =>
-        wasEditingRef.current || !disableInteractionsRef.current,
+        isEditing || !disableInteractionsRef.current,
       onMoveShouldSetPanResponderCapture: () =>
-        wasEditingRef.current || !disableInteractionsRef.current,
+        isEditing || !disableInteractionsRef.current,
       onPanResponderTerminationRequest: () => false,
       onShouldBlockNativeResponder: () => true,
       onPanResponderGrant: (evt: GestureResponderEvent) => {
@@ -708,7 +713,8 @@ const DraggableAppointment: React.FC<DraggableAppointmentProps> = ({
         touchStartTime.current = Date.now();
         hasMoved.current = false;
         longPressTriggeredRef.current = false;
-        lastSnappedColumnRef.current = 0;
+        // Track absolute column during drag so far-column drops work reliably.
+        lastSnappedColumnRef.current = columnIndexRef.current;
 
         onScrollEnable?.(false);
 
@@ -843,64 +849,24 @@ const DraggableAppointment: React.FC<DraggableAppointmentProps> = ({
         const proposedOffsetX = currentCommitted.x + gestureState.dx + scrollCompensation;
         const clampedOffsetX = clamp(proposedOffsetX, minOffsetX, maxOffsetX);
         
-        // Ultra-responsive column snapping while tracking finger
-        // Use a balanced threshold and add a small hysteresis to reduce flicker
-        const columnFloat = clampedOffsetX / effectiveColumnWidth;
-        const baseColumn = Math.floor(columnFloat);
-        const fraction = columnFloat - baseColumn;
-        
-        // Determine scroll bounds to refine snapping near edges
-        const totalColumnsBound = totalStaffColumnsValue;
-        const colWidth = effectiveColumnWidth;
-        const maxScrollPos = Math.max(0, (totalColumnsBound - 3) * colWidth);
-        const projScrollX = projectedScrollX;
-        const isAtStart = projScrollX <= 2;
-        const isAtEnd = projScrollX >= maxScrollPos - 2;
+        // Determine target column under the finger.
+        // IMPORTANT: keep this logic simple and consistent between move & release.
+        // We work in ABSOLUTE column indices to avoid jitter.
+        const currentAbsColumn = columnIndexValue;
+        const movedColumnsPreview = Math.round(clampedOffsetX / effectiveColumnWidth);
+        const clampedAbsColumn = Math.max(
+          0,
+          Math.min(totalStaffColumnsValue - 1, currentAbsColumn + movedColumnsPreview)
+        );
 
-        // Hysteresis: once we’ve snapped up, require more to snap back
-        // Treat prevColumn as absolute to avoid boundary desync
-        const prevColumn = (lastSnappedColumnRef.current ?? 0);
-        let forwardThreshold = 0.35; // move to next column when > 35%
-        let backThreshold = 0.65;    // move back to previous when < 35% from prev (i.e., > 65% in reverse)
+        // Snap/jump horizontally between columns while dragging (requested UX)
+        // Compute the snapped offset (relative to the current column) and apply it.
+        const snappedOffsetX = (clampedAbsColumn - currentAbsColumn) * effectiveColumnWidth;
+        const translateX = snappedOffsetX - currentCommitted.x;
 
-        // Tighten thresholds at hard edges to avoid accidental wrap
-        if (isAtStart) {
-          forwardThreshold = 0.6; // need to cross 60% into next col to leave first column
-        }
-        if (isAtEnd) {
-          backThreshold = 0.6; // need to go back >40% into previous col to leave last visible
-        }
-
-        let targetColumn = baseColumn;
-        if (fraction >= forwardThreshold) {
-          targetColumn = baseColumn + 1;
-        } else if (fraction < (1 - backThreshold)) {
-          targetColumn = baseColumn;
-        } else {
-          // At hard edges, don’t fall back to previous snapped column; keep base
-          if (isAtStart || isAtEnd) {
-            targetColumn = baseColumn;
-          } else {
-            targetColumn = prevColumn;
-          }
-        }
-        
-        // Convert to absolute column, clamp to [0, total-1], then back to relative
-        const absoluteTargetColumn = columnIndexValue + targetColumn;
-        const clampedAbsoluteColumn = Math.max(0, Math.min(totalStaffColumnsValue - 1, absoluteTargetColumn));
-        const snappedColumn = clampedAbsoluteColumn - columnIndexValue;
-        // Update absolute snapped column for consistent next-frame behavior
-        lastSnappedColumnRef.current = clampedAbsoluteColumn;
-        
-        const totalOffsetX = snappedColumn * effectiveColumnWidth;
-        const snappedTranslateX = totalOffsetX - currentCommitted.x;
-        // Jumping behaviour: always snap horizontally to the current snapped column
-        const translateX = snappedTranslateX;
-
-        // Haptic feedback on column change
-        // Haptic feedback on absolute column transitions only
-        if (clampedAbsoluteColumn !== lastSnappedColumnRef.current) {
-          lastSnappedColumnRef.current = clampedAbsoluteColumn;
+        // Haptic feedback when crossing into a new absolute column (preview)
+        if (clampedAbsColumn !== lastSnappedColumnRef.current) {
+          lastSnappedColumnRef.current = clampedAbsColumn;
           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
         }
 
@@ -1002,7 +968,9 @@ const DraggableAppointment: React.FC<DraggableAppointmentProps> = ({
           return;
         }
 
-        setIsDragging(false);
+        // Don't end dragging visuals until we've committed the final position.
+        // Ending early can cause a one-frame flicker/disappear because styles (zIndex/opacity/width)
+        // change before `displayStart` / `committedPosition` are updated.
         onScrollEnable?.(true);
 
         const currentCommitted = committedPositionRef.current;
@@ -1037,21 +1005,16 @@ const DraggableAppointment: React.FC<DraggableAppointmentProps> = ({
         const proposedOffsetX = currentCommitted.x + gesture.dx + releaseScrollCompensation;
         const clampedOffsetX = clamp(proposedOffsetX, minOffsetX, maxOffsetX);
 
-        // Calculate column snap for final position
-        const columnFloat = clampedOffsetX / effectiveColumnWidth;
-        const baseColumn = Math.floor(columnFloat);
-        const fraction = columnFloat - baseColumn;
-        const targetColumn = fraction >= 0.35 ? baseColumn + 1 : baseColumn;
+        // Calculate target ABS column based on final finger position.
+        // Use the preview column we computed during move (stored in lastSnappedColumnRef)
+        // to keep move + release consistent.
+        const currentAbsColumn = columnIndexValue;
+        const targetAbsColumn = Math.max(
+          0,
+          Math.min(totalStaffColumnsValue - 1, lastSnappedColumnRef.current)
+        );
 
-        // Clamp to valid column range  
-        const minColumn = -columnIndexValue;
-        const maxColumn = totalStaffColumnsValue - columnIndexValue - 1;
-        // Convert to absolute, clamp, then back to relative for drop
-        const absoluteTargetColumn = columnIndexValue + targetColumn;
-        const clampedAbsoluteColumn = Math.max(0, Math.min(totalStaffColumnsValue - 1, absoluteTargetColumn));
-        const snappedColumn = clampedAbsoluteColumn - columnIndexValue;
-
-        const columnsMoved = snappedColumn;
+        const columnsMoved = targetAbsColumn - currentAbsColumn;
         const finalOffsetX = columnsMoved * effectiveColumnWidth;
         const targetTranslateX = finalOffsetX - currentCommitted.x;
 
@@ -1078,9 +1041,12 @@ const DraggableAppointment: React.FC<DraggableAppointmentProps> = ({
           // parent should re-render with the updated staff after onDragEnd persists the change.
         }
 
-        // Commit snapped position instantly to avoid any drift
-        setCommittedPosition({ x: finalOffsetX, y: 0 });
-        committedPositionRef.current = { x: finalOffsetX, y: 0 };
+        // Commit snapped position instantly to avoid any drift.
+        // IMPORTANT: include `finalOffsetY` so there is no one-frame jump back to the old
+        // `initialTop` before `displayStart` updates and recalculates the absolute top.
+        // The `useEffect` that runs when `displayStart` changes will safely normalize `y` back to 0.
+        setCommittedPosition({ x: finalOffsetX, y: finalOffsetY });
+        committedPositionRef.current = { x: finalOffsetX, y: finalOffsetY };
         pan.setValue({ x: 0, y: 0 });
 
         setDisplayStart(newStartTime);
@@ -1088,7 +1054,8 @@ const DraggableAppointment: React.FC<DraggableAppointmentProps> = ({
 
         const landedSlot = getTimeSlotIndex(snapToTimeSlot(initialTopRef.current + finalOffsetY));
         lastSnappedSlotRef.current = landedSlot;
-        lastSnappedColumnRef.current = 0;
+        // Reset preview column to the committed absolute column.
+        lastSnappedColumnRef.current = columnIndexRef.current;
 
         // Update column index ref to match new position for next drag
         // Clamp within valid bounds to avoid overshooting at edges
@@ -1109,6 +1076,9 @@ const DraggableAppointment: React.FC<DraggableAppointmentProps> = ({
         //scrollOffsetRef automatically resets via useEffect when isDragging changes
 
         // Backend update will happen here, but UI is already updated
+
+        // Now safely exit dragging mode
+        setIsDragging(false);
       },
       onPanResponderTerminate: () => {
         stopAutoScroll();
@@ -1176,7 +1146,8 @@ const DraggableAppointment: React.FC<DraggableAppointmentProps> = ({
             event.data.appointment.status === "scheduled" && {
               color: colors.black,
             },
-            isSmall && { fontSize: fontEq(8) },
+            isSmall && {  fontSize:Platform.OS === 'android' ?fontEq(6): fontEq(8),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined, },
           ]}
           numberOfLines={1}
           ellipsizeMode="tail"
@@ -1199,7 +1170,8 @@ const DraggableAppointment: React.FC<DraggableAppointmentProps> = ({
             event.data.appointment.status === "scheduled" && {
               color: colors.black,
             },
-            isSmall && { fontSize: fontEq(11) },
+            isSmall && {  fontSize:Platform.OS === 'android' ?fontEq(6): fontEq(11),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined, },
           ]}
           numberOfLines={1}
           ellipsizeMode="tail"
@@ -1213,7 +1185,8 @@ const DraggableAppointment: React.FC<DraggableAppointmentProps> = ({
             event.data.appointment.status === "scheduled" && {
               color: colors.black,
             },
-            isSmall && { fontSize: fontEq(9), marginBottom: 0 },
+            isSmall && {  fontSize:Platform.OS === 'android' ?fontEq(5): fontEq(9),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined, marginBottom: 0 },
           ]}
           numberOfLines={1}
           ellipsizeMode="tail"

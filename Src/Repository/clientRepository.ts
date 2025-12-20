@@ -70,6 +70,11 @@ export interface ClientSaleStaff {
 export interface ClientSaleTip {
   id: string;
   amount: number;
+  payment_method_id?: string | null;
+  payment_methods?: {
+    id: string;
+    name: string;
+  } | null;
   staff?: ClientSaleStaff | null;
 }
 
@@ -493,7 +498,8 @@ export async function fetchSaleById(
         ),
         sale_tips(
           *,
-          staff:staff_id(*)
+          staff:staff_id(*),
+          payment_methods(id, name)
         ),
         sale_payment_methods(*),
         client:client_id(*),

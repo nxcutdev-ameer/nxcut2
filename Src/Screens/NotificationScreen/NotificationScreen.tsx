@@ -13,7 +13,9 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import * as Notifications from 'expo-notifications';
-import { useNavigation, useFocusEffect } from "@react-navigation/native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useFocusEffect, useIsFocused } from "@react-navigation/native";
+import { useNavigation } from "@react-navigation/native";
 import { useNotificationsStore } from "../../Store/useNotificationsStore";
 import { ArrowLeft, BellOff, Settings } from "lucide-react-native";
 import colors from "../../Constants/colors";
@@ -133,10 +135,19 @@ const NotificationScreen = () => {
     fetchNotifications(0, false);
   }, [fetchNotifications, currentTab, fadeAnim, underlineAnim]);
 
+  const isFocused = useIsFocused();
+
   // When entering the notification screen, mark notifications as read for this session
+  // and persist last-seen timestamp so the initial badge check (App.tsx) is consistent.
   useFocusEffect(
     React.useCallback(() => {
-      try { useNotificationsStore.getState().markRead(); } catch {}
+      try {
+        useNotificationsStore.getState().markRead();
+        AsyncStorage.setItem(
+          "notifications:lastSeenAt",
+          new Date().toISOString()
+        );
+      } catch {}
       return () => {};
     }, [])
   );
@@ -154,7 +165,18 @@ const NotificationScreen = () => {
   useEffect(() => {
     const received = Notifications.addNotificationReceivedListener(() => {
       // Foreground push received; refresh current tab
-      try { useNotificationsStore.getState().setUnread(true); } catch {}
+      try {
+        if (isFocused) {
+          // User is already reading notifications; don't show a badge.
+          useNotificationsStore.getState().markRead();
+          AsyncStorage.setItem(
+            "notifications:lastSeenAt",
+            new Date().toISOString()
+          );
+        } else {
+          useNotificationsStore.getState().setUnread(true);
+        }
+      } catch {}
       requestRefresh();
     });
     const responded = Notifications.addNotificationResponseReceivedListener(() => {
@@ -165,7 +187,7 @@ const NotificationScreen = () => {
       try { (received as any)?.remove?.(); } catch {}
       try { (responded as any)?.remove?.(); } catch {}
     };
-  }, [fetchNotifications]);
+  }, [isFocused, requestRefresh]);
 
   // Live refresh with Supabase realtime on notifications insert
   useEffect(() => {
@@ -175,7 +197,17 @@ const NotificationScreen = () => {
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'notifications' },
         () => {
-          try { useNotificationsStore.getState().setUnread(true); } catch {}
+          try {
+            if (isFocused) {
+              useNotificationsStore.getState().markRead();
+              AsyncStorage.setItem(
+                "notifications:lastSeenAt",
+                new Date().toISOString()
+              );
+            } else {
+              useNotificationsStore.getState().setUnread(true);
+            }
+          } catch {}
           requestRefresh();
         },
       )
@@ -184,7 +216,7 @@ const NotificationScreen = () => {
     return () => {
       try { supabase.removeChannel(channel); } catch {}
     };
-  }, [fetchNotifications]);
+  }, [isFocused, requestRefresh]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);

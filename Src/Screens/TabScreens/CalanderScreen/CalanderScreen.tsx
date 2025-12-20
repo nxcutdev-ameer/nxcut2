@@ -1247,7 +1247,7 @@ const CalanderScreen = () => {
                 ]}>
                   {/* Staff headers - all have equal width */}
                   {calanderData.map((staff, index) => (
-                    <Fragment key={index}>
+                    <Fragment key={staff.staffId}>
                       {/* Add separator width for columns after the first one */}
                       {index > 0 && (
                         <View
@@ -1427,7 +1427,7 @@ const CalanderScreen = () => {
                       }
 
                       return (
-                        <Fragment key={index}>
+                        <Fragment key={item.staffId}>
                           <DraggableCalendarColumn
                             staffName={item.staffName}
                             staffId={item.staffId}

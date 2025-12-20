@@ -230,6 +230,7 @@ export const appointmentsRepository = {
                 status,
                 created_at,
                 client:clients(first_name,last_name),
+                sales(id, sale_type, is_voided),
                 appointment_services(
                   start_time,
                   service:services(name),

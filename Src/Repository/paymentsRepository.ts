@@ -255,7 +255,13 @@ export const paymentRepository = {
           is_voided,
           client_id,
           location:locations(id, name),
-          client:clients(id, first_name, last_name)
+          client:clients(id, first_name, last_name),
+          appointment:appointments(
+            id,
+            appointment_services(
+              staff:team_members!appointment_services_staff_id_fkey(id, first_name, last_name)
+            )
+          )
         ),
         payment_methods(
           id,
@@ -301,6 +307,9 @@ export const paymentRepository = {
           client_id: sales.client_id,
           location: Array.isArray(sales.location) ? sales.location[0] : sales.location,
           client: Array.isArray(sales.client) ? sales.client[0] : sales.client,
+          appointment: Array.isArray(sales.appointment)
+            ? sales.appointment[0]
+            : sales.appointment,
         },
       };
     });

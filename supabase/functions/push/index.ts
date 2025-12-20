@@ -119,7 +119,7 @@ serve(async (req: Request) => {
         .eq("id", appointment.location_id)
         .single();
 
-      const timeText = formatTime(appointment.created_at);
+      const timeText = formatTime(payload.commit_timestamp ?? new Date().toISOString());
 
       const bodyText =
         `Appointment canceled at ${timeText} for ` +
@@ -170,7 +170,7 @@ serve(async (req: Request) => {
           .limit(1)
           .maybeSingle();
 
-        const timeText = formatTime(appointment?.created_at);
+        const timeText = formatTime(sale.created_at);
 
         // Collect all applied items
         const parts: string[] = [];

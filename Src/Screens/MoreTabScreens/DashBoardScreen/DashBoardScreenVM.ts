@@ -508,45 +508,23 @@ const useDashBoardScreenVM = (dateRange?: {
       }
     });
 
-    // Create date range based on dateRange prop or fallback to lineGraphFilter
+    // Always use a rolling window ending today (NOT month-to-date grouping).
+    // One point per day, filling missing days with 0.
     const result: LinePoint[] = [];
 
-    // Determine start date and total days
-    let start: Date;
-    let totalDays: number;
+    const totalDays = lineGraphFilter; // 7 or 30
+    const end = new Date();
+    const start = new Date();
+    start.setDate(end.getDate() - (totalDays - 1));
 
-    if (dateRange) {
-      start = new Date(dateRange.startDate);
-      const end = new Date(dateRange.endDate);
-      totalDays = getInclusiveDayCount(start, end);
-    } else {
-      // Fallback: Last N days (lineGraphFilter)
-      const end = new Date();
-      start = new Date();
-      start.setDate(end.getDate() - (lineGraphFilter - 1));
-      totalDays = lineGraphFilter;
-    }
-
-    // Iterate in 7-day steps (Weekly Aggregation)
-    for (let i = 0; i < totalDays; i += 7) {
-      const weekStart = new Date(start);
-      weekStart.setDate(start.getDate() + i);
-      
-      let weeklyCount = 0;
-
-      // Sum for the next 7 days (or until totalDays exhausted)
-      for (let j = 0; j < 7 && (i + j) < totalDays; j++) {
-        const current = new Date(weekStart);
-        current.setDate(weekStart.getDate() + j);
-        const key = current.toISOString().split("T")[0];
-        if (grouped[key]) {
-            weeklyCount += grouped[key].size;
-        }
-      }
+    for (let i = 0; i < totalDays; i++) {
+      const current = new Date(start);
+      current.setDate(start.getDate() + i);
+      const key = current.toISOString().split("T")[0];
 
       result.push({
-        value: weeklyCount,
-        label: weekStart.toLocaleDateString("en-US", {
+        value: grouped[key] ? grouped[key].size : 0,
+        label: current.toLocaleDateString("en-US", {
           month: "short",
           day: "numeric",
         }),
@@ -554,7 +532,7 @@ const useDashBoardScreenVM = (dateRange?: {
     }
 
     return result;
-  }, [appointmentsWithSalesData, lineGraphFilter, dateRange]);
+  }, [appointmentsWithSalesData, lineGraphFilter]);
 
   const salesLineData = useMemo<LinePoint[]>(() => {
     let appointments = appointmentsWithSalesData;
@@ -579,43 +557,23 @@ const useDashBoardScreenVM = (dateRange?: {
       }
     });
 
-    // Create date range based on dateRange prop or fallback to lineGraphFilter
+    // Always use a rolling window ending today (NOT month-to-date grouping).
+    // One point per day, filling missing days with 0.
     const result: LinePoint[] = [];
 
-    // Determine start date and total days
-    let start: Date;
-    let totalDays: number;
+    const totalDays = lineGraphFilter; // 7 or 30
+    const end = new Date();
+    const start = new Date();
+    start.setDate(end.getDate() - (totalDays - 1));
 
-    if (dateRange) {
-      start = new Date(dateRange.startDate);
-      const end = new Date(dateRange.endDate);
-      totalDays = getInclusiveDayCount(start, end);
-    } else {
-      // Fallback: Last N days (lineGraphFilter)
-      const end = new Date();
-      start = new Date();
-      start.setDate(end.getDate() - (lineGraphFilter - 1));
-      totalDays = lineGraphFilter;
-    }
-
-    // Iterate in 7-day steps (Weekly Aggregation)
-    for (let i = 0; i < totalDays; i += 7) {
-      const weekStart = new Date(start);
-      weekStart.setDate(start.getDate() + i);
-      
-      let weeklyCount = 0;
-
-      // Sum for the next 7 days (or until totalDays exhausted)
-      for (let j = 0; j < 7 && (i + j) < totalDays; j++) {
-        const current = new Date(weekStart);
-        current.setDate(weekStart.getDate() + j);
-        const key = current.toISOString().split("T")[0];
-        weeklyCount += (grouped[key] || 0);
-      }
+    for (let i = 0; i < totalDays; i++) {
+      const current = new Date(start);
+      current.setDate(start.getDate() + i);
+      const key = current.toISOString().split("T")[0];
 
       result.push({
-        value: weeklyCount,
-        label: weekStart.toLocaleDateString("en-US", {
+        value: grouped[key] || 0,
+        label: current.toLocaleDateString("en-US", {
           month: "short",
           day: "numeric",
         }),
@@ -623,7 +581,7 @@ const useDashBoardScreenVM = (dateRange?: {
     }
 
     return result;
-  }, [appointmentsWithSalesData, lineGraphFilter, dateRange]);
+  }, [appointmentsWithSalesData, lineGraphFilter]);
   //----------------------------------------------------------------Totals th slae with the conditions    ---------------------------------------------------------------
   // const totalSalesAmount = useMemo(() => {
   //   if (!appointmentsWithSalesData || appointmentsWithSalesData.length === 0) {

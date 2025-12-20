@@ -70,11 +70,12 @@ interface ClientBO {
 }
 
 export interface AppointmentActivityBO {
-  id: string; // e.g., "RFG1BY58"
+  id: string; // appointment id
   appointment_date: string; // e.g., "2025-09-15"
   status: string; // e.g., "paid"
   created_at: string; // e.g., "2025-09-15T11:45:07.65963+00:00"
   client: ClientBO;
+  sales?: Array<{ id: number; sale_type?: string; is_voided?: boolean }>;
   appointment_services: AppointmentServiceBO[]; // sorted by start_time descending
 }
 

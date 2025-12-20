@@ -6,6 +6,7 @@ import {
   ActivityIndicator,
   TouchableOpacity,
   Platform,
+  ScrollView,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import colors from "../Constants/colors";
@@ -23,6 +24,16 @@ interface SalePaymentMethod {
     location_id: string;
     created_at: string;
     tip_amount: number;
+    appointment?: {
+      id: string;
+      appointment_services?: Array<{
+        staff?: {
+          id: string;
+          first_name: string;
+          last_name: string;
+        } | null;
+      }>;
+    } | null;
   };
   adjustedTipAmount?: number; // Add processed tip amount
   isTipTransaction?: boolean; // Flag for tip transactions
@@ -73,6 +84,9 @@ const SalesTable: React.FC<SalesTableProps> = ({ data, loading }) => {
       <View style={[styles.headerCell, styles.totalColumn]}>
         <Text style={[styles.headerText, { color: paint.text }]}>Total</Text>
       </View>
+      <View style={[styles.headerCell, styles.staffColumn]}>
+        <Text style={[styles.headerText, { color: paint.text }]}>Staff</Text>
+      </View>
     </View>
   );
 
@@ -90,6 +104,21 @@ const SalesTable: React.FC<SalesTableProps> = ({ data, loading }) => {
     const displayPaymentMethod = item.isTipTransaction
       ? `${item.payment_method} (Tip)`
       : item.payment_method;
+
+    const staffNames =
+      item?.sales?.appointment?.appointment_services
+        ?.map((svc: any) => {
+          const firstName = svc?.staff?.first_name
+            ? String(svc.staff.first_name)
+            : "";
+          const lastName = svc?.staff?.last_name ? String(svc.staff.last_name) : "";
+          const fullName = `${firstName} ${lastName}`.trim();
+          return fullName;
+        })
+        .filter((name: any) => typeof name === "string" && name.trim().length > 0)
+        .filter((name: string, index: number, all: string[]) => all.indexOf(name) === index)
+        .join(", ") ??
+      "";
 
     return (
       <TouchableOpacity
@@ -119,6 +148,9 @@ const SalesTable: React.FC<SalesTableProps> = ({ data, loading }) => {
           ]}
         >
           {formatCurrency(total)}
+        </Text>
+        <Text style={[styles.cell, styles.staffColumn, { color: paint.text }]}>
+          {staffNames || "—"}
         </Text>
       </TouchableOpacity>
     );
@@ -219,16 +251,21 @@ const SalesTable: React.FC<SalesTableProps> = ({ data, loading }) => {
   );
 
   return (
-    <View style={styles.container}>
-      {renderTableHeader()}
-      {sortedData.length === 0
-        ? renderEmptyState()
-        : sortedData.map((item, index) => (
-            <View key={`${item.sales.id}-${index}`}>
-              {renderTableRow({ item })}
-            </View>
-          ))}
-      {renderSummary()}
+    <View>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+        <View style={[styles.container, styles.tableMinWidth]}>
+          {renderTableHeader()}
+          {sortedData.length === 0
+            ? renderEmptyState()
+            : sortedData.map((item, index) => (
+                <View key={`${item.sales.id}-${index}`}>
+                  {renderTableRow({ item })}
+                </View>
+              ))}
+        </View>
+      </ScrollView>
+
+      <View style={styles.summaryWrapper}>{renderSummary()}</View>
     </View>
   );
 };
@@ -240,6 +277,16 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     overflow: "hidden",
     marginTop: getHeightEquivalent(16),
+  },
+  tableMinWidth: {
+    // Sum of fixed columns + minimum staff column.
+    minWidth:
+      getWidthEquivalent(70) +
+      getWidthEquivalent(110) +
+      getWidthEquivalent(80) +
+      getWidthEquivalent(70) +
+      getWidthEquivalent(80) +
+      getWidthEquivalent(160),
   },
   tableRow: {
     flexDirection: "row",
@@ -268,20 +315,27 @@ const styles = StyleSheet.create({
     fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     textAlign: "center",
   },
+  // Keep original columns "fixed" so they don't get squeezed/expanded by horizontal scroll.
   timeColumn: {
-    flex: 1.2,
+    width: getWidthEquivalent(70),
   },
   paymentColumn: {
-    flex: 1.5,
+    width: getWidthEquivalent(80),
   },
   amountColumn: {
-    flex: 1,
+    width: getWidthEquivalent(70),
   },
   tipColumn: {
-    flex: 1,
+    width: getWidthEquivalent(50),
   },
   totalColumn: {
-    flex: 1,
+    width: getWidthEquivalent(80),
+  },
+
+  // Staff is the only dynamic-width column.
+  staffColumn: {
+    minWidth: getWidthEquivalent(160),
+    flexGrow: 1,
   },
   emptyState: {
     paddingVertical: getHeightEquivalent(40),
@@ -300,6 +354,9 @@ const styles = StyleSheet.create({
     fontSize:Platform.OS === 'android' ?fontEq(14): fontEq(16),
     fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     marginTop: getHeightEquivalent(12),
+  },
+  summaryWrapper: {
+    width: "100%",
   },
   summaryContainer: {
     paddingVertical: getHeightEquivalent(16),

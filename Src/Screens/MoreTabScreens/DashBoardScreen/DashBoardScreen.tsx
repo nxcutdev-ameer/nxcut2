@@ -293,11 +293,25 @@ const DashBoardScreen = () => {
       labelWidth: getWidthEquivalent(150),
       labelTextStyle: {
         color: colors.colors.text,
-        fontSize: fontEq(8),
+        fontSize:Platform.OS === 'android' ?fontEq(6): fontEq(8),
+        fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
         fontWeight: '500',
         marginLeft: getWidthEquivalent(-60),
         bottom: getHeightEquivalent(-30),
       },
+      topLabelComponent: () => (
+        <Text
+          style={{
+            color: colors.colors.text,
+            fontSize: Platform.OS === 'android' ? fontEq(8) : fontEq(10),
+            fontWeight: '600',
+            textAlign: 'center',
+            marginBottom: getHeightEquivalent(6),
+          }}
+        >
+          {item.appointment_count}
+        </Text>
+      ),
     }));
     
     // console.log('[DashBoardScreen] 📊 Bar chart data prepared:', barData);
@@ -754,7 +768,7 @@ const DashBoardScreen = () => {
             {upcomingAppointmentsLoading ? (
               <BarGraphSkeleton />
             ) : upcomingAppointmentsBarData.length > 0 ? (
-              <View style={{ paddingBottom: getHeightEquivalent(30) }}>
+              <View style={{ paddingBottom: getHeightEquivalent(10) }}>
                 <BarChart
                   data={upcomingAppointmentsBarData as any}
                   barWidth={getWidthEquivalent(35)}
@@ -786,7 +800,7 @@ const DashBoardScreen = () => {
                   barBorderColor={colors.colors.primary}
                   isAnimated
                   animationDuration={800}
-                  height={getHeightEquivalent(200)}
+                  height={getHeightEquivalent(190)}
                   showXAxisIndices={false}
                   showYAxisIndices={false}
                 />
@@ -811,13 +825,30 @@ const DashBoardScreen = () => {
               <ActivitySkeleton />
             ) : appointmentsActivityData.length > 0 ? (
               appointmentsActivityData.map((item, index) => (
-                <View
+                <TouchableOpacity
+                  activeOpacity={0.8}
+                  onPress={() => {
+                    if (item.status === "paid") {
+                      const saleId = item?.sales?.find(
+                        (s: any) => !s?.is_voided && s?.sale_type === "services"
+                      )?.id;
+
+                      navigation.navigate("TransactionDetailsScreen", {
+                        saleId: saleId ? String(saleId) : undefined,
+                      });
+                    } else if (item.status === "scheduled") {
+                      navigation.navigate("CreateAppointment", {
+                        mode: "edit",
+                        appointmentData: { appointment: item },
+                      });
+                    }
+                  }}
                   style={[
                     DashBoardScreenStyles.activityCard,
                     index === appointmentsActivityData.length - 1 &&
                       DashBoardScreenStyles.lastActivityCard,
                   ]}
-                  key={index}
+                  key={item.id ?? index}
                 >
                   <View style={DashBoardScreenStyles.activityDateContainer}>
                     <Text style={DashBoardScreenStyles.activityDate}>
@@ -841,7 +872,7 @@ const DashBoardScreen = () => {
                       {item.appointment_services[0].start_time}
                     </Text>
                     <Text
-                      numberOfLines={2}
+                      numberOfLines={1}
                       ellipsizeMode="tail"
                       style={DashBoardScreenStyles.activityService}
                     >
@@ -870,7 +901,7 @@ const DashBoardScreen = () => {
                       </TouchableOpacity>
                     </View>
                   </View>
-                </View>
+                </TouchableOpacity>
               ))
             ) : (
               <Text style={DashBoardScreenStyles.noDataText}>
@@ -918,13 +949,30 @@ const DashBoardScreen = () => {
                 return appointmentTime > currentTime;
               })
               .map((item, index, filteredArray) => (
-                <View
+                <TouchableOpacity
+                  activeOpacity={0.8}
+                  onPress={() => {
+                    if (item.status === "paid") {
+                      const saleId = item?.sales?.find(
+                        (s: any) => !s?.is_voided && s?.sale_type === "services"
+                      )?.id;
+
+                      navigation.navigate("TransactionDetailsScreen", {
+                        saleId: saleId ? String(saleId) : undefined,
+                      });
+                    } else if (item.status === "scheduled") { 
+                      navigation.navigate("CreateAppointment", {
+                        mode: "edit",
+                        appointmentData: { appointment: item },
+                      });
+                    }
+                  }}
                   style={[
                     DashBoardScreenStyles.activityCard,
                     index === filteredArray.length - 1 &&
                       DashBoardScreenStyles.lastActivityCard,
                   ]}
-                  key={index}
+                  key={item.id ?? index}
                 >
                   <View style={DashBoardScreenStyles.activityDateContainer}>
                     <Text style={DashBoardScreenStyles.activityDate}>
@@ -950,7 +998,8 @@ const DashBoardScreen = () => {
                         {
                           color: colors.colors.text,
                           fontWeight: "700",
-                          fontSize: fontEq(16),
+                            fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(16),
+                            fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
                         },
                       ]}
                     >
@@ -972,7 +1021,7 @@ const DashBoardScreen = () => {
                       })()}
                     </Text>
                     <Text
-                      numberOfLines={2}
+                      numberOfLines={1}
                       ellipsizeMode="tail"
                       style={DashBoardScreenStyles.activityService}
                     >
@@ -994,7 +1043,7 @@ const DashBoardScreen = () => {
                       </TouchableOpacity>
                     </View>
                   </View>
-                </View>
+                </TouchableOpacity>
               ))}
           </ScrollView>
         </View>
