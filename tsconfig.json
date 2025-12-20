@@ -3,5 +3,12 @@
   "compilerOptions": {
     "strict": true,
     "types": ["@supabase/supabase-js"]
-  }
+  },
+  "exclude": [
+    "node_modules",
+    "supabase/functions/**",
+    "supabase/.temp/**",
+    "**/*.swp",
+    "**/*.backup"
+  ]
 }

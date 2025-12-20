@@ -9,9 +9,6 @@
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
-   "notification": {
-      "icon": "./assets/nxcutLogo.png"
-    },
     "notification": {
       "icon": "./assets/nxcutLogo.png",
       "iosDisplayInForeground": true
