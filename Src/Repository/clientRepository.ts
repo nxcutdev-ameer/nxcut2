@@ -15,6 +15,9 @@ export interface ClientVoucher {
   discount_percentage: number | null;
   status: string | null;
   location_id?: string;
+  /** Optional fields used by client-facing voucher UI */
+  remaining_balance?: number | null;
+  total_used?: number | null;
 }
 export interface ClientBO {
   id: string;
@@ -34,6 +37,24 @@ export interface VoucherUsage {
   client_voucher_id: string;
   amount_used: number;
   discount_applied: number;
+}
+
+export interface ClientMembership {
+  id: string;
+  client_id: string;
+  membership_id: string;
+  used_sessions?: number | null;
+  created_at?: string | null;
+  updated_at?: string | null;
+  membership?: {
+    id: string;
+    name?: string | null;
+    description?: string | null;
+    total_sessions?: number | null;
+    price?: number | null;
+    used_sessions?: number | null;
+    service?: { name?: string | null } | null;
+  } | null;
 }
 
 export interface ClientFilter {
@@ -105,6 +126,10 @@ export interface ClientSaleItemMembershipUsage {
 
 export interface ClientSaleItem {
   id: string;
+  /** e.g. "products", "services", "vouchers" */
+  item_type?: string | null;
+  /** product/service/membership name captured at time of sale */
+  item_name?: string | null;
   name?: string | null;
   quantity?: number | null;
   price?: number | null;
@@ -395,6 +420,95 @@ export const clientRepository = {
     }
   },
 
+  /**
+   * Fetch vouchers for a specific client id.
+   * Returns ClientVoucher rows with voucher name and computed total_used/remaining_balance.
+   */
+  async getClientVouchersByClientId(params: {
+    clientId: string;
+    includeZeroBalance?: boolean;
+  }): Promise<ClientVoucher[]> {
+    const { clientId, includeZeroBalance = true } = params;
+
+    if (!clientId) {
+      return [];
+    }
+
+    try {
+      // Join to clients so we can filter by client id safely.
+      const { data, error } = await supabase
+        .from("client_vouchers")
+        .select(
+          `
+            *,
+            clients:client_id(id, first_name, last_name),
+            vouchers:voucher_id(name)
+          `
+        )
+        .eq("client_id", clientId)
+        .order("updated_at", { ascending: false });
+
+      if (error) {
+        console.error("[clientRepository] getClientVouchersByClientId error", error);
+        throw new Error(error.message);
+      }
+
+      const base =
+        (data ?? []).map((item: any) => ({
+          id: String(item.id),
+          client_id: String(item.client_id),
+          client_first_name: item.clients?.first_name ?? "",
+          client_last_name: item.clients?.last_name ?? "",
+          voucher_id: String(item.voucher_id),
+          voucher_name: item.vouchers?.name ?? "",
+          purchase_date: item.purchase_date ?? "",
+          original_value: Number(item.original_value ?? 0),
+          created_at: item.created_at ?? "",
+          updated_at: item.updated_at ?? "",
+          voucher_code: item.voucher_code ?? "",
+          purchase_sale_id: item.purchase_sale_id ?? 0,
+          discount_percentage: item.discount_percentage ?? null,
+          status: item.status ?? null,
+          location_id: item.location_id ?? null,
+        })) as ClientVoucher[];
+
+      if (base.length === 0) {
+        return [];
+      }
+
+      // Compute usage totals
+      const usageRows = await this.getVoucherUsage(base.map((v) => v.id));
+      const usedByVoucher = new Map<string, number>();
+      for (const usage of usageRows) {
+        const prev = usedByVoucher.get(usage.client_voucher_id) ?? 0;
+        usedByVoucher.set(
+          usage.client_voucher_id,
+          prev + Number(usage.amount_used ?? 0)
+        );
+      }
+
+      const withBalances = base.map((v) => {
+        const totalUsed = usedByVoucher.get(v.id) ?? 0;
+        const remaining = Math.max(Number(v.original_value ?? 0) - totalUsed, 0);
+        return {
+          ...v,
+          total_used: totalUsed,
+          remaining_balance: remaining,
+        };
+      });
+
+      return includeZeroBalance
+        ? withBalances
+        : withBalances.filter((v) => Number(v.remaining_balance ?? 0) > 0);
+    } catch (err) {
+      console.error(
+        "[clientRepository] Unexpected error in getClientVouchersByClientId",
+        err
+      );
+      throw err;
+    }
+  },
+
   async createClient(clientData: any): Promise<ClientBO | null> {
     try {
       const { data, error } = await supabase
@@ -465,6 +579,279 @@ export const clientRepository = {
     } catch (err) {
       console.error("[clientRepository] Unexpected error", err);
       return null;
+    }
+  },
+
+
+  async getSalesByClientId(params: { clientId: string; limitRecords?: number }) {
+    const { clientId, limitRecords = 200 } = params;
+
+    if (!clientId) {
+      return [];
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from("sales")
+        .select(
+          `
+            id,
+            created_at,
+            total_amount,
+            is_voided,
+            sale_type,
+            appointment:appointments!appointment_id!inner(
+              id,
+              status,
+              appointment_services(
+                id,
+                price,
+                staff:team_members!staff_id(first_name,last_name),
+                service:service_id(name, price)
+              )
+            ),
+            sale_items(
+              id,
+              item_type,
+              item_id,
+              item_name,
+              quantity,
+              unit_price,
+              discount_amount,
+              total_price,
+              staff_id,
+              appointment_service_id,
+              is_voided,
+              staff:team_members!staff_id(first_name,last_name)
+            )
+          `
+        )
+        .eq("client_id", clientId)
+        .order("created_at", { ascending: false })
+        .limit(limitRecords);
+
+      if (error) {
+        console.error("[clientRepository] getSalesByClientId error", error);
+        throw new Error(error.message);
+      }
+
+      return (data ?? []) as any[];
+    } catch (err) {
+      console.error("[clientRepository] Unexpected error in getSalesByClientId", err);
+      throw err;
+    }
+  },
+
+  /**
+   * Product purchases for a client (sale_items of type "products") joined with the owning sale and location.
+   * Used by Client Details -> Products tab.
+   */
+  async getProductPurchasesByClientId(params: {
+    clientId: string;
+    limitRecords?: number;
+  }): Promise<
+    Array<{
+      id: string;
+      item_name: string | null;
+      quantity: number | null;
+      created_at: string | null;
+      sales: {
+        sale_id: string;
+        total_amount: number | null;
+        location?: { name?: string | null } | null;
+      } | null;
+    }>
+  > {
+
+    const { clientId, limitRecords = 200 } = params;
+
+    if (!clientId) {
+      return [];
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from("sale_items")
+        .select(
+          `
+          id,
+          item_name,
+          item_type,
+          quantity,
+          appointment_service_id,
+          created_at,
+          sales!inner(
+            id,
+            client_id,
+            total_amount,
+            sale_type,
+            is_voided,
+            location:locations(name)
+          )
+        `
+        )
+        .eq("sales.client_id", clientId)
+        .eq("sales.is_voided", false)
+        .eq("is_voided", false)
+        // NOTE: Both sale_items.item_type and sales.sale_type are enums in the DB.
+        // Their literal values can vary by environment, so we avoid filtering by enum literals here.
+        .order("created_at", { ascending: false })
+        .limit(limitRecords);
+
+      if (error) {
+        console.error("[clientRepository] getProductPurchasesByClientId error", error);
+        throw new Error(error.message);
+      }
+
+      const rows = (data ?? []) as any[];
+
+      // Client-side filter to approximate "product purchases" without relying on enum literals.
+      // Heuristics:
+      // - Product items are typically NOT linked to an appointment service.
+      // - If item_type is present as a string, we also try to match common product-ish literals.
+      const productishTypes = new Set([
+        "product",
+        "products",
+        "PRODUCT",
+        "PRODUCTS",
+        "retail",
+        "RETAIL",
+      ]);
+
+      const filtered = rows.filter((row) => {
+        const type = row.item_type ? String(row.item_type) : "";
+        const hasApptService = Boolean(row.appointment_service_id);
+
+        if (productishTypes.has(type)) return true;
+        if (!type && !hasApptService) return true;
+
+        // If the backend uses a different literal, fall back to appointment_service_id heuristic.
+        return !hasApptService;
+      });
+
+      return filtered.map((row: any) => {
+        const sale = Array.isArray(row.sales) ? row.sales[0] : row.sales;
+        return {
+          id: String(row.id),
+          item_name: row.item_name ?? null,
+          quantity: row.quantity ?? null,
+          created_at: row.created_at ?? null,
+          sales: sale
+            ? {
+                sale_id: String(sale.id),
+                total_amount: sale.total_amount ?? null,
+                location: sale.location ?? null,
+              }
+            : null,
+        };
+      });
+    } catch (err) {
+      console.error(
+        "[clientRepository] Unexpected error in getProductPurchasesByClientId",
+        err
+      );
+      throw err;
+    }
+  },
+
+  /**
+   * Memberships for a client (used in Client Details -> Memberships tab).
+   */
+  async getClientMembershipsByClientId(params: {
+    clientId: string;
+  }): Promise<ClientMembership[]> {
+    const { clientId } = params;
+
+    if (!clientId) {
+      return [];
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from("client_memberships")
+        .select(
+          `
+            id,
+            client_id,
+            membership_id,
+            created_at,
+            updated_at,
+            membership:membership_id(
+              id,
+              name,
+              description,
+              total_sessions,
+              price,
+              service:service_id(name)
+            )
+          `
+        )
+        .eq("client_id", clientId)
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        console.error(
+          "[clientRepository] getClientMembershipsByClientId error",
+          error
+        );
+        throw new Error(error.message);
+      }
+
+      const base = (data ?? []).map((row: any) => ({
+        id: String(row.id),
+        client_id: String(row.client_id),
+        membership_id: String(row.membership_id),
+        used_sessions: null,
+        created_at: row.created_at ?? null,
+        updated_at: row.updated_at ?? null,
+        membership: row.membership
+          ? {
+              id: String(row.membership.id),
+              name: row.membership.name ?? null,
+              description: row.membership.description ?? null,
+              total_sessions: row.membership.total_sessions ?? null,
+              price: row.membership.price ?? null,
+              service: row.membership.service ?? null,
+            }
+          : null,
+      })) as ClientMembership[];
+
+      if (base.length === 0) return [];
+
+      // Compute used sessions from membership_usage table (more reliable than relying on a column that may not exist).
+      const membershipIds = base.map((m) => m.id);
+      const { data: usageRows, error: usageError } = await supabase
+        .from("membership_usage")
+        .select("client_membership_id")
+        .in("client_membership_id", membershipIds)
+        .eq("is_voided", false);
+
+      if (usageError) {
+        // If membership_usage isn't available in an environment, fall back gracefully.
+        console.warn(
+          "[clientRepository] getClientMembershipsByClientId membership_usage query failed",
+          usageError
+        );
+        return base;
+      }
+
+      const usedCountByMembership = new Map<string, number>();
+      for (const row of usageRows ?? []) {
+        const id = String((row as any).client_membership_id);
+        usedCountByMembership.set(id, (usedCountByMembership.get(id) ?? 0) + 1);
+      }
+
+      return base.map((m) => ({
+        ...m,
+        used_sessions: usedCountByMembership.get(m.id) ?? 0,
+      })) as ClientMembership[];
+
+    } catch (err) {
+      console.error(
+        "[clientRepository] Unexpected error in getClientMembershipsByClientId",
+        err
+      );
+      throw err;
     }
   },
   //fetchSaleById,

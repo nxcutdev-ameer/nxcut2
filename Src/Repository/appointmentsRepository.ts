@@ -229,11 +229,15 @@ export const appointmentsRepository = {
                 appointment_date,
                 status,
                 created_at,
+                location:locations(name),
                 client:clients(first_name,last_name),
                 sales(id, sale_type, is_voided),
                 appointment_services(
+                  id,
                   start_time,
-                  service:services(name),
+                  end_time,
+                  price,
+                  service:services(name, duration_minutes),
                   staff_id,
                   staff:team_members!staff_id(first_name,last_name)
                 )
@@ -298,6 +302,111 @@ export const appointmentsRepository = {
       return sortedData;
     } catch (err) {
       console.error("Error fetching appointments:", err);
+      throw err;
+    }
+  },
+
+  /**
+   * Fetch appointments for a specific client (used in Client Details tabs).
+   * Includes appointment_services + staff + service and sales.
+   */
+ async getAppointmentsByClientId(params: {
+    clientId: string;
+    startDate?: string; // YYYY-MM-DD
+    endDate?: string; // YYYY-MM-DD
+    limitRecords?: number;
+    /** Optional: filter appointments to a specific location. If omitted, returns appointments across all locations. */
+    locationId?: string;
+  }): Promise<AppointmentActivityBO[]> {
+    const { clientId, startDate, endDate, limitRecords, locationId } = params;
+
+    if (!clientId) {
+      return [];
+    }
+
+    try {
+      // Location filtering is optional for client details.
+
+      // Fetch appointments directly so we include appointments even if they have 0 services.
+      let allRows: any[] = [];
+      let from = 0;
+      const pageSize = limitRecords ? Math.min(limitRecords, 1000) : 1000;
+      let hasMore = true;
+
+      while (hasMore) {
+        let query = supabase
+          .from("appointments")
+          .select(
+            `
+              id,
+              appointment_date,
+              status,
+              created_at,
+              location:locations(name),
+              sales(id, sale_type, is_voided),
+              appointment_services(
+                id,
+                start_time,
+                end_time,
+                price,
+                staff_id,
+                staff:team_members!staff_id(first_name,last_name),
+                service:services(name, duration_minutes)
+              )
+            `,
+            { count: "exact" }
+          )
+          .eq("client_id", clientId)
+          .range(from, from + pageSize - 1);
+
+        const effectiveLocationId = locationId ?? undefined;
+        if (effectiveLocationId) {
+          query = query.eq("location_id", effectiveLocationId);
+        }
+
+        if (startDate) {
+          query = query.gte("appointment_date", startDate);
+        }
+
+        if (endDate) {
+          query = query.lte("appointment_date", endDate);
+        }
+
+        query = query.order("appointment_date", { ascending: false });
+
+        const { data, error, count } = await query;
+        if (error) throw error;
+
+        if (data && data.length > 0) {
+          allRows = allRows.concat(data);
+        }
+
+        if (limitRecords && allRows.length >= limitRecords) {
+          allRows = allRows.slice(0, limitRecords);
+          break;
+        }
+
+        hasMore = data && data.length == pageSize && allRows.length < (count || 0);
+        from += pageSize;
+
+        if (from > 50000) {
+          console.warn(
+            "[getAppointmentsByClientId] Reached maximum fetch limit of 50,000 records"
+          );
+          break;
+        }
+      }
+
+      const normalized = (allRows ?? []).map((appt: any) => ({
+        ...appt,
+        appointment_services: (appt.appointment_services || []).sort((a: any, b: any) =>
+          String(b.start_time || "").localeCompare(String(a.start_time || ""))
+        ),
+      }));
+
+      return normalized as AppointmentActivityBO[];
+    } catch (err) {
+      console.error("[appointmentsRepository] Error fetching client appointments:", err);
       throw err;
     }
   },
