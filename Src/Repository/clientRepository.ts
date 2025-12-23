@@ -139,6 +139,9 @@ export interface ClientSaleItem {
   appointment_service_id?: string | null;
   sale_item_staff?: ClientSaleItemStaff[] | null;
   membership_usage?: ClientSaleItemMembershipUsage[] | null;
+
+  // Some queries (e.g. client sales list) include a direct join to team_members as `staff`.
+  staff?: ClientSaleStaff | null;
 }
 
 export interface ClientSaleAppointmentService {
@@ -600,7 +603,7 @@ export const clientRepository = {
             total_amount,
             is_voided,
             sale_type,
-            appointment:appointments!appointment_id!inner(
+            appointment:appointments!appointment_id(
               id,
               status,
               appointment_services(
@@ -627,6 +630,7 @@ export const clientRepository = {
           `
         )
         .eq("client_id", clientId)
+       .eq("is_voided", false)
         .order("created_at", { ascending: false })
         .limit(limitRecords);
 
@@ -691,10 +695,9 @@ export const clientRepository = {
         `
         )
         .eq("sales.client_id", clientId)
-        .eq("sales.is_voided", false)
+        .eq("item_type", "product")
         .eq("is_voided", false)
-        // NOTE: Both sale_items.item_type and sales.sale_type are enums in the DB.
-        // Their literal values can vary by environment, so we avoid filtering by enum literals here.
+        .eq("sales.is_voided", false)
         .order("created_at", { ascending: false })
         .limit(limitRecords);
 
@@ -705,31 +708,7 @@ export const clientRepository = {
 
       const rows = (data ?? []) as any[];
 
-      // Client-side filter to approximate "product purchases" without relying on enum literals.
-      // Heuristics:
-      // - Product items are typically NOT linked to an appointment service.
-      // - If item_type is present as a string, we also try to match common product-ish literals.
-      const productishTypes = new Set([
-        "product",
-        "products",
-        "PRODUCT",
-        "PRODUCTS",
-        "retail",
-        "RETAIL",
-      ]);
-
-      const filtered = rows.filter((row) => {
-        const type = row.item_type ? String(row.item_type) : "";
-        const hasApptService = Boolean(row.appointment_service_id);
-
-        if (productishTypes.has(type)) return true;
-        if (!type && !hasApptService) return true;
-
-        // If the backend uses a different literal, fall back to appointment_service_id heuristic.
-        return !hasApptService;
-      });
-
-      return filtered.map((row: any) => {
+      return rows.map((row: any) => {
         const sale = Array.isArray(row.sales) ? row.sales[0] : row.sales;
         return {
           id: String(row.id),
@@ -890,7 +869,7 @@ export async function fetchSaleById(
         ),
         sale_payment_methods(*),
         client:client_id(*),
-        appointment:appointment_id(
+        appointment:appointments!appointment_id(
           *,
           appointment_services(
             *,

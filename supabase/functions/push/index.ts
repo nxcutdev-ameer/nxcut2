@@ -230,7 +230,85 @@ serve(async (req: Request) => {
         };
       }
     }
+// SALE_ITEMS INSERT case (voucher or membership sold)
+else if (payload?.type === "INSERT" && payload?.table === "sale_items" && payload?.record) {
+  const item = payload.record;
 
+  // Only notify for voucher or membership
+  if (item.item_type === "voucher" || item.item_type === "membership") {
+
+    // Fetch sale → gives us client_id + location_id + appointment_id
+    const { data: sale } = await supabase
+      .from("sales")
+      .select("client_id, location_id, appointment_id, created_at")
+      .eq("id", item.sale_id)
+      .single();
+
+    // Fetch client
+    const { data: client } = await supabase
+      .from("clients")
+      .select("first_name, last_name")
+      .eq("id", sale?.client_id)
+      .single();
+
+    // Fetch location
+    const { data: location } = await supabase
+      .from("locations")
+      .select("name")
+      .eq("id", sale?.location_id)
+      .single();
+
+    // Fetch ALL staff assigned to this sale item
+    const { data: staffLinks } = await supabase
+      .from("sale_item_staff")
+      .select("staff_id")
+      .eq("sale_id", item.sale_id);
+
+    let staffNames: string[] = [];
+
+    if (staffLinks && staffLinks.length > 0) {
+      const staffIds = staffLinks.map((s) => s.staff_id);
+
+      const { data: staffMembers } = await supabase
+        .from("team_members")
+        .select("id, first_name, last_name")
+        .in("id", staffIds);
+
+      staffNames = (staffMembers ?? []).map(
+        (s) => `${s.first_name ?? ""} ${s.last_name ?? ""}`.trim()
+      );
+    }
+
+    const staffText =
+      staffNames.length === 0
+        ? ""
+        : staffNames.length === 1
+        ? `with ${staffNames[0]} `
+        : `with ${staffNames.join(" & ")} `;
+
+    const timeText = formatTime(item.created_at);
+    const paymentMethod = sale?.payment_method;
+
+    const typeText = item.item_type === "voucher" ? "Voucher sold" : "Membership sold";
+
+    const bodyText =
+      `${typeText} at ${timeText} for ` +
+      `${client?.first_name ?? ""} ${client?.last_name ?? ""} via ${paymentMethod} ` +
+      staffText +
+      `by ${location?.name ?? ""} reception`;
+
+    enrichedPayload = {
+      title: typeText,
+      body: bodyText,
+      data: {
+        type: item.item_type,
+        saleItemId: item.id,
+        saleId: item.sale_id,
+        appointmentId: sale?.appointment_id,
+      },
+    };
+  }
+}
     // Direct push payload case
     else if (payload?.title && payload?.body) {
       enrichedPayload = payload as PushPayload;

@@ -76,40 +76,42 @@ const ClientVouchersTab: React.FC<ClientVouchersTabProps> = ({
 
   if (!clientId) {
     return (
-      <View style={styles.messageContainer}>
-        <Text style={styles.messageTitle}>No Client Linked</Text>
-        <Text style={styles.messageBody}>
-          This client is not available. Please try again.
-        </Text>
-      </View>
+        <View style={styles.messageContainer}>
+          <Text style={styles.messageTitle}>No Client Linked</Text>
+          <Text style={styles.messageBody}>
+            This client is not available. Please try again.
+          </Text>
+        </View>
     );
   }
 
   if (isLoading && vouchers.length === 0) {
     return (
-      <View style={styles.loaderContainer}>
-        <ActivityIndicator size="large" color={colors.primary} />
+      <View style={styles.fullStateContainer}>
+        <View style={styles.loaderContainer}>
+          <ActivityIndicator size="large" color={colors.primary} />
+        </View>
       </View>
     );
   }
 
   if (error) {
     return (
-      <View style={styles.messageContainer}>
-        <Text style={styles.messageTitle}>Unable to load vouchers</Text>
-        <Text style={styles.messageBody}>{error}</Text>
-      </View>
+        <View style={styles.messageContainer}>
+          <Text style={styles.messageTitle}>Unable to load vouchers</Text>
+          <Text style={styles.messageBody}>{error}</Text>
+        </View>
     );
   }
 
   if (vouchers.length === 0) {
     return (
-      <View style={styles.messageContainer}>
-        <Text style={styles.messageTitle}>No Active Vouchers</Text>
-        <Text style={styles.messageBody}>
-          You currently do not have any vouchers with remaining balance.
-        </Text>
-      </View>
+        <View style={styles.messageContainer}>
+          <Text style={styles.messageTitle}>No Active Vouchers</Text>
+          <Text style={styles.messageBody}>
+            You currently do not have any vouchers with remaining balance.
+          </Text>
+        </View>
     );
   }
 
@@ -264,7 +266,7 @@ const ClientVouchersTab: React.FC<ClientVouchersTabProps> = ({
           colors={[colors.primary]}
         />
       }
-      contentContainerStyle={styles.listContent}
+      contentContainerStyle={[styles.listContent, { flexGrow: 1 }]}
     />
   );
 };
@@ -307,6 +309,13 @@ const createResponsiveStyles = (screenWidth: number, screenHeight: number) => {
       paddingBottom: listPaddingBottom,
       paddingHorizontal: listPaddingHorizontal,
       alignItems: isLargeScreen ? "center" : undefined,
+      flexGrow: 1,
+    },
+    fullStateContainer: {
+      flex: 1,
+      justifyContent: "center",
+      alignItems: "center",
+      paddingHorizontal: horizontalPadding,
     },
     loaderContainer: {
       flex: 1,

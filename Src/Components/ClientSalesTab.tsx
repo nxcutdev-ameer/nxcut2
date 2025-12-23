@@ -8,6 +8,7 @@ import {
   RefreshControl,
   TouchableOpacity,
   Dimensions,
+  Platform,
 } from "react-native";
 
 import { Ionicons } from "@expo/vector-icons";
@@ -16,7 +17,7 @@ import { StackNavigationProp } from "@react-navigation/stack";
 
 import { colors } from "../Constants/colors";
 import { clientRepository } from "../Repository/clientRepository";
-import { formatCurrency } from "../Utils/helpers";
+import { fontEq, formatCurrency } from "../Utils/helpers";
 import { RootStackParamList } from "../Navigations/RootStackNavigator";
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
@@ -123,48 +124,47 @@ const ClientSalesTab: React.FC<ClientSalesTabProps> = ({ clientId }) => {
       return <Text style={styles.cardMeta}>No items recorded for this sale.</Text>;
     }
 
-    return saleItems.map((item: any) => {
-      const staffName = item.staff ? [item.staff.first_name, item.staff.last_name].filter(Boolean).join(" ") : "No staff recorded";
-
-      return (
-        <View key={item.id} style={styles.itemRow}>
-          <View style={styles.itemHeading}>
-            <Text style={styles.itemTitle} numberOfLines={itemTitleLines}>
-              {item.item_name ?? "Item"}
-            </Text>
-            <Text style={styles.itemTotal}>AED {Number(item.total_price ?? (item.unit_price && item.quantity ? Number(item.unit_price) * Number(item.quantity) : 0)).toFixed(2)}</Text>
-          </View>
-          <Text style={styles.itemMeta}>{staffName}</Text>
+    return saleItems.map((item: any) => (
+      <View key={item.id} style={styles.itemRow}>
+        <View style={styles.itemHeading}>
+          <Text style={styles.itemTitle} numberOfLines={itemTitleLines}>
+            {item.item_name ?? "Item"}
+          </Text>
+          <Text style={styles.itemTotal}>
+            AED {Number(item.total_price ?? (item.unit_price && item.quantity ? Number(item.unit_price) * Number(item.quantity) : 0)).toFixed(2)}
+          </Text>
         </View>
-      );
-    });
+      </View>
+    ));
   }, []);
 
   if (isLoading && sales.length === 0) {
     return (
-      <View style={styles.loaderContainer}>
-        <ActivityIndicator size="large" color={colors.primary} />
+      <View style={styles.fullStateContainer}>
+        <View style={styles.loaderContainer}>
+          <ActivityIndicator size="large" color={colors.primary} />
+        </View>
       </View>
     );
   }
 
   if (error) {
     return (
-      <View style={styles.messageContainer}>
-        <Text style={styles.messageTitle}>Unable to load sales</Text>
-        <Text style={styles.messageBody}>{error}</Text>
-      </View>
+        <View style={styles.messageContainer}>
+          <Text style={styles.messageTitle}>Unable to load sales</Text>
+          <Text style={styles.messageBody}>{error}</Text>
+        </View>
     );
   }
 
   if (sales.length === 0) {
     return (
-      <View style={styles.messageContainer}>
-        <Text style={styles.messageTitle}>No Sales Found</Text>
-        <Text style={styles.messageBody}>
-          This client does not have any completed sales yet.
-        </Text>
-      </View>
+        <View style={styles.messageContainer}>
+          <Text style={styles.messageTitle}>No Sales Found</Text>
+          <Text style={styles.messageBody}>
+            This client does not have any completed sales yet.
+          </Text>
+        </View>
     );
   }
 
@@ -187,7 +187,9 @@ const ClientSalesTab: React.FC<ClientSalesTabProps> = ({ clientId }) => {
 
             const total = item.total_amount || 0;
             const appointmentStatus = (item.appointment?.status || "").toLowerCase();
-            const displayStatus = appointmentStatus;
+            const displayStatus = item.is_voided
+              ? "voided"
+              : appointmentStatus || "paid";
             const statusStyle =
               displayStatus === "paid"
                 ? styles.statusBadgeSuccess
@@ -215,7 +217,7 @@ const ClientSalesTab: React.FC<ClientSalesTabProps> = ({ clientId }) => {
 
                   <View style={[styles.statusBadge, statusStyle]}>
                     <Text style={styles.statusBadgeText}>
-                      {displayStatus || "unknown"}
+                      {displayStatus}
                     </Text>
                   </View>
                 </View>
@@ -265,7 +267,7 @@ const ClientSalesTab: React.FC<ClientSalesTabProps> = ({ clientId }) => {
               colors={[colors.primary]}
             />
           }
-          contentContainerStyle={styles.listContent}
+          contentContainerStyle={[styles.listContent, { flexGrow: 1 }]}
         />
       </View>
     </View>
@@ -282,6 +284,12 @@ const styles = StyleSheet.create({
     backgroundColor: colors.gray[50],
     paddingHorizontal: horizontalPadding,
     paddingTop: topPadding,
+  },
+  fullStateContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: horizontalPadding,
   },
   listContent: {
     paddingBottom: listPaddingBottom,
@@ -307,13 +315,15 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   messageTitle: {
-    fontSize: 18,
+    fontSize:Platform.OS === 'android' ?fontEq(16): fontEq(18),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "600",
     color: colors.text,
     marginBottom: 8,
   },
   messageBody: {
-    fontSize: 14,
+    fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(14),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     color: colors.text,
     opacity: 0.7,
     lineHeight: 20,
@@ -352,22 +362,26 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   cardTitle: {
-    fontSize: isLargeScreen ? 18 : 17,
+    fontSize:Platform.OS === 'android' ?fontEq(14): fontEq(16),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "700",
     color: colors.text,
   },
   totalLabel: {
-    fontSize: isLargeScreen ? 18 : 17,
+    fontSize:Platform.OS === 'android' ?fontEq(14): fontEq(16),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "500",
     color: colors.text,
   },
    DateLabel: {
-    fontSize: isLargeScreen ? 14 : 13,
+    fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(14),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "500",
     color: colors.text,
   },
   cardMeta: {
-    fontSize: 13,
+    fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(13),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     color: colors.text,
     opacity: 0.7,
   },
@@ -396,7 +410,8 @@ const styles = StyleSheet.create({
     marginRight: 6,
   },
   amountChipText: {
-    fontSize: 12,
+    fontSize:Platform.OS === 'android' ?fontEq(10): fontEq(12),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "700",
     color: colors.black,
   },
@@ -412,18 +427,21 @@ const styles = StyleSheet.create({
     gap: isLargeScreen ? 16 : 12,
   },
   itemTitle: {
-    fontSize: isLargeScreen ? 15 : 14,
+    fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(14),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "600",
     color: colors.text,
     flex: 1,
   },
   itemTotal: {
-    fontSize: 13,
+    fontSize:Platform.OS === 'android' ?fontEq(10): fontEq(13),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "700",
     color: colors.black,
   },
   itemMeta: {
-    fontSize: 12,
+    fontSize:Platform.OS === 'android' ?fontEq(10): fontEq(12),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     color: colors.text,
     opacity: 0.6,
   },
@@ -446,7 +464,8 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0,0,0,0.08)",
   },
   statusBadgeText: {
-    fontSize: statusFontSize,
+    fontSize:Platform.OS === 'android' ?fontEq(10): statusFontSize,
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "700",
     textTransform: "uppercase",
     letterSpacing: 0.6,
@@ -465,7 +484,8 @@ const styles = StyleSheet.create({
     borderWidth:1
   },
   viewSaleText: {
-    fontSize: 14,
+    fontSize:Platform.OS === 'android' ?fontEq(10): fontEq(14),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "700",
     color: colors.black,
     letterSpacing: 0.4,

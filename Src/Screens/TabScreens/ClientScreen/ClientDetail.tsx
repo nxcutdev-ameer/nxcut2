@@ -262,7 +262,7 @@ const ClientDetailStyles = StyleSheet.create({
     backgroundColor: "#F5E7FD",
   },
   clientInitials: {
-    fontSize:Platform.OS === 'android' ?fontEq(22): fontEq(24),
+    fontSize:Platform.OS === 'android' ?fontEq(18): fontEq(24),
     fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : 'Helvetica',
     fontWeight: "700",
     color: "#3C096C",

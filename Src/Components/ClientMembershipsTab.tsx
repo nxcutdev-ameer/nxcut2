@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
+  Platform,
   RefreshControl,
   StyleSheet,
   Text,
@@ -15,6 +16,7 @@ import {
   ClientMembership,
   clientRepository,
 } from "../Repository/clientRepository";
+import { fontEq } from "../Utils/helpers";
 
 export type ClientMembershipsTabProps = {
   clientId: string;
@@ -65,40 +67,42 @@ const ClientMembershipsTab: React.FC<ClientMembershipsTabProps> = ({
 
   if (!clientId) {
     return (
-      <View style={styles.messageContainer}>
-        <Text style={styles.messageTitle}>No Client Linked</Text>
-        <Text style={styles.messageBody}>
-          Sign in with an account linked to memberships to view your status.
-        </Text>
-      </View>
+        <View style={styles.messageContainer}>
+          <Text style={styles.messageTitle}>No Client Linked</Text>
+          <Text style={styles.messageBody}>
+            Sign in with an account linked to memberships to view your status.
+          </Text>
+        </View>
     );
   }
 
   if (isLoading && memberships.length === 0) {
     return (
-      <View style={styles.loaderContainer}>
-        <ActivityIndicator size="large" color={colors.primary} />
-      </View>
+         <View style={styles.fullStateContainer}>
+                <View style={styles.loaderContainer}>
+                  <ActivityIndicator size="large" color={colors.primary} />
+                </View>
+              </View>
     );
   }
 
   if (error) {
     return (
-      <View style={styles.messageContainer}>
-        <Text style={styles.messageTitle}>Unable to load memberships</Text>
-        <Text style={styles.messageBody}>{error}</Text>
-      </View>
+        <View style={styles.messageContainer}>
+          <Text style={styles.messageTitle}>Unable to load memberships</Text>
+          <Text style={styles.messageBody}>{error}</Text>
+        </View>
     );
   }
 
   if (memberships.length === 0) {
     return (
-      <View style={styles.messageContainer}>
-        <Text style={styles.messageTitle}>No Active Memberships</Text>
-        <Text style={styles.messageBody}>
-          You currently do not have any memberships assigned to this client.
-        </Text>
-      </View>
+        <View style={styles.messageContainer}>
+          <Text style={styles.messageTitle}>No Active Memberships</Text>
+          <Text style={styles.messageBody}>
+            You currently do not have any memberships assigned to this client.
+          </Text>
+        </View>
     );
   }
 
@@ -209,7 +213,7 @@ const ClientMembershipsTab: React.FC<ClientMembershipsTabProps> = ({
           colors={[colors.primary]}
         />
       }
-      contentContainerStyle={styles.listContent}
+      contentContainerStyle={[styles.listContent, { flexGrow: 1 }]}
     />
   );
 };
@@ -242,7 +246,8 @@ const createStyles = ({ width, height }: { width: number; height: number }) => {
       marginBottom: 4,
     },
     subtitle: {
-      fontSize: 16,
+      fontSize:Platform.OS === 'android' ?fontEq(14): fontEq(16),
+      fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
       color: colors.black,
       opacity: 0.7,
     },
@@ -255,9 +260,14 @@ const createStyles = ({ width, height }: { width: number; height: number }) => {
     listContent: {
       paddingBottom: listPaddingBottom,
       paddingHorizontal: isLargeScreen ? 8 : 0,
+      flexGrow: 1,
+    },
+    fullStateContainer: {
+      flex: 1,
+      justifyContent: "center",
+      alignItems: "center",
     },
     loaderContainer: {
-      flex: 1,
       justifyContent: "center",
       alignItems: "center",
     },

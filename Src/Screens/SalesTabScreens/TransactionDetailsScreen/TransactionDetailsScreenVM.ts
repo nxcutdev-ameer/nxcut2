@@ -1,4 +1,5 @@
 import { useCallback, useMemo } from "react";
+import { formatMinutesToHours } from "../../../Utils/helpers";
 import { ParamListBase, RouteProp } from "@react-navigation/native";
 import { ClientSale } from "../../../Repository/clientRepository";
 import { useSaleDetails } from "./useSaleDetails";
@@ -254,19 +255,20 @@ export const useTransactionDetailsScreenVM = (
   );
 
   const shortTime = useCallback((value?: string | null) => {
-    if (!value) {
-      return null;
+    if (!value) return null;
+
+    // Support raw time strings coming from DB like "10:15:00".
+    const timeOnlyMatch = /^\d{2}:\d{2}(:\d{2})?$/.exec(value);
+    if (timeOnlyMatch) {
+      const [hh, mm] = value.split(":").map((v) => Number(v));
+      const dt = new Date(2000, 0, 1, hh || 0, mm || 0, 0);
+      return dt.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
     }
+
     const date = new Date(value);
-    if (Number.isNaN(date.getTime())) {
-      return null;
-    }
-    const hours = date.getHours();
-    const minutes = date.getMinutes();
-    const hour12 = hours % 12 || 12;
-    const minutePadded = minutes.toString().padStart(2, "0");
-    const period = hours >= 12 ? "PM" : "AM";
-    return `${hour12}:${minutePadded}${period}`;
+    if (Number.isNaN(date.getTime())) return null;
+
+    return date.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
   }, []);
 
   const appointmentServiceCreatedAt =
@@ -311,67 +313,140 @@ export const useTransactionDetailsScreenVM = (
   }, [appointmentServiceCreatedAt, shortTime]);
 
   const combinedItems = useMemo(() => {
-    if (!appointmentServices.length) {
-      return [] as {
-        id: string;
-        title: string;
-        amount: number;
-        unitPrice: number;
-        staff: string;
-      }[];
+    // Preferred: linked appointment services (has service + staff).
+    if (appointmentServices.length) {
+      return appointmentServices.map((service) => {
+        const linkedSaleItem = saleItems.find((item) => {
+          if (!item?.appointment_service_id) {
+            return false;
+          }
+          return String(item.appointment_service_id) === String(service.id);
+        });
+
+        const amount = toNumber(service?.price ?? linkedSaleItem?.price);
+        const unitPrice = toNumber(linkedSaleItem?.unit_price ?? amount);
+        const title =
+          service?.service?.name ??
+          linkedSaleItem?.description ??
+          linkedSaleItem?.name ??
+          "Service";
+
+        const staffEntries = service?.staff ? [service.staff] : [];
+        const staffNames = staffEntries
+          .map((member) =>
+            [member?.first_name, member?.last_name].filter(Boolean).join(" ")
+          )
+          .filter(Boolean);
+
+        const durationMinutes =
+          service?.service?.duration_minutes ??
+          service?.service?.duration ??
+          service?.duration_minutes ??
+          service?.duration ??
+          null;
+        const durationLabel = durationMinutes ? formatMinutesToHours(durationMinutes) : null;
+
+        const startTimeRaw =
+          service?.start_time ??
+          service?.scheduled_start ??
+          service?.appointment_start ??
+          null;
+        const endTimeRaw = service?.end_time ?? null;
+
+        const startTimeLabel = shortTime(startTimeRaw);
+
+        const computeEndFromDuration = (start: string, minutesToAdd: number) => {
+          const match = /^\d{2}:\d{2}(:\d{2})?$/.exec(start);
+          if (!match) return null;
+          const [hh, mm] = start.split(":").map((v) => Number(v));
+          const dt = new Date(2000, 0, 1, hh || 0, mm || 0, 0);
+          dt.setMinutes(dt.getMinutes() + (Number(minutesToAdd) || 0));
+          return dt.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+        };
+
+        const endTimeLabel =
+          shortTime(endTimeRaw) ??
+          (startTimeRaw && durationMinutes
+            ? computeEndFromDuration(String(startTimeRaw), Number(durationMinutes))
+            : null);
+
+        const timeRangeLabel =
+          startTimeLabel && endTimeLabel
+            ? `${startTimeLabel}`
+            : startTimeLabel;
+
+        const staffLabel = staffNames.length
+          ? staffNames.join(", ")
+          : "No staff recorded";
+
+        const metaParts = [timeRangeLabel, durationLabel, staffLabel].filter(Boolean);
+        const itemMeta = metaParts.join(" · ");
+
+        return {
+          id: String(service.id ?? linkedSaleItem?.id ?? title),
+          title,
+          amount,
+          unitPrice,
+          staff: itemMeta,
+        };
+      });
     }
 
-    return appointmentServices.map((service) => {
-      const linkedSaleItem = saleItems.find((item) => {
-        if (!item?.appointment_service_id) {
-          return false;
-        }
-        return String(item.appointment_service_id) === String(service.id);
+    // Fallback: show sale_items when no linked appointment services exist.
+    if (saleItems.length) {
+      return saleItems.map((item) => {
+        const title =
+          item?.item_name ??
+          item?.name ??
+          item?.description ??
+          "Item";
+
+        const amount =
+          item?.total_price !== undefined && item?.total_price !== null
+            ? toNumber(item.total_price)
+            : item?.unit_price !== undefined && item?.unit_price !== null
+              ? toNumber(item.unit_price) * toNumber(item.quantity ?? 1)
+              : toNumber(item.price);
+
+        const unitPrice =
+          item?.unit_price !== undefined && item?.unit_price !== null
+            ? toNumber(item.unit_price)
+            : amount;
+
+        // Staff names can come from sale_item_staff.team_members (fetchSaleById)
+        // or item.staff (other queries).
+        const staffFromSaleItemStaff = Array.isArray(item?.sale_item_staff)
+          ? item.sale_item_staff
+              .map((s: any) => s?.team_members)
+              .filter(Boolean)
+              .map((m: any) => [m?.first_name, m?.last_name].filter(Boolean).join(" "))
+              .filter(Boolean)
+          : [];
+
+        const staffFromItemStaff = item?.staff
+          ? [[item.staff?.first_name, item.staff?.last_name].filter(Boolean).join(" ")].filter(Boolean)
+          : [];
+
+        const staffNames = [...staffFromSaleItemStaff, ...staffFromItemStaff];
+        const staffLabel = staffNames.length ? staffNames.join(", ") : "No staff recorded";
+
+        return {
+          id: String(item?.id ?? title),
+          title,
+          amount,
+          unitPrice,
+          staff: staffLabel,
+        };
       });
+    }
 
-      const amount = toNumber(service?.price ?? linkedSaleItem?.price);
-      const unitPrice = toNumber(linkedSaleItem?.unit_price ?? amount);
-      const title =
-        service?.service?.name ??
-        linkedSaleItem?.description ??
-        linkedSaleItem?.name ??
-        "Service";
-
-      const staffEntries = service?.staff ? [service.staff] : [];
-      const staffNames = staffEntries
-        .map((member) => member?.first_name ?? "UNKNOWN")
-        .filter(Boolean);
-
-      const durationMinutes =
-        service?.service?.duration_minutes ??
-        service?.service?.duration ??
-        service?.duration_minutes ??
-        service?.duration ??
-        null;
-      const durationLabel = durationMinutes ? `${durationMinutes} min` : null;
-      const startTimeValue =
-        service?.start_time ??
-        service?.scheduled_start ??
-        service?.appointment_start ??
-        service?.created_at ??
-        null;
-      const startTimeLabel = shortTime(startTimeValue);
-      const staffLabel = staffNames.length
-        ? staffNames.join(", ")
-        : "No staff recorded";
-      const metaParts = [startTimeLabel, durationLabel, staffLabel].filter(
-        Boolean
-      );
-      const itemMeta = metaParts.join(" · ");
-
-      return {
-        id: String(service.id ?? linkedSaleItem?.id ?? title),
-        title,
-        amount,
-        unitPrice,
-        staff: itemMeta,
-      };
-    });
+    return [] as {
+      id: string;
+      title: string;
+      amount: number;
+      unitPrice: number;
+      staff: string;
+    }[];
   }, [appointmentServices, saleItems, shortTime]);
 
   const formatDate = (value?: string | null) => {

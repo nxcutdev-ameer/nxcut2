@@ -15,7 +15,7 @@ import { colors } from "../Constants/colors";
 import { Ionicons } from "@expo/vector-icons";
 import { appointmentsRepository } from "../Repository/appointmentsRepository";
 import { AppointmentActivityBO } from "../BOs/appointmentBOs";
-import { fontEq, getHeightEquivalent, getWidthEquivalent, formatCurrency } from "../Utils/helpers";
+import { formatMinutesToHours, formatCurrency, fontEq } from "../Utils/helpers";
 import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
 import { RootStackParamList } from "../Navigations/RootStackNavigator";
@@ -69,29 +69,31 @@ const ClientAppointmentsTab: React.FC<ClientAppointmentsTabProps> = ({
 
   if (isLoading && appointments.length === 0) {
     return (
-      <View style={styles.tabStateContainer}>
-        <ActivityIndicator size="large" color={colors.primary} />
-      </View>
+     <View style={styles.fullStateContainer}>
+            <View style={styles.loaderContainer}>
+              <ActivityIndicator size="large" color={colors.primary} />
+            </View>
+          </View>
     );
   }
 
   if (error) {
     return (
-      <View style={styles.tabStateCard}>
+        <View style={styles.tabStateCard}>
         <Text style={styles.tabStateTitle}>Unable to load appointments</Text>
-        <Text style={styles.tabStateBody}>{error}</Text>
-      </View>
+          <Text style={styles.tabStateBody}>{error}</Text>
+        </View>
     );
   }
 
   if (!appointments || appointments.length === 0) {
     return (
-      <View style={styles.tabStateCard}>
+        <View style={styles.tabStateCard}>
         <Text style={styles.tabStateTitle}>No Appointments Found</Text>
-        <Text style={styles.tabStateBody}>
-          This client doesn't have any appointments yet.
-        </Text>
-      </View>
+          <Text style={styles.tabStateBody}>
+            This client doesn't have any appointments yet.
+          </Text>
+        </View>
     );
   }
 
@@ -106,21 +108,65 @@ const ClientAppointmentsTab: React.FC<ClientAppointmentsTabProps> = ({
         />
       }
       showsVerticalScrollIndicator={false}
-      contentContainerStyle={[styles.appointmentsListContent, { paddingHorizontal: horizontalPadding }]}
+      contentContainerStyle={[styles.appointmentsListContent, { paddingHorizontal: horizontalPadding, flexGrow: 1 }]}
     >
       {appointments.map((item: any) => {
-        const appointmentDate = item.appointment_date
-          ? new Date(item.appointment_date).toLocaleString(undefined, {
+        const services = item.appointment_services || [];
+
+        const buildAppointmentDateLabel = (): string => {
+          const rawDate: string | undefined = item.appointment_date;
+          if (!rawDate) return "Date not available";
+
+          // If backend ever returns a real timestamp, let JS parse it normally.
+          const looksLikeDateOnly = /^\d{4}-\d{2}-\d{2}$/.test(rawDate);
+
+          // Prefer the earliest service start_time as the appointment "time".
+          const startTimes: string[] = (services || [])
+            .map((s: any) => s?.start_time)
+            .filter((t: any) => typeof t === "string" && t.length >= 5);
+
+          const earliestStart = startTimes.sort((a, b) => String(a).localeCompare(String(b)))[0];
+
+          const formatWithTime = (dt: Date) =>
+            dt.toLocaleString(undefined, {
               year: "numeric",
               month: "short",
               day: "numeric",
               hour: "2-digit",
               minute: "2-digit",
-            })
-          : "Date not available";
+            });
+
+          const formatDateOnly = (dt: Date) =>
+            dt.toLocaleDateString(undefined, {
+              year: "numeric",
+              month: "short",
+              day: "numeric",
+            });
+
+          // Date-only values like "2025-09-18" are parsed as UTC by `new Date(str)`.
+          // That shifts the local time (commonly to 04:00). Build a *local* Date instead.
+          if (looksLikeDateOnly) {
+            const [y, m, d] = rawDate.split("-").map((v: string) => Number(v));
+
+            if (earliestStart) {
+              const [hh, mm, ss] = earliestStart.split(":").map((v) => Number(v));
+              const localDt = new Date(y, (m || 1) - 1, d || 1, hh || 0, mm || 0, ss || 0);
+              return formatWithTime(localDt);
+            }
+
+            const localDate = new Date(y, (m || 1) - 1, d || 1);
+            return formatDateOnly(localDate);
+          }
+
+          // Non-date-only string; treat as timestamp.
+          const parsed = new Date(rawDate);
+          if (Number.isNaN(parsed.getTime())) return rawDate;
+          return earliestStart ? formatWithTime(parsed) : formatDateOnly(parsed);
+        };
+
+        const appointmentDate = buildAppointmentDateLabel();
 
         const locationName = item.location?.name || item.location_name || "Location not specified";
-        const services = item.appointment_services || [];
         const primarySale = (item.sales || []).find((sale: any) => !sale?.is_voided);
         const saleId = primarySale?.id ? String(primarySale.id) : null;
         const hasSales = Boolean(saleId);
@@ -187,7 +233,7 @@ const ClientAppointmentsTab: React.FC<ClientAppointmentsTabProps> = ({
                     const price = Number(service.price ?? 0);
                     const durationValue =
                       service?.service?.duration_minutes ?? service?.duration;
-                    const durationLabel = durationValue ? `${durationValue} min` : "Duration N/A";
+                    const durationLabel = formatMinutesToHours(durationValue);
                     const staff = service?.staff;
                     const staffName =
                       staff?.full_name ||
@@ -216,7 +262,40 @@ const ClientAppointmentsTab: React.FC<ClientAppointmentsTabProps> = ({
                               color={colors.black}
                               style={styles.serviceDetailIcon}
                             />
-                            <Text style={styles.serviceInfoText}>{durationLabel}</Text>
+                            <Text style={styles.serviceInfoText}>
+                              {(() => {
+                                const startTime = typeof service?.start_time === "string" ? service.start_time : undefined;
+                                const endTime = typeof service?.end_time === "string" ? service.end_time : undefined;
+
+                                const looksLikeTime = (t?: string) => typeof t === "string" && /^\d{2}:\d{2}(:\d{2})?$/.test(t);
+
+                                const formatTime = (t: string) => {
+                                  const [hh, mm] = t.split(":").map((v) => Number(v));
+                                  const dt = new Date(2000, 0, 1, hh || 0, mm || 0, 0);
+                                  return dt.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+                                };
+
+                                const addMinutes = (t: string, minutesToAdd: number) => {
+                                  const [hh, mm] = t.split(":").map((v) => Number(v));
+                                  const dt = new Date(2000, 0, 1, hh || 0, mm || 0, 0);
+                                  dt.setMinutes(dt.getMinutes() + (Number(minutesToAdd) || 0));
+                                  return dt.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+                                };
+
+                                const durationMinutes = Number(durationValue ?? 0);
+
+                                const startLabel = looksLikeTime(startTime) ? formatTime(startTime!) : undefined;
+                                const endLabel = looksLikeTime(endTime)
+                                  ? formatTime(endTime!)
+                                  : looksLikeTime(startTime) && durationMinutes
+                                    ? addMinutes(startTime!, durationMinutes)
+                                    : undefined;
+
+                                if (startLabel && endLabel) return `${startLabel} • ${durationLabel}`;
+                                if (startLabel) return `${startLabel} • ${durationLabel}`;
+                                return durationLabel;
+                              })()}
+                            </Text>
                           </View>
 
                           <View style={[styles.serviceInfoBlock, styles.serviceInfoBlockRight]}>
@@ -280,6 +359,15 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingVertical: 24,
   },
+  fullStateContainer: {
+      flex: 1,
+      justifyContent: "center",
+      alignItems: "center",
+  },
+  loaderContainer: {
+      justifyContent: "center",
+      alignItems: "center",
+  },
   tabStateCard: {
     backgroundColor: colors.gray[50],
     borderRadius: 12,
@@ -287,21 +375,25 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     padding: 16,
     marginHorizontal: 4,
+    width:"100%"
   },
   tabStateTitle: {
-    fontSize: 18,
+    fontSize:Platform.OS === 'android' ?fontEq(16): fontEq(18),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "600",
     color: colors.text,
     marginBottom: 8,
   },
   tabStateBody: {
-    fontSize: 14,
+    fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(14),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     color: colors.text,
     opacity: 0.7,
     lineHeight: 20,
   },
   appointmentsListContent: {
     paddingBottom: 16,
+    flexGrow: 1,
   },
   card: {
     backgroundColor: colors.white,
@@ -327,14 +419,16 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   cardLabel: {
-    fontSize: 20,
+    fontSize:Platform.OS === 'android' ?fontEq(16): fontEq(20),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "600",
     color: colors.black,
     letterSpacing: 0.5,
     marginBottom: 2,
   },
   cardStatus: {
-    fontSize: 12,
+    fontSize:Platform.OS === 'android' ?fontEq(10): fontEq(12),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "700",
     paddingHorizontal: 10,
     paddingVertical: 4,
@@ -367,7 +461,8 @@ const styles = StyleSheet.create({
     marginRight: 6,
   },
   cardMetaText: {
-    fontSize: 13,
+    fontSize:Platform.OS === 'android' ?fontEq(10): fontEq(13),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     color: colors.text,
     opacity: 0.75,
     //flexShrink: 1,
@@ -382,10 +477,11 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
   emptyServices: {
-    fontSize: 13,
+    fontSize:Platform.OS === 'android' ?fontEq(10): fontEq(13),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     color: colors.text,
     opacity: 0.6,
-    fontStyle: "italic",
+    //fontStyle: "italic",
   },
   serviceRow: {
     flexDirection: "column",
@@ -404,14 +500,16 @@ const styles = StyleSheet.create({
     borderBottomColor: colors.border,
   },
   serviceName: {
-    fontSize: 14,
+    fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(14),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "600",
     color: colors.text,
     flex: 1,
     marginRight: 12,
   },
   servicePrice: {
-    fontSize: 14,
+    fontSize:Platform.OS === 'android' ?fontEq(10): fontEq(14),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "700",
     color: colors.black,
   },
@@ -436,10 +534,10 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   serviceInfoText: {
-    fontSize: 12,
+    fontSize:Platform.OS === 'android' ?fontEq(10): fontEq(12),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     color: colors.text,
     opacity: 0.8,
-    flexShrink: 1,
   },
   totalRow: {
     flexDirection: "row",
@@ -449,13 +547,15 @@ const styles = StyleSheet.create({
     paddingTop: 8,
   },
   totalLabel: {
-    fontSize: 16,
+    fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(16),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "600",
     color: colors.text,
     opacity: 0.8,
   },
   totalValue: {
-    fontSize: 15,
+    fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(15),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "700",
     color: colors.black,
   },
@@ -486,7 +586,8 @@ const styles = StyleSheet.create({
     marginRight: 2,
   },
   viewSaleText: {
-    fontSize: 13,
+    fontSize:Platform.OS === 'android' ?fontEq(10): fontEq(13),
+    fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
     fontWeight: "600",
     color: colors.black,
     textTransform: "uppercase",

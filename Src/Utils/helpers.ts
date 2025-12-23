@@ -73,3 +73,32 @@ export function formatTimeAgo(input: string | Date): string {
   const years = Math.floor(days / 365);
   return `${years} year${years === 1 ? '' : 's'} ago`;
 }
+
+//Format a duration in minutes into a compact label.
+
+export function formatMinutesToHours(minutesInput?: number | string | null): string {
+  const totalMinutes =
+    minutesInput === null || minutesInput === undefined
+      ? 0
+      : typeof minutesInput === "string"
+        ? Number(minutesInput)
+        : minutesInput;
+
+  if (!Number.isFinite(totalMinutes) || totalMinutes <= 0) {
+    return "0m";
+  }
+
+  const minutesRounded = Math.round(totalMinutes);
+  const hours = Math.floor(minutesRounded / 60);
+  const minutes = minutesRounded % 60;
+
+  if (hours > 0 && minutes === 0) {
+    return `${hours}h`;
+  }
+
+  if (hours > 0) {
+    return `${hours}h ${minutes}m`;
+  }
+
+  return `${minutes}m`;
+}

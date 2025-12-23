@@ -3,6 +3,7 @@ import {
   ActivityIndicator,
   Alert,
   FlatList,
+  Platform,
   RefreshControl,
   StyleSheet,
   Text,
@@ -16,7 +17,7 @@ import { StackNavigationProp } from "@react-navigation/stack";
 
 import { colors } from "../Constants/colors";
 import { clientRepository } from "../Repository/clientRepository";
-import { formatCurrency } from "../Utils/helpers";
+import { fontEq, formatCurrency } from "../Utils/helpers";
 import { RootStackParamList } from "../Navigations/RootStackNavigator";
 
 export type ClientProductsTabProps = {
@@ -96,29 +97,31 @@ const ClientProductsTab: React.FC<ClientProductsTabProps> = ({
 
   if (isLoading && products.length === 0) {
     return (
-      <View style={styles.loaderContainer}>
-        <ActivityIndicator size="large" color={colors.primary} />
-      </View>
+     <View style={styles.fullStateContainer}>
+            <View style={styles.loaderContainer}>
+              <ActivityIndicator size="large" color={colors.primary} />
+            </View>
+          </View>
     );
   }
 
   if (error) {
     return (
-      <View style={styles.messageContainer}>
-        <Text style={styles.messageTitle}>Unable to load products</Text>
-        <Text style={styles.messageBody}>{error}</Text>
-      </View>
+        <View style={styles.messageContainer}>
+          <Text style={styles.messageTitle}>Unable to load products</Text>
+          <Text style={styles.messageBody}>{error}</Text>
+        </View>
     );
   }
 
   if (products.length === 0) {
     return (
-      <View style={styles.messageContainer}>
-        <Text style={styles.messageTitle}>No Products Found</Text>
-        <Text style={styles.messageBody}>
-          You currently do not have any product purchases on record.
-        </Text>
-      </View>
+        <View style={styles.messageContainer}>
+          <Text style={styles.messageTitle}>No Products Found</Text>
+          <Text style={styles.messageBody}>
+            You currently do not have any product purchases on record.
+          </Text>
+        </View>
     );
   }
 
@@ -216,7 +219,7 @@ const ClientProductsTab: React.FC<ClientProductsTabProps> = ({
                 <Ionicons
                   name="eye-outline"
                   size={18}
-                  color={colors.success}
+                  color={colors.black}
                 />
                 <Text style={styles.viewSaleText}>View Sale</Text>
               </TouchableOpacity>
@@ -231,7 +234,7 @@ const ClientProductsTab: React.FC<ClientProductsTabProps> = ({
           colors={[colors.primary]}
         />
       }
-      contentContainerStyle={styles.listContent}
+      contentContainerStyle={[styles.listContent, { flexGrow: 1 }]}
     />
   );
 };
@@ -260,8 +263,13 @@ const createStyles = (width: number) => {
       paddingBottom: 32,
       paddingHorizontal: clamp(width * 0.01, 4, 16),
     },
-    loaderContainer: {
+    fullStateContainer: {
       flex: 1,
+      justifyContent: "center",
+      alignItems: "center",
+      paddingHorizontal: horizontalPadding,
+    },
+    loaderContainer: {
       justifyContent: "center",
       alignItems: "center",
     },
@@ -272,15 +280,18 @@ const createStyles = (width: number) => {
       borderColor: colors.gray[200],
       padding: clamp(cardPadding, 16, 24),
       marginHorizontal: horizontalPadding,
+      width:"100%"
     },
     messageTitle: {
-      fontSize: clamp(18, 16, 22),
+      fontSize:Platform.OS === 'android' ?fontEq(14): fontEq(16),
+      fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
       fontWeight: "600",
       color: colors.black,
       marginBottom: clamp(8, 6, 12),
     },
     messageBody: {
-      fontSize: clamp(14, 12, 18),
+      fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(14),
+      fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
       color: colors.gray[700],
       lineHeight: clamp(20, 18, 26),
     },
@@ -315,12 +326,14 @@ const createStyles = (width: number) => {
       flex: 1,
     },
     cardTitle: {
-      fontSize: clamp(17, 15, 22),
+      fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(15),
+      fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
       fontWeight: "700",
       color: colors.black,
     },
     cardLocation: {
-      fontSize: clamp(12, 11, 16),
+      fontSize:Platform.OS === 'android' ?fontEq(10): fontEq(12),
+      fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
       color: colors.gray[700],
       opacity: 0.75,
     },
@@ -341,16 +354,18 @@ const createStyles = (width: number) => {
       alignItems: "flex-end",
     },
     cardAmountLabel: {
-      fontSize: clamp(11, 10, 14),
+      fontSize:Platform.OS === 'android' ?fontEq(10): fontEq(11),
+      fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
       fontWeight: "600",
       letterSpacing: 0.5,
       color: colors.gray[700],
       textTransform: "uppercase",
     },
     cardAmount: {
-      fontSize: clamp(16, 14, 20),
+      fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(14),
+      fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
       fontWeight: "700",
-      color: colors.success,
+      color: colors.black,
     },
     metaRow: {
       flexDirection: "row-reverse",
@@ -372,7 +387,8 @@ const createStyles = (width: number) => {
       marginRight: clamp(width * 0.015, 4, 8),
     },
     metaChipText: {
-      fontSize: clamp(12, 11, 16),
+      fontSize:Platform.OS === 'android' ?fontEq(10): fontEq(12),
+      fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
       fontWeight: "600",
       color: colors.gray[700],
     },
@@ -387,12 +403,13 @@ const createStyles = (width: number) => {
       gap: clamp(width * 0.02, 6, 14),
       paddingVertical: 14,
       borderRadius: clamp(cardRadius * 0.9, 12, 24),
-      backgroundColor: "rgba(76, 175, 80, 0.16)",
+      backgroundColor: "rgba(99, 102, 241, 0.10)",
     },
     viewSaleText: {
-      fontSize: clamp(14, 12, 18),
+      fontSize:Platform.OS === 'android' ?fontEq(12): fontEq(14),
+      fontFamily: Platform.OS === 'android' ? 'sans-serif-condensed' : undefined,
       fontWeight: "700",
-      color: colors.success,
+      color: colors.black,
       letterSpacing: 0.4,
       textTransform: "uppercase",
     },
