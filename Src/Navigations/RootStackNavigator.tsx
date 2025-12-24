@@ -1,6 +1,9 @@
 import { StyleSheet } from "react-native";
 import React from "react";
 import { NavigationContainer } from "@react-navigation/native";
+import { navigationRef } from './navigationRef';
+import { consumePendingNotificationRoute } from '../Utils/pendingNotificationRoute';
+import { routeFromNotificationData } from '../Utils/notificationRouting';
 import SplashScreen from "../Screens/SplashScreen/SplashScreen";
 import BottomTabNavigator from "./BottomTabNavigator";
 import { createStackNavigator } from "@react-navigation/stack";
@@ -74,7 +77,13 @@ export type RootStackParamList = {
   };
   AddClientScreen: undefined;
   AppointmentDetailsScreen: { appointment_id?: string; appointment_service_id?: string; appointment?: any } | undefined;
-  CreateAppointment: undefined;
+  CreateAppointment:
+    | undefined
+    | {
+        mode?: 'edit' | 'create';
+        appointmentId?: string;
+        appointmentData?: any;
+      };
   PaymentMethodsScreen: undefined;
   AddPaymentMethodScreen: undefined;
   CheckoutScreen: {
@@ -87,7 +96,18 @@ const RootStackNavigator = () => {
 
   return (
     <GestureHandlerRootView>
-      <NavigationContainer ref={require('./navigationRef').navigationRef as any}>
+      <NavigationContainer
+        ref={navigationRef as any}
+        onReady={() => {
+          try {
+            const pending = consumePendingNotificationRoute();
+            if (pending) {
+              // Route once navigation is ready (cold start from push notification)
+              routeFromNotificationData(pending);
+            }
+          } catch {}
+        }}
+      >
         <Stack.Navigator
           initialRouteName="SplashScreen"
           screenOptions={{

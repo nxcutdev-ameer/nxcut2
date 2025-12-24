@@ -187,7 +187,7 @@ export interface ClientSaleLocation {
 }
 
 export interface ClientSale {
-  id: string;
+  id: number;
   payment_method?: string | null;
   amount?: number;
   subtotal?: number;
@@ -197,6 +197,7 @@ export interface ClientSale {
   tax_amount?: number | null;
   status?: string | null;
   sale_type?: string | null;
+  is_voided?: boolean | null;
   created_at: string;
   tip_amount: number | null;
   is_tip_transaction?: boolean;
@@ -210,6 +211,75 @@ export interface ClientSale {
 }
 
 export const clientRepository = {
+  async hasClientVouchers(clientId: string): Promise<boolean> {
+    if (!clientId) return false;
+    const { data, error } = await supabase
+      .from("client_vouchers")
+      .select("id")
+      .eq("client_id", clientId)
+      .limit(1);
+
+    if (error) {
+      console.error("[clientRepository] hasClientVouchers error", error);
+      return false;
+    }
+
+    return (data?.length ?? 0) > 0;
+  },
+
+  async hasClientMemberships(clientId: string): Promise<boolean> {
+    if (!clientId) return false;
+    const { data, error } = await supabase
+      .from("client_memberships")
+      .select("id")
+      .eq("client_id", clientId)
+      .limit(1);
+
+    if (error) {
+      console.error("[clientRepository] hasClientMemberships error", error);
+      return false;
+    }
+
+    return (data?.length ?? 0) > 0;
+  },
+
+
+  /**
+   * Void a sale by marking `sales.is_voided = true`.
+   * Note: this does NOT delete the linked appointment.
+   */
+  async voidSaleById(saleId: string | number): Promise<boolean> {
+    if (saleId === null || saleId === undefined || saleId === "") {
+      throw new Error("Sale ID is required to void sale");
+    }
+
+    // `sales.id` is int8 in Supabase. Ensure we compare using a numeric value.
+    const numericSaleId =
+      typeof saleId === "number" ? saleId : Number(String(saleId).trim());
+
+    if (!Number.isFinite(numericSaleId)) {
+      throw new Error(`Invalid sale id: ${saleId}`);
+    }
+
+    try {
+      const { error } = await supabase
+        .from("sales")
+        .update({ is_voided: true })
+        .eq("id", numericSaleId);
+
+      if (error) {
+        console.error("[voidSaleById] Error:", error);
+        return false;
+      }
+
+      return true;
+    } catch (err) {
+      console.error("[voidSaleById] Unexpected error:", err);
+      return false;
+    }
+  },
+
+
   async getClients(filters: ClientFilter = {}): Promise<ClientResponse> {
     try {
       const {

@@ -35,7 +35,7 @@ export default function App() {
       const { supabase } = await import('./Src/Utils/supabase');
       const { useNotificationsStore } = await import('./Src/Store/useNotificationsStore');
       const { routeFromNotificationData } = await import('./Src/Utils/notificationRouting');
-      let pendingRouteData: any | null = null;
+      const { setPendingNotificationRoute } = await import('./Src/Utils/pendingNotificationRoute');
       try {
         // Initialize authentication (restore session if exists)
         await initializeAuth();
@@ -68,8 +68,8 @@ export default function App() {
             if (last) {
               const content = last?.notification?.request?.content;
               const data = { ...(content?.data || {}), title: content?.title as any, body: content?.body as any };
-              // Defer routing until navigation is ready; show splash until ready
-              pendingRouteData = data;
+              // Defer routing until navigation is ready
+              try { setPendingNotificationRoute(data); } catch {}
             }
           } catch {}
         })();
@@ -111,41 +111,8 @@ export default function App() {
       } catch (error) {
         console.error("[App] Initialization error:", error);
       } finally {
-        // Hide splash screen only when navigation is ready (or no pending route)
-        try {
-          const { navigationRef } = await import('./Src/Navigations/navigationRef');
-          if (pendingRouteData) {
-            const waitReady = () => new Promise<void>((resolve) => {
-              if (navigationRef.isReady()) return resolve();
-              const i = setInterval(() => { if (navigationRef.isReady()) { clearInterval(i); resolve(); } }, 50);
-            });
-            const withTimeout = (ms: number) => new Promise<'ready' | 'timeout'>(async (resolve) => {
-              let done = false;
-              const t = setTimeout(() => { if (!done) { done = true; resolve('timeout'); } }, ms);
-              try {
-                await waitReady();
-                if (!done) { done = true; clearTimeout(t); resolve('ready'); }
-              } catch {
-                if (!done) { done = true; clearTimeout(t); resolve('timeout'); }
-              }
-            });
-
-            const result = await withTimeout(5000);
-            if (result === 'ready') {
-              await routeFromNotificationData(pendingRouteData);
-            } else {
-              // Fallback: don't block splash; route as soon as navigator is ready in background
-              const poll = setInterval(async () => {
-                try {
-                  if (navigationRef.isReady()) {
-                    clearInterval(poll);
-                    await routeFromNotificationData(pendingRouteData);
-                  }
-                } catch {}
-              }, 200);
-            }
-          }
-        } catch {}
+        // Splash screen can be hidden now; cold-start push routing is handled in
+        // RootStackNavigator via NavigationContainer.onReady() consuming pendingNotificationRoute.
         await SplashScreen.hideAsync();
       }
     }

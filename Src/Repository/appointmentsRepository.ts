@@ -49,6 +49,7 @@ export interface AppointmentCalanderBO {
     updated_at: string;
     location_id: string;
     appointment_date: string; // e.g. "2025-09-18"
+    sales?: Array<{ id: number }>;
   };
 
   service: {
@@ -775,7 +776,7 @@ export const appointmentsRepository = {
         service:service_id(*),
         staff:team_members!staff_id(*),
         original_staff:original_staff_id(*),
-        appointment:appointment_id(*, client:client_id(*))
+        appointment:appointment_id(*, client:client_id(*), sales(id))
       `
       )
       .eq("appointment.appointment_date", date)

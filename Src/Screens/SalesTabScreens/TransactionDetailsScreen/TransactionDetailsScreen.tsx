@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo, useState } from "react";
 import {
   View,
   Text,
@@ -8,6 +8,8 @@ import {
   ActivityIndicator,
   Dimensions,
   Platform,
+  Alert,
+  Pressable,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StackScreenProps } from "@react-navigation/stack";
@@ -15,7 +17,11 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import { colors } from "../../../Constants/colors";
 import { RootStackParamList } from "../../../Navigations/RootStackNavigator";
 import { useTransactionDetailsScreenVM } from "./TransactionDetailsScreenVM";
-import { fontEq } from "../../../Utils/helpers";
+import { fontEq, getHeightEquivalent } from "../../../Utils/helpers";
+import { clientRepository } from "../../../Repository/clientRepository";
+import * as Clipboard from "expo-clipboard";
+import * as Haptics from "expo-haptics";
+import { useToast } from "react-native-toast-notifications";
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
 
@@ -29,10 +35,10 @@ const titleFontSize = Platform.OS === 'android' ? fontEq(16) : Math.min(26, scre
 const headingFontSize = Platform.OS === 'android' ? fontEq(14) : Math.max(16, screenWidth * 0.045);
 const sectionTitleFontSize = Platform.OS === 'android' ? fontEq(12) : Math.max(14, screenWidth * 0.04);
 const subtitleFontSize = Platform.OS === 'android' ? fontEq(12) : Math.max(12, screenWidth * 0.035);
-const bodyFontSize = Platform.OS === 'android' ? fontEq(11) : Math.max(12, screenWidth * 0.036);
+const bodyFontSize = Platform.OS === 'android' ? fontEq(10) : Math.max(12, screenWidth * 0.033);
 const smallFontSize = Platform.OS === 'android' ? fontEq(9): Math.max(12, screenWidth * 0.032);
 const priceFontSize = Platform.OS === 'android' ? fontEq(10) : Math.max(12, screenWidth * 0.036);
-const amountFontSize = Platform.OS === 'android' ? fontEq(10) : Math.max(16, screenWidth * 0.045);
+const amountFontSize = Platform.OS === 'android' ? fontEq(10) : Math.max(16, screenWidth * 0.036);
 const summaryValueFontSize = Platform.OS === 'android' ? fontEq(12) : Math.max(16, screenWidth * 0.043);
 const dividerThickness = Math.max(screenHeight * 0.0015, 1);
 
@@ -46,6 +52,7 @@ const TransactionDetailsScreen: React.FC<TransactionDetailsProps> = ({
   route,
 }) => {
   const viewModel = useTransactionDetailsScreenVM(route);
+  const toast = useToast();
 
   const {
     sale,
@@ -73,12 +80,110 @@ const TransactionDetailsScreen: React.FC<TransactionDetailsProps> = ({
   const totalSectionAmount = subtotal + taxAmount + adjustedTip;
   const payableSectionAmount = totalSectionAmount - voucherDiscount;
 
+  const saleIdLabel = useMemo(() => {
+    if (!sale?.id) {
+      return null;
+    }
+    return `Sale ID: ${sale.id}`;
+  }, [sale?.id]);
+
+  const [saleIdCopiedAt, setSaleIdCopiedAt] = useState<number | null>(null);
+
+  const handleCopySaleId = async () => {
+    if (!sale?.id) {
+      return;
+    }
+
+    try {
+      await Clipboard.setStringAsync(String(sale.id));
+      setSaleIdCopiedAt(Date.now());
+
+      // Light haptic + toast feedback
+      try {
+        await Haptics.selectionAsync();
+      } catch {
+        // ignore if not supported
+      }
+
+      toast.show("Sale ID copied", { type: "success" });
+    } catch (e) {
+      console.error("Failed to copy sale id", e);
+      toast.show("Failed to copy", { type: "danger" });
+    }
+  };
+
+  const isSaleIdRecentlyCopied =
+    saleIdCopiedAt != null && Date.now() - saleIdCopiedAt < 1500;
+
   const tipPaymentMethod =
     sale?.sale_tips
       ?.map((tip: any) => tip?.payment_methods?.name)
       .find((name: any) => typeof name === "string" && name.trim().length > 0)
       ?.trim() ??
     null;
+
+  const [isVoiding, setIsVoiding] = useState(false);
+
+  const canVoidSale = !!sale?.id && !sale?.is_voided;
+
+  const handleVoidSale = () => {
+    if (!sale?.id) {
+      Alert.alert("Void unavailable", "Sale ID is missing.");
+      return;
+    }
+
+    if (!canVoidSale) {
+      Alert.alert("Already voided", "This sale is already voided.");
+      return;
+    }
+
+    Alert.alert(
+      "Void Sale",
+      "Are you sure you want to void this sale? This action cannot be undone.",
+      [
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+        {
+          text: "Void Sale",
+          style: "destructive",
+          onPress: async () => {
+            setIsVoiding(true);
+            try {
+              const success = await clientRepository.voidSaleById(sale.id);
+
+              if (success) {
+                await refetch();
+                Alert.alert("Success", "Sale has been voided successfully.", [
+                  {
+                    text: "OK",
+                    onPress: () => {
+                      const parent = navigation.getParent();
+                      if (parent) {
+                        parent.setParams({ dataChanged: true });
+                      }
+                      navigation.goBack();
+                    },
+                  },
+                ]);
+              } else {
+                Alert.alert(
+                  "Error",
+                  "Failed to void the sale. Please try again."
+                );
+              }
+            } catch (error) {
+              console.error("Error voiding sale:", error);
+              Alert.alert("Error", "Something went wrong. Please try again.");
+            } finally {
+              setIsVoiding(false);
+            }
+          },
+        },
+      ]
+    );
+  };
 
   const tipStaffNames =
     sale?.sale_tips
@@ -122,12 +227,7 @@ const TransactionDetailsScreen: React.FC<TransactionDetailsProps> = ({
         <ScrollView contentContainerStyle={styles.content}>
           <View style={styles.headerRow}>
             <View style={styles.headerTextGroup}>
-              <Text style={styles.title}>Sale Summary</Text>
-              <Text style={styles.dateText}>
-                {appointmentServiceCreatedAtLabel}
-              </Text>
-            </View>
-            <TouchableOpacity
+                <TouchableOpacity
               style={styles.closeButton}
               onPress={() => navigation.goBack()}
               accessibilityRole="button"
@@ -135,6 +235,54 @@ const TransactionDetailsScreen: React.FC<TransactionDetailsProps> = ({
             >
               <Ionicons name="close" size={22} color={colors.text} />
             </TouchableOpacity>
+              <Text style={styles.title}>Sale Summary</Text>
+              <Text style={styles.dateText}>
+                {createdAtLabel}
+              </Text>
+            </View>
+
+            {sale?.id ? (
+              <View style={styles.headerActions}>
+                {saleIdLabel ? (
+                  <Pressable
+                    onPress={handleCopySaleId}
+                    accessibilityRole="button"
+                    accessibilityLabel="Copy sale id"
+                    style={({ pressed }) => [
+                      styles.saleIdChip,
+                      pressed && styles.saleIdChipPressed,
+                      isSaleIdRecentlyCopied && styles.saleIdChipCopied,
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.saleIdChipText,
+                        isSaleIdRecentlyCopied && styles.saleIdChipTextCopied,
+                      ]}
+                      numberOfLines={1}
+                    >
+                      {saleIdLabel}
+                    </Text>
+                  </Pressable>
+                ) : null}
+
+                <TouchableOpacity
+                  style={styles.voidButton}
+                  onPress={handleVoidSale}
+                  disabled={isVoiding || !canVoidSale}
+                  accessibilityRole="button"
+                  accessibilityLabel="Void sale"
+                >
+                  {isVoiding ? (
+                    <ActivityIndicator size="small" color={colors.danger} />
+                  ) : (
+                    <View style={styles.voidButtonContent}>
+                      <Text style={styles.voidButtonText}>Void Sale</Text>
+                    </View>
+                  )}
+                </TouchableOpacity>
+              </View>
+            ) : null}
           </View>
 
           <TouchableOpacity
@@ -467,6 +615,43 @@ const styles = StyleSheet.create({
     flex: 1,
     marginRight: secondarySpacing,
   },
+  headerActions: {
+    alignItems: "flex-end",
+    justifyContent: "center",
+    gap: 8,
+  },
+  saleIdChip: {
+    maxWidth: 170,
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    backgroundColor: "rgba(0,0,0,0.04)",
+    borderWidth: 1,
+    borderColor: "rgba(0,0,0,0.08)",
+    marginBottom:getHeightEquivalent(15),
+  },
+  saleIdChipPressed: {
+    opacity: 0.75,
+    transform: [{ scale: 0.98 }],
+  },
+  saleIdChipCopied: {
+    // backgroundColor: "rgba(46, 204, 113, 0.12)",
+     borderColor: "rgba(46, 204, 113, 0.35)",
+  },
+  saleIdChipText: {
+    fontSize: smallFontSize,
+    color: colors.text,
+    fontWeight: "600",
+  },
+  saleIdChipTextCopied: {
+    color: colors.success,
+  },
+  saleIdChipHint: {
+    marginTop: 2,
+    fontSize: smallFontSize,
+    color: colors.text,
+    opacity: 0.6,
+  },
   title: {
     fontSize: titleFontSize,
     fontWeight: "700",
@@ -485,6 +670,27 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: "rgba(0,0,0,0.05)",
+    marginBottom: getHeightEquivalent(5),
+  },
+  voidButton: {
+    paddingVertical: secondarySpacing * 0.6,
+    paddingHorizontal: secondarySpacing,
+    borderRadius: 10,
+    backgroundColor: colors.white,
+    minWidth: 90,
+    alignItems: "center",
+    justifyContent: "center",
+    borderColor: colors.danger,
+    borderWidth: 1,
+  },
+  voidButtonContent: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  voidButtonText: {
+    color: colors.danger,
+    fontSize: bodyFontSize,
+    fontWeight: "600",
   },
   contactCard: {
     flexDirection: "row",
@@ -627,7 +833,6 @@ const styles = StyleSheet.create({
     alignItems: "flex-end",
   },
   itemAmount: {
-    fontSize: amountFontSize,
     fontWeight: "700",
     color: colors.text,
   },

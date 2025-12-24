@@ -623,6 +623,24 @@ export const CreateAppointmentStyles = StyleSheet.create({
     fontWeight: "400",
     color: colors.textSecondary,
   },
+  loadingAppointmentBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    paddingVertical: 10,
+    marginHorizontal: 16,
+    marginTop: 8,
+    marginBottom: 8,
+    borderRadius: 10,
+    backgroundColor: "rgba(0,0,0,0.04)",
+  },
+  loadingAppointmentText: {
+    fontSize: 14,
+    color: colors.text,
+    fontWeight: "600",
+  },
+
   viewProfileButton: {
     marginTop: getHeightEquivalent(12),
     paddingVertical: getHeightEquivalent(8),

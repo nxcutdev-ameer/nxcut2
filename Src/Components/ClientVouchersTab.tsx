@@ -109,7 +109,7 @@ const ClientVouchersTab: React.FC<ClientVouchersTabProps> = ({
         <View style={styles.messageContainer}>
           <Text style={styles.messageTitle}>No Active Vouchers</Text>
           <Text style={styles.messageBody}>
-            You currently do not have any vouchers with remaining balance.
+            No vouchers with remaining balance for this client.
           </Text>
         </View>
     );
@@ -204,7 +204,7 @@ const ClientVouchersTab: React.FC<ClientVouchersTabProps> = ({
               <Ionicons
                 name="pricetag-outline"
                 size={metaIconSize}
-                color={colors.primary}
+                color={colors.black}
                 style={styles.metaIcon}
               />
               <Text style={styles.codeText}>{voucherCode}</Text>
@@ -214,7 +214,7 @@ const ClientVouchersTab: React.FC<ClientVouchersTabProps> = ({
               <Ionicons
                 name="wallet-outline"
                 size={metaIconSize}
-                color={colors.primary}
+                color={colors.black}
                 style={styles.metaIcon}
               />
               <View style={styles.balanceBadge}>
@@ -232,13 +232,13 @@ const ClientVouchersTab: React.FC<ClientVouchersTabProps> = ({
               <Ionicons
                 name="eye-outline"
                 size={activityIconSize}
-                color={colors.primary}
+                color={colors.black}
                 style={styles.activityIcon}
               />
               <Text style={styles.activityText}>View Sale</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity
+            {/* <TouchableOpacity
               style={styles.activityButton}
               onPress={() => {
                 Alert.alert(
@@ -251,11 +251,11 @@ const ClientVouchersTab: React.FC<ClientVouchersTabProps> = ({
               <Ionicons
                 name="pulse-outline"
                 size={activityIconSize}
-                color={colors.primary}
+                color={colors.black}
                 style={styles.activityIcon}
               />
               <Text style={styles.activityText}>View Activity</Text>
-            </TouchableOpacity>
+            </TouchableOpacity> */}
           </View>
         );
       }}
@@ -263,7 +263,7 @@ const ClientVouchersTab: React.FC<ClientVouchersTabProps> = ({
         <RefreshControl
           refreshing={isLoading}
           onRefresh={fetchVouchers}
-          colors={[colors.primary]}
+          colors={[colors.black]}
         />
       }
       contentContainerStyle={[styles.listContent, { flexGrow: 1 }]}
@@ -426,7 +426,7 @@ const createResponsiveStyles = (screenWidth: number, screenHeight: number) => {
     balanceText: {
       fontSize: 12,
       fontWeight: "700",
-      color: colors.success,
+      color: colors.black,
       letterSpacing: 0.4,
       textTransform: "uppercase",
     },
@@ -436,7 +436,7 @@ const createResponsiveStyles = (screenWidth: number, screenHeight: number) => {
       alignItems: "center",
       justifyContent: "center",
       borderWidth: 1,
-      borderColor: colors.primary,
+      borderColor: colors.black,
       borderRadius: 8,
       paddingVertical: 8,
       gap: 6,
@@ -447,7 +447,7 @@ const createResponsiveStyles = (screenWidth: number, screenHeight: number) => {
     activityText: {
       fontSize: 13,
       fontWeight: "600",
-      color: colors.primary,
+      color: colors.black,
       textTransform: "uppercase",
       letterSpacing: 0.6,
     },

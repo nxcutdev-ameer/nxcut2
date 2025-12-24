@@ -729,8 +729,10 @@ const DraggableCalendarColumn: React.FC<DraggableCalendarColumnProps> = ({
                       console.log("  Status:", appointment.data.appointment.status);
                       console.log("  Appointment ID:", appointment.data.appointment.id);
                       
+                      const status = String(appointment.data.appointment.status ?? "").toLowerCase();
+
                       // Navigate to CreateAppointment in edit mode for scheduled appointments
-                      if (appointment.data.appointment.status === "scheduled") {
+                      if (status === "scheduled") {
                         console.log("  -> Navigating to edit mode");
                         console.log("  -> Appointment ID:", appointment.data.appointment.id);
                         navigation.navigate("CreateAppointment", {
@@ -738,13 +740,34 @@ const DraggableCalendarColumn: React.FC<DraggableCalendarColumnProps> = ({
                           appointmentId: appointment.data.appointment.id, // Pass only ID, not full data
                           appointmentData: appointment.data, // Keep for backward compatibility
                         });
-                      } else {
-                        console.log("  -> Navigating to details screen (status:", appointment.data.appointment.status, ")");
-                        // Navigate to details screen for paid appointments (read-only)
-                        navigation.navigate("AppointmentDetailsScreen", {
-                          appointment: appointment.data,
-                        });
+                        return;
                       }
+
+                      // For PAID appointments, open the TransactionDetailsScreen instead of AppointmentDetailsScreen
+                      if (status === "paid") {
+                        const saleId = appointment.data.appointment.sales?.[0]?.id;
+
+                        if (saleId) {
+                          navigation.navigate("TransactionDetailsScreen", {
+                            saleId: String(saleId),
+                          });
+                          return;
+                        }
+
+                        console.warn(
+                          "[DraggableCalendarColumn] Paid appointment has no sale id, falling back to AppointmentDetailsScreen",
+                          appointment.data.appointment.id
+                        );
+                      }
+
+                      console.log(
+                        "  -> Navigating to AppointmentDetailsScreen (status:",
+                        appointment.data.appointment.status,
+                        ")"
+                      );
+                      navigation.navigate("AppointmentDetailsScreen", {
+                        appointment: appointment.data,
+                      });
                     }
               }
             />

@@ -1,7 +1,7 @@
   import { View, Text, TouchableOpacity, Linking, Alert, Platform, ScrollView } from "react-native";
-import React, { useMemo, useCallback, useState } from "react";
+import React, { useMemo, useCallback, useEffect, useState } from "react";
 import { useRoute, RouteProp, useNavigation } from "@react-navigation/native";
-import { ClientBO } from "../../../Repository/clientRepository";
+import { ClientBO, clientRepository } from "../../../Repository/clientRepository";
 import { StyleSheet } from "react-native";
 import { colors } from "../../../Constants/colors";
 import {
@@ -61,6 +61,30 @@ const ClientDetail = () => {
   );
 
   const [activeTab, setActiveTab] = useState<ClientDetailTabKey>("appointments");
+  const [hasVouchers, setHasVouchers] = useState(false);
+  const [hasMemberships, setHasMemberships] = useState(false);
+
+  useEffect(() => {
+    let mounted = true;
+
+    (async () => {
+      try {
+        const [v, m] = await Promise.all([
+          clientRepository.hasClientVouchers(client.id),
+          clientRepository.hasClientMemberships(client.id),
+        ]);
+        if (!mounted) return;
+        setHasVouchers(v);
+        setHasMemberships(m);
+      } catch (e) {
+        // Non-blocking
+      }
+    })();
+
+    return () => {
+      mounted = false;
+    };
+  }, [client.id]);
 
 
   const handleCall = useCallback(() => {
@@ -161,14 +185,20 @@ const ClientDetail = () => {
                 activeOpacity={0.85}
               >
                 <Icon size={18} color={isActive ? colors.white : colors.gray[700]} />
-                <Text
-                  style={[
-                    ClientDetailStyles.tabPillText,
-                    isActive ? ClientDetailStyles.tabPillTextActive : null,
-                  ]}
-                >
-                  {label}
-                </Text>
+                <View style={ClientDetailStyles.tabPillLabelRow}>
+                  <Text
+                    style={[
+                      ClientDetailStyles.tabPillText,
+                      isActive ? ClientDetailStyles.tabPillTextActive : null,
+                    ]}
+                  >
+                    {label}
+                  </Text>
+                  {(key === 'vouchers' && hasVouchers) ||
+                  (key === 'memberships' && hasMemberships) ? (
+                    <View style={ClientDetailStyles.tabBadgeDot} />
+                  ) : null}
+                </View>
               </TouchableOpacity>
             );
           })}
@@ -366,6 +396,17 @@ const ClientDetailStyles = StyleSheet.create({
   tabPillActive: {
     backgroundColor: colors.black,
     borderColor: colors.black,
+  },
+  tabPillLabelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: getWidthEquivalent(6),
+  },
+  tabBadgeDot: {
+    width: getWidthEquivalent(8),
+    height: getWidthEquivalent(8),
+    borderRadius: 999,
+    backgroundColor: colors.danger,
   },
   tabPillText: {
     fontSize: Platform.OS === "android" ? fontEq(12) : fontEq(13),

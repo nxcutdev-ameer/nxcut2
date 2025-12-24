@@ -82,8 +82,14 @@ const CreateAppointmentScreen = ({ route }: any) => {
   
   // Determine mode: 'create' or 'edit'
   const mode = route.params?.mode || "create";
-  const appointmentData = route.params?.appointmentData;
-  
+  const appointmentIdParam = route.params?.appointmentId as string | undefined;
+  const routeAppointmentData = route.params?.appointmentData;
+  const [resolvedAppointmentData, setResolvedAppointmentData] = useState<any>(null);
+
+  // In some flows (e.g. notification deep-link) we only receive `appointmentId`.
+  // Normalize into the same `appointmentData` shape the screen expects.
+  const appointmentData = routeAppointmentData ?? resolvedAppointmentData;
+
   const [currentDate, setCurrentDate] = useState(new Date());
   const [currentTime, setCurrentTime] = useState("");
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
@@ -112,6 +118,10 @@ const CreateAppointmentScreen = ({ route }: any) => {
   const [toastType, setToastType] = useState<"success" | "error">("success");
   const [showMenuModal, setShowMenuModal] = useState(false);
   const [isCanceling, setIsCanceling] = useState(false);
+
+  // Small indicator for deep-link/edit-mode initial loading
+  const [isLoadingAppointment, setIsLoadingAppointment] = useState(false);
+  const hasLoadedAppointmentOnce = useRef(false);
   
   // Track if any backend changes were made
   const hasDataChanged = useRef(false);
@@ -209,12 +219,95 @@ const CreateAppointmentScreen = ({ route }: any) => {
     }
   }, [route.params]);
 
+  // If we entered edit-mode without `appointmentData` (e.g. from notifications),
+  // fetch the minimal structure required by the screen.
+  const resolveAppointmentDataIfNeeded = React.useCallback(async () => {
+    if (mode !== "edit") {
+      return;
+    }
+
+    // Already have appointmentData in the expected shape
+    if (appointmentData?.appointment?.id) {
+      return;
+    }
+
+    if (!appointmentIdParam) {
+      return;
+    }
+
+    try {
+      const { data: appt, error: apptError } = await supabase
+        .from("appointments")
+        .select(
+          `
+          id,
+          client_id,
+          appointment_date,
+          location_id,
+          notes,
+          status,
+          clients!appointments_client_id_fkey (
+            id,
+            first_name,
+            last_name,
+            email,
+            phone
+          )
+        `
+        )
+        .eq("id", appointmentIdParam)
+        .single();
+
+      if (apptError || !appt) {
+        console.error(
+          "[CreateAppointment] Failed to resolve appointment data:",
+          apptError
+        );
+        return;
+      }
+
+      const { data: services, error: servicesError } = await supabase
+        .from("appointment_services")
+        .select(`id, service_id, price, start_time, end_time, staff_id`)
+        .eq("appointment_id", appointmentIdParam)
+        .order("start_time", { ascending: true });
+
+      if (servicesError) {
+        console.error(
+          "[CreateAppointment] Failed to resolve appointment services:",
+          servicesError
+        );
+      }
+
+      const firstService = (services ?? [])[0];
+
+      setResolvedAppointmentData({
+        appointment: {
+          id: appt.id,
+          client_id: appt.client_id,
+          appointment_date: appt.appointment_date,
+          location_id: appt.location_id,
+          notes: appt.notes,
+          status: appt.status,
+          // keep shape compatibility with other flows
+          clients: appt.clients,
+        },
+        services: services ?? [],
+        start_time: firstService?.start_time ?? null,
+        staff_id: firstService?.staff_id ?? null,
+      });
+    } catch (e) {
+      console.error("[CreateAppointment] resolveAppointmentDataIfNeeded error", e);
+    }
+  }, [mode, appointmentIdParam, appointmentData?.appointment?.id]);
+
   // Fetch fresh appointment data from database
-  const loadFreshAppointmentData = React.useCallback(async () => {
-    if (mode === "edit" && appointmentData?.appointment?.id) {
-      console.log("[CreateAppointment] Fetching FRESH data from database");
-      console.log("[CreateAppointment] Appointment ID:", appointmentData.appointment.id);
-      
+  const loadFreshAppointmentData = React.useCallback(
+    async (appointmentIdOverride?: string) => {
+      const effectiveAppointmentId =
+        appointmentIdOverride ?? appointmentData?.appointment?.id ?? appointmentIdParam;
+
+      if (mode === "edit" && effectiveAppointmentId) {
       try {
         // Fetch fresh appointment data directly from database
         const { data: freshAppointment, error } = await supabase
@@ -234,7 +327,7 @@ const CreateAppointmentScreen = ({ route }: any) => {
               phone
             )
           `)
-          .eq("id", appointmentData.appointment.id)
+          .eq("id", effectiveAppointmentId)
           .single();
 
         if (error) {
@@ -253,11 +346,32 @@ const CreateAppointmentScreen = ({ route }: any) => {
           setCurrentDate(new Date(freshAppointment.appointment_date));
         }
         
-        // Use first service's start time from route params (time doesn't change in edit)
-        if (appointmentData.services && appointmentData.services.length > 0 && appointmentData.services[0].start_time) {
-          setCurrentTime(appointmentData.services[0].start_time.substring(0, 5));
-        } else if (appointmentData.start_time) {
-          setCurrentTime(appointmentData.start_time.substring(0, 5));
+        // Set time
+        // In some flows (e.g. notification deep-link) `appointmentData` may be null initially,
+        // so we must guard access and/or fallback to DB.
+        const routeServices = appointmentData?.services;
+
+        if (
+          Array.isArray(routeServices) &&
+          routeServices.length > 0 &&
+          routeServices[0]?.start_time
+        ) {
+          setCurrentTime(String(routeServices[0].start_time).substring(0, 5));
+        } else if (appointmentData?.start_time) {
+          setCurrentTime(String(appointmentData.start_time).substring(0, 5));
+        } else {
+          // Fallback: grab first service start_time from DB
+          const { data: firstServiceRow } = await supabase
+            .from("appointment_services")
+            .select("start_time")
+            .eq("appointment_id", effectiveAppointmentId)
+            .order("start_time", { ascending: true })
+            .limit(1)
+            .maybeSingle();
+
+          if (firstServiceRow?.start_time) {
+            setCurrentTime(String(firstServiceRow.start_time).substring(0, 5));
+          }
         }
         
         // Set client from FRESH database data
@@ -279,48 +393,103 @@ const CreateAppointmentScreen = ({ route }: any) => {
         }
         
         // Fetch services and get staff from the first service
-        await fetchAllAppointmentServices(appointmentData.appointment.id);
+        await fetchAllAppointmentServices(effectiveAppointmentId);
         
         // Now set the staff from the appointment services (after fetching services)
         // This will override any auto-selection from the location change
         const { data: servicesData } = await supabase
           .from("appointment_services")
           .select("staff_id")
-          .eq("appointment_id", appointmentData.appointment.id)
+          .eq("appointment_id", effectiveAppointmentId)
           .limit(1)
           .maybeSingle();
         
         if (servicesData?.staff_id) {
-          console.log("[CreateAppointment] Setting staff from appointment services:", servicesData.staff_id);
           setSelectedStaff(servicesData.staff_id);
         }
         
       } catch (error) {
         console.error("[CreateAppointment] Error loading fresh appointment data:", error);
       }
-    }
-  }, [mode, appointmentData?.appointment?.id]);
+      }
+    },
+    [mode, appointmentData?.appointment?.id, appointmentIdParam]
+  );
 
-  // Populate form when in edit mode - fetch fresh data from DB
+  // Populate form when in edit mode - resolve required params then fetch fresh data from DB
   useEffect(() => {
-    loadFreshAppointmentData();
-  }, [loadFreshAppointmentData]);
+    resolveAppointmentDataIfNeeded();
+  }, [resolveAppointmentDataIfNeeded]);
 
-  // Refetch data when screen comes into focus (after navigating back from other screens)
+  // Deterministic appointment loading:
+  // - Initial load: useEffect when we have an appointment id
+  // - Refetch on focus: only after the first load has completed
+  const isFreshLoadInFlight = useRef(false);
+
+  const triggerFreshLoad = React.useCallback(
+    async (reason: 'initial' | 'focus') => {
+      if (mode !== 'edit') {
+        return;
+      }
+
+      const effectiveId = appointmentIdParam ?? appointmentData?.appointment?.id;
+      if (!effectiveId) {
+        return;
+      }
+
+      if (isFreshLoadInFlight.current) {
+        return;
+      }
+
+      const isFirstLoad = !hasLoadedAppointmentOnce.current;
+      if (reason === 'initial' && isFirstLoad) {
+        setIsLoadingAppointment(true);
+      }
+
+      isFreshLoadInFlight.current = true;
+      try {
+        await resolveAppointmentDataIfNeeded();
+        await loadFreshAppointmentData(effectiveId);
+        hasLoadedAppointmentOnce.current = true;
+      } finally {
+        if (reason === 'initial' && isFirstLoad) {
+          setIsLoadingAppointment(false);
+        }
+        isFreshLoadInFlight.current = false;
+      }
+    },
+    [mode, appointmentIdParam, appointmentData?.appointment?.id, resolveAppointmentDataIfNeeded, loadFreshAppointmentData]
+  );
+
+  // Initial edit-mode load (covers notification deep-link reliably)
+  useEffect(() => {
+    if (mode !== 'edit') return;
+    if (hasLoadedAppointmentOnce.current) return;
+
+    const effectiveId = appointmentIdParam ?? appointmentData?.appointment?.id;
+    if (!effectiveId) return;
+
+    triggerFreshLoad('initial');
+  }, [mode, appointmentIdParam, appointmentData?.appointment?.id, triggerFreshLoad]);
+
+  // Refetch data when screen comes into focus (after initial load)
   useFocusEffect(
     React.useCallback(() => {
-      if (mode === "edit") {
-        console.log("[CreateAppointment] Screen focused - refetching appointment data");
-        loadFreshAppointmentData();
+      if (mode !== 'edit') {
+        return;
       }
-    }, [mode, loadFreshAppointmentData])
+
+      if (!hasLoadedAppointmentOnce.current) {
+        return;
+      }
+
+      triggerFreshLoad('focus');
+    }, [mode, triggerFreshLoad])
   );
 
   // Function to fetch all services for an appointment
   const fetchAllAppointmentServices = async (appointmentId: string) => {
     try {
-      console.log("[CreateAppointment] Fetching all services for appointment:", appointmentId);
-      
       const { data, error } = await supabase
         .from("appointment_services")
         .select(`
@@ -344,8 +513,6 @@ const CreateAppointmentScreen = ({ route }: any) => {
         return;
       }
 
-      console.log("[CreateAppointment] Raw appointment_services data from DB:", data);
-      
       if (data && data.length > 0) {
         const services: SelectedService[] = data.map((apptService: any) => ({
           id: apptService.services.id,
@@ -357,11 +524,9 @@ const CreateAppointmentScreen = ({ route }: any) => {
           quantity: 1,
         }));
         
-        console.log("[CreateAppointment] Loaded services:", services);
         setSelectedServices(services);
       } else {
         // No services left - clear the selected services array
-        console.log("[CreateAppointment] No services found - clearing services list");
         setSelectedServices([]);
       }
     } catch (error) {
@@ -990,6 +1155,14 @@ const CreateAppointmentScreen = ({ route }: any) => {
         </View>
 
         <ScrollView>
+          {mode === "edit" && isLoadingAppointment && (
+            <View style={CreateAppointmentStyles.loadingAppointmentBanner}>
+              <ActivityIndicator size="small" color={colors.primary} />
+              <Text style={CreateAppointmentStyles.loadingAppointmentText}>
+                Loading appointment…
+              </Text>
+            </View>
+          )}
           <View style={CreateAppointmentStyles.scrollContent}>
             {/* Client Selection Card */}
             <View style={CreateAppointmentStyles.section}>
@@ -1033,10 +1206,14 @@ const CreateAppointmentScreen = ({ route }: any) => {
                     <TouchableOpacity
                       style={CreateAppointmentStyles.viewProfileButton}
                       onPress={() => {
-                        const client = clients.find(
-                          (c) => c.id === selectedClient.id
+                        // `clients` list may not be loaded yet (e.g. notification deep-link),
+                        // so always fall back to the currently selected client.
+                        const selectedId = (selectedClient as any)?.id;
+                        const clientFromList = clients?.find(
+                          (c) => String((c as any).id) === String(selectedId)
                         );
-                        if (client) navigateToClientDetail(client);
+
+                        navigateToClientDetail(clientFromList ?? (selectedClient as any));
                       }}
                     >
                       <Text style={CreateAppointmentStyles.viewProfileText}>

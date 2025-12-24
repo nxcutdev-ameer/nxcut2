@@ -240,7 +240,7 @@ else if (payload?.type === "INSERT" && payload?.table === "sale_items" && payloa
     // Fetch sale → gives us client_id + location_id + appointment_id
     const { data: sale } = await supabase
       .from("sales")
-      .select("client_id, location_id, appointment_id, created_at")
+      .select("client_id, location_id, appointment_id, created_at, payment_method")
       .eq("id", item.sale_id)
       .single();
 
@@ -262,7 +262,7 @@ else if (payload?.type === "INSERT" && payload?.table === "sale_items" && payloa
     const { data: staffLinks } = await supabase
       .from("sale_item_staff")
       .select("staff_id")
-      .eq("sale_id", item.sale_id);
+      .eq("sale_item_id", item.sale_id);
 
     let staffNames: string[] = [];
 
@@ -365,6 +365,7 @@ else if (payload?.type === "INSERT" && payload?.table === "sale_items" && payloa
       body: enrichedPayload!.body,
       type: enrichedPayload!.data?.type,
       appointment_id: enrichedPayload!.data?.appointmentId as any,
+      sale_id: (enrichedPayload!.data as any)?.saleId ?? null,
     });
 
     if (insertErr) {

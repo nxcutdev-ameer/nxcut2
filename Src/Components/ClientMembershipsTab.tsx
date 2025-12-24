@@ -100,7 +100,7 @@ const ClientMembershipsTab: React.FC<ClientMembershipsTabProps> = ({
         <View style={styles.messageContainer}>
           <Text style={styles.messageTitle}>No Active Memberships</Text>
           <Text style={styles.messageBody}>
-            You currently do not have any memberships assigned to this client.
+            No memberships assigned to this client.
           </Text>
         </View>
     );
@@ -397,7 +397,7 @@ const createStyles = ({ width, height }: { width: number; height: number }) => {
       marginTop: 18,
       fontSize: 15,
       fontWeight: "700",
-      color: colors.success,
+      color: colors.black,
       textAlign: "right",
     },
     active: {

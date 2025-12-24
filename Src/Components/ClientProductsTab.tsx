@@ -119,7 +119,7 @@ const ClientProductsTab: React.FC<ClientProductsTabProps> = ({
         <View style={styles.messageContainer}>
           <Text style={styles.messageTitle}>No Products Found</Text>
           <Text style={styles.messageBody}>
-            You currently do not have any product purchases on record.
+            No product purchases for this client.
           </Text>
         </View>
     );

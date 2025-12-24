@@ -841,16 +841,10 @@ const CalanderScreen = () => {
         navigation.setParams({ dataChanged: undefined, refresh: undefined });
       }
 
-      // Subscribe to push notifications to refresh calendar on new notifications
-      const receivedSub = Notifications.addNotificationReceivedListener(() => {
-        const locationIds = pageFilter.location_ids.length > 0
-          ? pageFilter.location_ids
-          : allLocations.map((loc) => loc.id);
-        const dateString = currentDate.toISOString().split('T')[0];
-        setIsFocusLoading(true);
-        Promise.resolve(fetchCalanderAppointmentsData(dateString, locationIds))
-          .finally(() => setIsFocusLoading(false));
-      });
+      // NOTE: Do NOT refresh the calendar on push notification receipt.
+      // This avoids unexpected reloads while the user is working.
+      // Calendar data will be refreshed when the screen gains focus instead.
+      const receivedSub = { remove: () => {} } as any;
 
       // Check if returning from appointment screen
       const isReturningFromAppointment = isComingFromAppointmentScreen.current;
@@ -870,9 +864,7 @@ const CalanderScreen = () => {
         console.log('[CalendarScroll-Focus] Blocking auto-scroll - returning from appointment screen');
       }
 
-      // Only refresh calendar data if backend interaction occurred (dataChanged flag)
-      if (dataChanged) {
-        console.log('[CalendarScroll-Focus] Backend data changed - refreshing calendar');
+      const refreshCalendarForFocus = () => {
         setIsFocusLoading(true);
         const locationIds = pageFilter.location_ids.length > 0
           ? pageFilter.location_ids
@@ -880,8 +872,21 @@ const CalanderScreen = () => {
         const dateString = currentDate.toISOString().split('T')[0];
         Promise.resolve(fetchCalanderAppointmentsData(dateString, locationIds))
           .finally(() => setIsFocusLoading(false));
-      } else if (!isReturningFromAppointment) {
-        // Auto-scroll when navigating from tabs (not returning from appointment screens and no data change)
+      };
+
+      // Refresh calendar data ONLY when NOT returning from an appointment flow.
+      // We intentionally skip refresh on back-navigation from appointment-related screens
+      // (CreateAppointment / AppointmentDetails / TransactionDetails) to avoid disruptive reloads.
+      if (!isReturningFromAppointment) {
+        if (dataChanged) {
+          console.log('[CalendarScroll-Focus] Backend data changed - refreshing calendar');
+        } else {
+          console.log('[CalendarScroll-Focus] Focused via tabs/other nav - refreshing calendar');
+        }
+
+        refreshCalendarForFocus();
+
+        // Auto-scroll when navigating from tabs
         console.log('[CalendarScroll-Focus] Tab navigation - performing auto-scroll');
         const scrollToCurrentTime = () => {
           const currentHour = new Date().getHours();
@@ -967,9 +972,12 @@ const CalanderScreen = () => {
       const routes = state.routes;
       const currentRoute = routes[routes.length - 1];
       
-      // Only disable auto-scroll for these two specific screens
-      if (currentRoute?.name === 'AppointmentDetailsScreen' || 
-          currentRoute?.name === 'CreateAppointment') {
+      // Disable focus-refresh/auto-scroll when navigating into appointment-related screens
+      if (
+        currentRoute?.name === 'AppointmentDetailsScreen' ||
+        currentRoute?.name === 'CreateAppointment' ||
+        currentRoute?.name === 'TransactionDetailsScreen'
+      ) {
         isComingFromAppointmentScreen.current = true;
         console.log('[CalendarScroll-Focus] Navigating to appointment screen (auto-scroll will be disabled):', currentRoute.name);
       } else {

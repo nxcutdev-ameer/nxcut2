@@ -39,7 +39,10 @@ export async function routeFromNotificationData(payload: NotificationRouteData) 
           }
         }
       } catch {}
-      return navigateSafe('AppointmentDetailsScreen', { appointment_id: appointmentId });
+      return navigateSafe('CreateAppointment', {
+        mode: 'edit',
+        appointmentId,
+      });
     }
     Alert.alert('Appointment', 'No appointment id found for this notification.');
     return navigateSafe('NotificationScreen');
@@ -56,8 +59,15 @@ export async function routeFromNotificationData(payload: NotificationRouteData) 
     title.includes('manual discount') ||
     title.includes('voucher applied') ||
     title.includes('membership discount') ||
-    title.includes('discount applied')
+    title.includes('discount applied') ||
+    title.includes('voucher sold') ||
+    title.includes('membership sold')
   ) {
+    // Special case: Voucher/Membership sold -> show an alert only (no navigation)
+    if (title.includes('voucher sold') || title.includes('membership sold')) {
+      Alert.alert(payload.title || 'Sale', payload.body || 'A sale item was created.');
+      return navigateSafe('NotificationScreen');
+    }
     let saleId = payload?.saleId as string | undefined;
 
     // Preferred: resolve by joining sales on appointment_id

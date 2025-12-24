@@ -41,7 +41,7 @@ const buildFallbackSale = (
   const createdAt = transaction.sales.created_at ?? new Date().toISOString();
 
   return {
-    id: String(transaction.sales.id),
+    id: toNumber(transaction.sales.id),
     payment_method: transaction.payment_method,
     amount: transaction.amount,
     subtotal: transaction.amount,
@@ -225,9 +225,11 @@ export const useTransactionDetailsScreenVM = (
   }, [clientName]);
 
   const transactionId =
-    sale?.id ?? (transactionParam?.sales?.id !== undefined
-      ? String(transactionParam.sales.id)
-      : "N/A");
+    sale?.id !== undefined && sale?.id !== null
+      ? String(sale.id)
+      : transactionParam?.sales?.id !== undefined
+        ? String(transactionParam.sales.id)
+        : "N/A";
 
   const primaryPaymentAmount = paymentMethods.length
     ? toNumber(paymentMethods[0]?.amount)

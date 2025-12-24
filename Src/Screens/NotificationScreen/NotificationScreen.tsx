@@ -34,6 +34,7 @@ type NotificationRow = {
   body: string;
   type: string | null;
   appointment_id: string | null;
+  sale_id?: string | number | null;
   created_at: string;
 };
 
@@ -65,7 +66,9 @@ const NotificationScreen = () => {
           'Manual discount',
           'Voucher applied',
           'Membership discount',
-          'Discount applied'
+          'Discount applied',
+          'Voucher sold',
+          'Membership sold'
         ];
       case 'products':
         return ['Product Low stock'];
@@ -358,7 +361,17 @@ const NotificationScreen = () => {
           <TouchableOpacity
             style={[styles.card, { backgroundColor: colors.colors.white }]}
             activeOpacity={0.8}
-            onPress={() => routeFromNotificationData({ title: n.title, body: n.body, appointment_id: n.appointment_id || undefined })}
+            onPress={() =>
+              routeFromNotificationData({
+                title: n.title,
+                body: n.body,
+                appointment_id: n.appointment_id || undefined,
+                saleId:
+                  n.sale_id !== undefined && n.sale_id !== null
+                    ? String(n.sale_id)
+                    : undefined,
+              })
+            }
           >
             <View style={styles.cardHeader}>
               <Text style={[styles.cardTitle, { color: colors.colors.text }]} numberOfLines={1}>
